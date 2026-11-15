@@ -3,7 +3,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
     <title>华山论剑 - 三命进化与多武器版</title>
     <style>
         * {
@@ -25,6 +25,7 @@
             width: 100vw;
             height: 100vh;
             overflow: hidden;
+            position: fixed;
         }
         /* 登录/注册浮层 */
         #login-overlay {
@@ -97,30 +98,31 @@
             transform: scale(1.02);
         }
 
-        /* 游戏整体布局 */
+        /* 游戏整体布局 - 手机横屏全屏防变形优化 */
         #game-wrapper {
             display: none;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
             flex-direction: row;
             justify-content: center;
             align-items: center;
             gap: 15px;
-            padding: 10px;
+            padding: 0;
             background: #121212;
+            overflow: hidden;
         }
         #game-wrapper.active {
             display: flex;
         }
         #game-container {
             position: relative;
-            width: 100%;
-            max-width: 800px;
-            aspect-ratio: 4 / 3;
-            max-height: 100vh;
-            border-radius: 8px;
+            width: 100vw;
+            height: 100vh;
+            max-width: none;
+            max-height: none;
+            border-radius: 0;
             overflow: hidden;
-            border: 2px solid #333;
+            border: none;
             background: #000;
         }
         canvas {
@@ -128,6 +130,7 @@
             width: 100%;
             height: 100%;
             background-color: #000;
+            object-fit: cover;
         }
 
         /* UI 面板 */
@@ -198,7 +201,7 @@
         #pause-btn {
             position: absolute;
             top: 10px;
-            right: 10px;
+            right: 15px;
             background: rgba(0, 0, 0, 0.8);
             border: 1px solid rgba(255,255,255,0.3);
             color: #fff;
@@ -255,24 +258,24 @@
         /* 左侧虚拟摇杆样式 */
         #joystick-base {
             position: absolute;
-            bottom: 40px;
+            bottom: 30px;
             left: 40px;
-            width: 120px;
-            height: 120px;
+            width: 110px;
+            height: 110px;
             background: rgba(255, 255, 255, 0.12);
             border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             pointer-events: auto;
-            display: none;
+            display: flex;
             z-index: 5;
             touch-action: none;
         }
         #joystick-stick {
             position: absolute;
-            top: 35px;
-            left: 35px;
-            width: 50px;
-            height: 50px;
+            top: 30px;
+            left: 30px;
+            width: 46px;
+            height: 46px;
             background: rgba(33, 150, 243, 0.6);
             border: 2px solid #2196F3;
             border-radius: 50%;
@@ -282,17 +285,17 @@
         /* 右侧攻击按钮 */
         #attack-btn {
             position: absolute;
-            bottom: 40px;
+            bottom: 30px;
             right: 40px;
-            width: 85px;
-            height: 85px;
+            width: 80px;
+            height: 80px;
             background: rgba(255, 82, 82, 0.3);
             border: 2px solid #ff5252;
             border-radius: 50%;
             color: #fff;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
-            display: none;
+            display: flex;
             align-items: center;
             justify-content: center;
             z-index: 5;
@@ -348,77 +351,41 @@
 
         /* 右侧战绩排行榜 */
         #leaderboard {
-            width: 250px;
-            background: #252525;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.1);
-            max-height: 550px;
-            display: flex;
-            flex-direction: column;
+            display: none;
         }
-        #leaderboard h2 {
-            font-size: 14px;
-            color: #2196F3;
-            margin-bottom: 10px;
-            padding-bottom: 6px;
-            border-bottom: 1px solid #444;
-            text-align: center;
-        }
-        .score-list {
-            list-style: none;
-            overflow-y: auto;
-            flex-grow: 1;
-        }
-        .score-item {
-            display: flex;
-            flex-direction: column;
-            padding: 6px;
-            font-size: 11px;
-            border-bottom: 1px solid #333;
-            color: #ccc;
-        }
-        .score-item:nth-child(even) { background: rgba(255,255,255,0.03); }
-        .score-row-top { display: flex; justify-content: space-between; margin-bottom: 2px; }
-        .score-row-bottom { display: flex; justify-content: space-between; color: #888; font-size: 10px; }
-        .score-item .index { color: #ffca28; font-weight: bold; }
-        .score-item .time { color: #4fc3f7; font-weight: bold; }
-        .score-item .kills { color: #ff5252; font-weight: bold; }
-        .no-records { text-align: center; color: #666; font-size: 11px; padding: 15px 0; }
 
-        @media (max-width: 900px) {
-            body {
-                width: 100vw;
-                height: 100vh;
-                overflow: hidden;
-                position: fixed;
-            }
+        @media (min-width: 901px) {
             #game-wrapper {
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                padding: 0;
-                gap: 0;
-                width: 100vw;
-                height: 100vh;
-            }
-            #leaderboard {
-                display: none;
+                flex-direction: row;
+                padding: 10px;
+                gap: 15px;
+                width: 100%;
+                height: 100%;
             }
             #game-container {
-                width: 100vw;
-                height: 100vh;
-                max-width: none;
-                max-height: none;
-                border-radius: 0;
-                border: none;
-                aspect-ratio: auto;
+                width: auto;
+                height: 100%;
+                max-width: 800px;
+                aspect-ratio: 4 / 3;
+                max-height: 100vh;
+                border-radius: 8px;
+                border: 2px solid #333;
+            }
+            #leaderboard {
+                width: 250px;
+                background: #252525;
+                padding: 12px;
+                border-radius: 8px;
+                border: 1px solid rgba(255,255,255,0.1);
+                max-height: 550px;
+                display: flex;
+                flex-direction: column;
             }
             #joystick-base, #attack-btn {
-                display: flex;
+                display: none;
             }
             .controls-hint {
-                display: none;
+                display: block;
             }
         }
     </style>
@@ -438,7 +405,7 @@
 <!-- 游戏主体 -->
 <div id="game-wrapper">
     <div id="game-container">
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <canvas id="gameCanvas" width="960" height="600"></canvas>
         
         <button id="pause-btn" onclick="togglePause()" title="暂停 (Esc)">⏸️</button>
 
@@ -535,6 +502,23 @@ function startBGM() {
             step++;
         } catch(e) {}
     }, 320);
+}
+
+// 倒计时嘀嗒音效
+function playSoundTick() {
+    if (!audioCtx) return;
+    try {
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.08);
+    } catch(e) {}
 }
 
 function playSoundShoot(weaponType) {
@@ -890,12 +874,12 @@ let isPaused = false;
 let livesLeft = 3;          // 剩余总命数（初始3条）
 let isRespawning = false;   // 是否正处于死亡后等待5秒复活阶段
 let respawnTimer = 0;       // 复活倒计时（5秒）
+let lastIntSecond = 5;      // 记录整数秒用于触发倒计时音效
 
 let lastShootTime = 0;
 let lastItemSpawnTime = 0;
 
 function getCurrentLifeForm() {
-    // 3条命对应第1命，2条命对应第2命，1条命对应第3命
     let lifeIndex = Math.min(3, Math.max(1, 4 - livesLeft));
     return LIFE_FORMS[lifeIndex];
 }
@@ -1078,14 +1062,14 @@ function addFloatingText(text, x, y, color = '#fff') {
     floatingTexts.push({ text, x, y, color, life: 1.1, vy: -0.85 });
 }
 
-// --- 怪物与难度增强配置 ---
+// --- 怪物配置 ---
 const MONSTER_TYPES = [
-    { name: '狂暴史莱姆', shape: 'blob', hp: 2, speed: 1.05, size: 18, color: '#ab47bc', exp: 12, isBoss: false, sound: 'slime' },
-    { name: '重装僵尸怪', shape: 'zombie', hp: 4, speed: 0.85, size: 22, color: '#26a69a', exp: 28, isBoss: false, sound: 'zombie' },
-    { name: '疾风刺猬兽', shape: 'spike', hp: 2, speed: 1.55, size: 17, color: '#ff7043', exp: 18, isBoss: false, sound: 'spike' },
-    { name: '暗影猎手', shape: 'shadow', hp: 3, speed: 1.40, size: 20, color: '#5c6bc0', exp: 32, isBoss: false, sound: 'shadow' },
-    { name: '烈焰狂兽', shape: 'beast', hp: 6, speed: 1.25, size: 26, color: '#e65100', exp: 45, isBoss: false, sound: 'roar' },
-    { name: '虚空幽灵', shape: 'ghost', hp: 3, speed: 1.65, size: 19, color: '#7b1fa2', exp: 40, isBoss: false, sound: 'ghost' }
+    { name: '狂暴史莱姆', shape: 'blob', hp: 2, speed: 1.05, size: 18, color: '#ab47bc', exp: 12, sound: 'slime' },
+    { name: '重装僵尸怪', shape: 'zombie', hp: 4, speed: 0.85, size: 22, color: '#26a69a', exp: 28, sound: 'zombie' },
+    { name: '疾风刺猬兽', shape: 'spike', hp: 2, speed: 1.55, size: 17, color: '#ff7043', exp: 18, sound: 'spike' },
+    { name: '暗影猎手', shape: 'shadow', hp: 3, speed: 1.40, size: 20, color: '#5c6bc0', exp: 32, sound: 'shadow' },
+    { name: '烈焰狂兽', shape: 'beast', hp: 6, speed: 1.25, size: 26, color: '#e65100', exp: 45, sound: 'roar' },
+    { name: '虚空幽灵', shape: 'ghost', hp: 3, speed: 1.65, size: 19, color: '#7b1fa2', exp: 40, sound: 'ghost' }
 ];
 
 function playMonsterRoar(type) {
@@ -1184,7 +1168,7 @@ function spawnMonster(isBoss = false) {
         });
         playSoundLevelUp();
         playMonsterRoar('boss');
-        showNotification(`🚨 第 ${bossCount} 波小BOSS【${bossName}】降临！血量:${bossMaxHp}`);
+        showNotification(`🚨 小BOSS降临！HP:${bossMaxHp}`);
         addFloatingText(`🚨 小BOSS降临！HP:${bossMaxHp}`, player.x, player.y - 1.5, "#ff1744");
         updateUI();
     } else {
@@ -1285,7 +1269,6 @@ function shootBullet() {
             let vy = baseVx * sin + baseVy * cos;
 
             if (weaponType === 'arrow') {
-                // 第2命：弓箭（速度更快，直线飞行锐利）
                 bullets.push({
                     type: 'arrow',
                     x: startX,
@@ -1297,7 +1280,6 @@ function shootBullet() {
                     life: 4.0
                 });
             } else if (weaponType === 'boomerang') {
-                // 第3命：回旋镖（飞出一段距离后自动返回角色身边，路径可多次切割不同怪物）
                 bullets.push({
                     type: 'boomerang',
                     x: startX,
@@ -1309,11 +1291,10 @@ function shootBullet() {
                     maxOutTime: 0.55,
                     returning: false,
                     spinAngle: 0,
-                    hitHistory: {}, // 记录每个怪物上次受击时间，避免同一帧秒杀
+                    hitHistory: {},
                     life: 5.0
                 });
             } else {
-                // 第1命：经典高能子弹
                 bullets.push({
                     type: 'bullet',
                     x: startX,
@@ -1373,7 +1354,7 @@ function resetGame() {
         facingX: 0, facingY: 1,
         isMoving: false,
         runCycle: 0,
-        stealthTimer: 0, // 复活后的5秒隐身时间
+        stealthTimer: 0,
         buffs: {
             speed: { active: false, timeLeft: 0 },
             multishot: { active: false, timeLeft: 0 },
@@ -1499,17 +1480,16 @@ function moveEntityWithCollision(entity, dx, dy, radius) {
     }
 }
 
-// 玩家受击掉命处理：若还有命，间隔5秒复活并附带5秒隐身；三条命全没则结束游戏
+// 玩家掉命及切换复活处理
 function handlePlayerDeath() {
     livesLeft--;
     if (livesLeft > 0) {
         isRespawning = true;
         respawnTimer = 5.0;
-        bullets = []; // 清空当前飞行中的投射物
+        lastIntSecond = 5;
+        bullets = [];
         playSoundGameOver();
-        let nextForm = getCurrentLifeForm();
-        showNotification(`💔 损失1条命！5秒后切换【${nextForm.title}】复活！`);
-        addFloatingText(`💀 阵亡！5秒后复活...`, player.x, player.y - 1.2, "#ff5252");
+        playSoundTick();
         updateUI();
     } else {
         livesLeft = 0;
@@ -1523,23 +1503,28 @@ function updateGame(deltaTime) {
 
     let deltaSec = Math.min(0.1, deltaTime / 1000);
 
-    // 处于死亡等待5秒复活阶段
+    // 复活倒计时
     if (isRespawning) {
         respawnTimer -= deltaSec;
-        // 漂浮字继续更新
+        let currentCeil = Math.ceil(respawnTimer);
+        if (currentCeil !== lastIntSecond && currentCeil > 0 && currentCeil <= 5) {
+            lastIntSecond = currentCeil;
+            playSoundTick();
+        }
+
         for (let i = floatingTexts.length - 1; i >= 0; i--) {
             let ft = floatingTexts[i];
             ft.life -= deltaSec * 1.2;
             ft.y += ft.vy * deltaSec;
             if (ft.life <= 0) floatingTexts.splice(i, 1);
         }
+
         if (respawnTimer <= 0) {
             isRespawning = false;
             respawnTimer = 0;
-            player.stealthTimer = 5.0; // 复活后5秒隐身时间
+            player.stealthTimer = 5.0;
             playSoundPowerup();
             let form = getCurrentLifeForm();
-            showNotification(`✨ 复活成功！【${form.title}】获得5秒隐身保护！`);
             addFloatingText(`👻 5秒隐身开启！`, player.x, player.y - 1.2, "#84ffff");
         }
         updateUI();
@@ -1548,7 +1533,6 @@ function updateGame(deltaTime) {
 
     survivalTime += deltaSec;
 
-    // 复活隐身时间倒计时
     if (player.stealthTimer > 0) {
         player.stealthTimer -= deltaSec;
         if (player.stealthTimer <= 0) {
@@ -1621,7 +1605,6 @@ function updateGame(deltaTime) {
         player.runCycle = 0;
     }
 
-    // --- 护卫狼 AI ---
     if (wolf) {
         wolf.level = player.level;
         let targetMonster = getClosestMonster(wolf.x, wolf.y);
@@ -1676,7 +1659,6 @@ function updateGame(deltaTime) {
         }
     }
 
-    // 道具拾取
     for (let i = items.length - 1; i >= 0; i--) {
         let it = items[i];
         it.life -= deltaSec;
@@ -1706,13 +1688,11 @@ function updateGame(deltaTime) {
         }
     }
 
-    // 怪物AI与碰撞检测
     for (let mIdx = 0; mIdx < monsters.length; mIdx++) {
         let m = monsters[mIdx];
         let dx = player.x - m.x, dy = player.y - m.y;
         let dist = Math.hypot(dx, dy);
 
-        // 隐身状态下怪物失去目标只会缓慢游荡，非隐身状态正常追击
         if (player.stealthTimer > 0) {
             let wanderAngle = (parseInt(m.id.slice(0, 4), 36) || 1) + survivalTime * 0.8;
             let mSpeed = m.speed * 0.4 * deltaSec;
@@ -1728,7 +1708,6 @@ function updateGame(deltaTime) {
 
         let hitDist = m.isBoss ? 0.95 : 0.72;
         if (dist < hitDist) {
-            // 复活后的5秒隐身期间完全免疫怪物触碰伤害
             if (player.stealthTimer > 0) {
                 continue;
             }
@@ -1754,12 +1733,11 @@ function updateGame(deltaTime) {
                 updateUI();
             } else {
                 handlePlayerDeath();
-                break; // 触发掉命后立即退出本帧循环
+                break;
             }
         }
     }
 
-    // 投射物（子弹 / 弓箭 / 回旋镖）飞行与碰撞
     for (let i = bullets.length - 1; i >= 0; i--) {
         let b = bullets[i];
         b.life -= deltaSec;
@@ -1772,7 +1750,6 @@ function updateGame(deltaTime) {
             if (!b.returning) {
                 b.x += b.vx * b.speed * deltaSec;
                 b.y += b.vy * b.speed * deltaSec;
-                // 飞出达到最大时间或撞墙后开始回旋
                 let bGx = Math.floor(b.x);
                 let bGy = Math.floor(b.y);
                 let bTerrain = getTerrain(bGx, bGy);
@@ -1781,7 +1758,6 @@ function updateGame(deltaTime) {
                     b.returning = true;
                 }
             } else {
-                // 飞回玩家位置
                 let rdx = player.x - b.x;
                 let rdy = player.y - b.y;
                 let rDist = Math.hypot(rdx, rdy);
@@ -1795,7 +1771,6 @@ function updateGame(deltaTime) {
                 b.y += b.vy * (b.speed * 1.15) * deltaSec;
             }
 
-            // 回旋镖可穿透切割路径上的多个怪物
             let nowMs = performance.now();
             for (let j = monsters.length - 1; j >= 0; j--) {
                 let m = monsters[j];
@@ -1821,7 +1796,6 @@ function updateGame(deltaTime) {
             continue;
         }
 
-        // 子弹 & 弓箭的追踪与直线逻辑
         let target = monsters.find(m => m.id === b.targetId);
         if (!target) { target = getClosestMonster(b.x, b.y); if (target) b.targetId = target.id; }
 
@@ -1829,7 +1803,6 @@ function updateGame(deltaTime) {
             let tdx = target.x - b.x, tdy = target.y - b.y;
             let tDist = Math.hypot(tdx, tdy);
             if (tDist > 0) {
-                // 弓箭跟踪转向略微克制，保持箭矢凌厉感；子弹跟踪更灵活
                 let turnRate = b.type === 'arrow' ? 0.12 : 0.18;
                 b.vx = b.vx * (1 - turnRate) + (tdx / tDist) * turnRate;
                 b.vy = b.vy * (1 - turnRate) + (tdy / tDist) * turnRate;
@@ -1895,7 +1868,6 @@ function triggerGameOver() {
     addRecord(survivalTime, killCount, player.level);
 }
 
-// 绘制不同命数对应形态的主角
 function drawBoxerHero(cx, cy, p) {
     let form = getCurrentLifeForm();
     let runAngle = p.isMoving ? Math.sin(p.runCycle) * 0.6 : 0;
@@ -1904,7 +1876,6 @@ function drawBoxerHero(cx, cy, p) {
     ctx.save();
     ctx.translate(cx, cy - bounce);
 
-    // 复活隐身期间：半透明闪烁 + 虚线隐身光环
     if (p.stealthTimer > 0) {
         let pulseAlpha = 0.35 + Math.abs(Math.sin(performance.now() * 0.012)) * 0.3;
         ctx.globalAlpha = pulseAlpha;
@@ -1919,13 +1890,11 @@ function drawBoxerHero(cx, cy, p) {
         ctx.restore();
     }
 
-    // 脚底阴影
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
     ctx.beginPath();
     ctx.ellipse(0, 24 + bounce, 16, 6, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // 道具护盾/无敌光环
     if (p.buffs.shield.active) {
         ctx.strokeStyle = 'rgba(255, 215, 0, 0.75)';
         ctx.lineWidth = 3.5;
@@ -1941,7 +1910,6 @@ function drawBoxerHero(cx, cy, p) {
         ctx.shadowBlur = 0;
     }
 
-    // 第2命专属：背后背着一张翠绿长弓
     if (form.lifeNum === 2) {
         ctx.save();
         ctx.strokeStyle = '#8d6e63';
@@ -1958,7 +1926,6 @@ function drawBoxerHero(cx, cy, p) {
         ctx.restore();
     }
 
-    // 双腿
     ctx.fillStyle = '#c68642';
     ctx.save(); ctx.translate(-5, 8); ctx.rotate(-runAngle);
     ctx.beginPath(); ctx.roundRect(-3.5, 0, 7, 16, 3); ctx.fill(); ctx.restore();
@@ -1966,21 +1933,17 @@ function drawBoxerHero(cx, cy, p) {
     ctx.save(); ctx.translate(5, 8); ctx.rotate(runAngle);
     ctx.beginPath(); ctx.roundRect(-3.5, 0, 7, 16, 3); ctx.fill(); ctx.restore();
 
-    // 战裤颜色（第1命蓝色 / 第2命绿色 / 第3命红色）
     ctx.fillStyle = form.shortsColor;
     ctx.beginPath(); ctx.roundRect(-12, -2, 24, 12, [2, 2, 4, 4]); ctx.fill();
     ctx.fillStyle = '#111'; ctx.fillRect(-12, -2, 24, 4);
 
-    // 战裤闪电纹饰
     ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.moveTo(-9, 3); ctx.lineTo(-6, 7); ctx.lineTo(-8, 7); ctx.lineTo(-5, 10); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(9, 3); ctx.lineTo(6, 7); ctx.lineTo(8, 7); ctx.lineTo(5, 10); ctx.stroke();
 
-    // 上身躯干
     ctx.fillStyle = '#d89351';
     ctx.beginPath(); ctx.roundRect(-13, -22, 26, 21, [6, 6, 2, 2]); ctx.fill();
 
-    // 第3命专属：斜挎赤焰肩带
     if (form.lifeNum === 3) {
         ctx.strokeStyle = '#ff1744';
         ctx.lineWidth = 3.5;
@@ -1990,27 +1953,22 @@ function drawBoxerHero(cx, cy, p) {
         ctx.stroke();
     }
 
-    // 左臂 & 拳套/护腕
     ctx.save(); ctx.translate(-14, -18); ctx.rotate(runAngle * 1.2);
     ctx.fillStyle = '#c68642'; ctx.beginPath(); ctx.roundRect(-3, 0, 6, 13, 3); ctx.fill();
     ctx.fillStyle = form.gloveColor; ctx.shadowColor = form.glowColor; ctx.shadowBlur = 8;
     ctx.beginPath(); ctx.arc(0, 13, 6, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; ctx.restore();
 
-    // 右臂 & 拳套/护腕
     ctx.save(); ctx.translate(14, -18); ctx.rotate(-runAngle * 1.2);
     ctx.fillStyle = '#c68642'; ctx.beginPath(); ctx.roundRect(-3, 0, 6, 13, 3); ctx.fill();
     ctx.fillStyle = form.gloveColor; ctx.shadowColor = form.glowColor; ctx.shadowBlur = 8;
     ctx.beginPath(); ctx.arc(0, 13, 6, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; ctx.restore();
 
-    // 头部
     ctx.fillStyle = '#d89351';
     ctx.beginPath(); ctx.arc(0, -30, 11, 0, Math.PI * 2); ctx.fill();
 
-    // 发型（颜色随命数变化）
     ctx.fillStyle = form.hairColor;
     ctx.beginPath(); ctx.moveTo(-6, -37); ctx.quadraticCurveTo(0, -44, 6, -37); ctx.lineTo(4, -30); ctx.lineTo(-4, -30); ctx.closePath(); ctx.fill();
 
-    // 第2、3命专属武者头带
     if (form.headbandColor) {
         ctx.fillStyle = form.headbandColor;
         ctx.fillRect(-10.5, -34, 21, 3.5);
@@ -2040,7 +1998,6 @@ function drawWolf(w, offsetX, offsetY) {
     ctx.restore();
 }
 
-// --- 地图与实体渲染函数 ---
 function renderGame() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -2137,7 +2094,6 @@ function renderGame() {
         }
     }
 
-    // 绘制道具
     items.forEach(it => {
         let itDrawX = it.x * TILE_SIZE + offsetX;
         let itDrawY = it.y * TILE_SIZE + offsetY;
@@ -2152,13 +2108,11 @@ function renderGame() {
         ctx.fillText(it.icon, itDrawX, itDrawY);
     });
 
-    // 绘制三种形态投射物（子弹 / 弓箭 / 回旋镖）
     bullets.forEach(b => {
         let bDrawX = b.x * TILE_SIZE + offsetX;
         let bDrawY = b.y * TILE_SIZE + offsetY;
 
         if (b.type === 'arrow') {
-            // 第2命：弓箭绘制
             let angle = Math.atan2(b.vy, b.vx);
             ctx.save();
             ctx.translate(bDrawX, bDrawY);
@@ -2166,7 +2120,6 @@ function renderGame() {
 
             ctx.shadowColor = '#69f0ae';
             ctx.shadowBlur = 8;
-            // 箭杆
             ctx.strokeStyle = '#d7ccc8';
             ctx.lineWidth = 2.5;
             ctx.beginPath();
@@ -2174,7 +2127,6 @@ function renderGame() {
             ctx.lineTo(10, 0);
             ctx.stroke();
 
-            // 翠绿箭头
             ctx.fillStyle = '#00e676';
             ctx.beginPath();
             ctx.moveTo(15, 0);
@@ -2183,7 +2135,6 @@ function renderGame() {
             ctx.closePath();
             ctx.fill();
 
-            // 箭尾羽
             ctx.strokeStyle = '#76ff03';
             ctx.lineWidth = 1.8;
             ctx.beginPath();
@@ -2193,7 +2144,6 @@ function renderGame() {
 
             ctx.restore();
         } else if (b.type === 'boomerang') {
-            // 第3命：旋转回旋镖绘制
             ctx.save();
             ctx.translate(bDrawX, bDrawY);
             ctx.rotate(b.spinAngle);
@@ -2219,7 +2169,6 @@ function renderGame() {
 
             ctx.restore();
         } else {
-            // 第1命：高能蓝拳子弹
             ctx.shadowColor = '#00e5ff'; ctx.shadowBlur = 10;
             ctx.fillStyle = '#e0f7fa';
             ctx.beginPath(); ctx.arc(bDrawX, bDrawY, 5 + Math.min(3, b.damage * 0.5), 0, Math.PI * 2); ctx.fill();
@@ -2227,7 +2176,6 @@ function renderGame() {
         }
     });
 
-    // 绘制怪物与小BOSS
     monsters.forEach(m => {
         let mDrawX = m.x * TILE_SIZE + offsetX;
         let mDrawY = m.y * TILE_SIZE + offsetY;
@@ -2318,7 +2266,6 @@ function renderGame() {
         drawWolf(wolf, offsetX, offsetY);
     }
 
-    // 仅在非复活等待状态下绘制玩家与分身
     if (!isRespawning) {
         if (player.buffs.clone.active) {
             let angleTime = performance.now() * 0.008;
@@ -2337,7 +2284,6 @@ function renderGame() {
         drawBoxerHero(canvas.width / 2, canvas.height / 2, player);
     }
 
-    // 屏幕边缘暗角氛围渲染
     let grad = ctx.createRadialGradient(
         canvas.width / 2, canvas.height / 2, canvas.width * 0.32,
         canvas.width / 2, canvas.height / 2, canvas.width * 0.65
@@ -2347,25 +2293,26 @@ function renderGame() {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 复活等待5秒的中央倒计时提示
+    // 简洁清爽的 54321 倒计时与新英雄即将登场提示
     if (isRespawning) {
         let nextForm = getCurrentLifeForm();
-        ctx.save();
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-        ctx.fillRect(0, canvas.height / 2 - 65, canvas.width, 130);
+        let currentSec = Math.ceil(respawnTimer);
 
-        ctx.fillStyle = '#ff5252';
-        ctx.font = 'bold 26px Segoe UI, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(`💔 已阵亡！剩余生命: ${livesLeft} 条`, canvas.width / 2, canvas.height / 2 - 22);
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         ctx.fillStyle = '#ffca28';
-        ctx.font = 'bold 20px Segoe UI, sans-serif';
-        ctx.fillText(`⏳ ${Math.ceil(respawnTimer)} 秒后【${nextForm.title}】登场（附带5秒隐身）`, canvas.width / 2, canvas.height / 2 + 22);
+        ctx.font = 'bold 22px Segoe UI, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`新英雄【${nextForm.title}】即将登场`, canvas.width / 2, canvas.height / 2 - 35);
+
+        ctx.fillStyle = '#ff5252';
+        ctx.font = 'bold 64px Segoe UI, sans-serif';
+        ctx.fillText(`${currentSec}`, canvas.width / 2, canvas.height / 2 + 35);
         ctx.restore();
     }
 
-    // 绘制漂浮伤害数字与提示
     floatingTexts.forEach(ft => {
         let ftDrawX = ft.x * TILE_SIZE + offsetX;
         let ftDrawY = ft.y * TILE_SIZE + offsetY;
