@@ -396,7 +396,7 @@
 <div id="login-overlay">
     <div class="login-card">
         <h1 id="registerTitle">华山论剑 · 进化版</h1>
-        <p>箭在手问天下谁是英雄</p>
+        <p>剑在手，问天下谁是英雄</p>
         <input type="text" id="usernameInput" class="login-input" placeholder="输入您的昵称 (例如: 大头辉)" maxlength="16">
         <button class="register-btn" onclick="registerUser()">发起挑战</button>
     </div>
@@ -416,7 +416,7 @@
             <p>玩家: <span id="userNameDisplay" style="color:#00e5ff; font-weight:bold;">玩家</span></p>
             <p>生命: <span id="livesDisplay" class="lives-highlight">❤️❤️❤️ (3)</span></p>
             <p>形态: <span id="weaponFormDisplay" style="color:#4fc3f7; font-weight:bold;">第1命 · 蓝拳子弹</span></p>
-            <p>当前在线: <span id="onlineCount" style="color:#00e676; font-weight:bold;">1</span> 人 | 历史: <span id="totalPlayersCount" style="color:#ffca28; font-weight:bold;">128</span></p>
+
             <p>等级: <span id="playerLevel" class="level-highlight">Lv.1</span> (攻击: <span id="atkDisplay" style="color:#ff8a80;">1</span>)</p>
             <div class="exp-bar-box">
                 <div class="exp-bar-fill" id="expBarFill"></div>
@@ -450,7 +450,7 @@
         <!-- 游戏结束浮层 -->
         <div id="game-over-overlay" class="overlay-screen">
             <h2 style="color: #f44336;">胜败乃兵家常事，请大侠重新来过！</h2>
-            <p>华山险恶，你的三世英雄皆已力竭！</p>
+            <p> @AndehuiZ 制造</p>
             <p>最终等级: <span id="finalLevel" class="level-highlight">Lv.1</span></p>
             <p>生存时间: <span id="finalTime" class="timer-highlight">0.0</span> 秒</p>
             <p>击杀妖怪: <span id="finalKills" class="kills-highlight">0</span> 只</p>
@@ -628,89 +628,7 @@ function playSoundGameOver() {
 
 // --- 在线人数与历史游玩统计 ---
 let activeUsersCount = 1;
-let totalPlayersCount = 1;
-
-try {
-    let storedTotal = localStorage.getItem('survival_game_total_players');
-    let hasCountedThisDevice = sessionStorage.getItem('survival_game_counted');
-    
-    if (!storedTotal) {
-        totalPlayersCount = 128;
-        localStorage.setItem('survival_game_total_players', totalPlayersCount);
-    } else {
-        totalPlayersCount = parseInt(storedTotal, 10);
-    }
-
-    if (!hasCountedThisDevice) {
-        totalPlayersCount += 1;
-        localStorage.setItem('survival_game_total_players', totalPlayersCount);
-        sessionStorage.setItem('survival_game_counted', 'true');
-    }
-} catch(e) {
-    totalPlayersCount = 1;
-}
-
-const pageSessionId = Math.random().toString(36).substring(2, 15);
-let activeTabChannel = null;
-
-try {
-    activeTabChannel = new BroadcastChannel('survival_game_active_users_v2');
-    let peers = {};
-    peers[pageSessionId] = Date.now();
-
-    activeTabChannel.onmessage = (event) => {
-        if (event.data && event.data.id && event.data.type === 'ping') {
-            peers[event.data.id] = Date.now();
-            activeTabChannel.postMessage({ id: pageSessionId, type: 'pong' });
-        } else if (event.data && event.data.id && event.data.type === 'pong') {
-            peers[event.data.id] = Date.now();
-        }
-    };
-
-    function broadcastPresence() {
-        if (document.visibilityState === 'visible') {
-            peers[pageSessionId] = Date.now();
-            if (activeTabChannel) {
-                activeTabChannel.postMessage({ id: pageSessionId, type: 'ping' });
-            }
-        }
-    }
-
-    broadcastPresence();
-    setInterval(broadcastPresence, 2000);
-
-    setInterval(() => {
-        let now = Date.now();
-        let count = 0;
-        for (let id in peers) {
-            if (now - peers[id] > 6000) {
-                delete peers[id];
-            } else {
-                count++;
-            }
-        }
-        activeUsersCount = Math.max(1, count);
-        
-        let onlineEl = document.getElementById('onlineCount');
-        if (onlineEl) onlineEl.textContent = activeUsersCount;
-
-        let totalEl = document.getElementById('totalPlayersCount');
-        if (totalEl) totalEl.textContent = totalPlayersCount;
-    }, 2000);
-
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-            broadcastPresence();
-        }
-    });
-} catch (e) {}
-
-window.addEventListener('DOMContentLoaded', () => {
-    let onlineEl = document.getElementById('onlineCount');
-    if (onlineEl) onlineEl.textContent = activeUsersCount;
-    let totalEl = document.getElementById('totalPlayersCount');
-    if (totalEl) totalEl.textContent = totalPlayersCount;
-});
+// 历史英雄统计功能已移除
 
 function showNotification(msg) {
     let toast = document.getElementById('notification-toast');
@@ -1064,12 +982,12 @@ function addFloatingText(text, x, y, color = '#fff') {
 
 // --- 怪物配置 ---
 const MONSTER_TYPES = [
-    { name: '华山老登', shape: 'blob', hp: 2, speed: 1.05, size: 18, color: '#ab47bc', exp: 12, sound: 'slime' },
-    { name: '陈塘老祖', shape: 'zombie', hp: 4, speed: 0.85, size: 22, color: '#26a69a', exp: 28, sound: 'zombie' },
+    { name: '疾风影刺客', shape: 'ghost', hp: 1, speed: 1.85, size: 16, color: '#00e5ff', exp: 15, sound: 'ghost' },
     { name: '疯狂大头辉', shape: 'spike', hp: 2, speed: 1.55, size: 17, color: '#ff7043', exp: 18, sound: 'spike' },
-    { name: '东宫大刺猬', shape: 'shadow', hp: 3, speed: 1.40, size: 20, color: '#5c6bc0', exp: 32, sound: 'shadow' },
-    { name: '华阴怪老汉', shape: 'beast', hp: 6, speed: 1.25, size: 26, color: '#e65100', exp: 45, sound: 'roar' },
-    { name: '邪恶沉香怪', shape: 'ghost', hp: 3, speed: 1.65, size: 19, color: '#7b1fa2', exp: 40, sound: 'ghost' }
+    { name: '华山老登', shape: 'blob', hp: 3, speed: 1.25, size: 18, color: '#ab47bc', exp: 20, sound: 'slime' },
+    { name: '东宫大刺猬', shape: 'shadow', hp: 4, speed: 1.10, size: 20, color: '#5c6bc0', exp: 26, sound: 'shadow' },
+    { name: '陈塘老祖', shape: 'zombie', hp: 8, speed: 0.78, size: 23, color: '#26a69a', exp: 38, sound: 'zombie' },
+    { name: '华阴重装怪老汉', shape: 'beast', hp: 14, speed: 0.58, size: 28, color: '#e65100', exp: 55, sound: 'roar' }
 ];
 
 function playMonsterRoar(type) {
@@ -1146,9 +1064,9 @@ function spawnMonster(isBoss = false) {
 
     if (isBoss) {
         bossCount++;
-        let bossMaxHp = Math.round((15 + (bossCount - 1) * 12) * (1 + (player.level - 1) * 0.05));
-        let bossSpeed = Math.min(1.45, 0.72 + (bossCount - 1) * 0.06);
-        let bossSize = Math.min(54, 38 + bossCount * 2);
+        let bossMaxHp = Math.round((35 + (bossCount - 1) * 28) * (1 + (player.level - 1) * 0.08));
+        let bossSpeed = Math.min(1.65, 0.85 + (bossCount - 1) * 0.08);
+        let bossSize = Math.min(62, 42 + bossCount * 3);
         let bossName = BOSS_NAMES[(bossCount - 1) % BOSS_NAMES.length] + ` (第${bossCount}波)`;
 
         monsters.push({
