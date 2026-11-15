@@ -1,1673 +1,742 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>荒野求生 - 王者操作盘与战狼进化版</title>
+    <title>笑傲江湖：剑心劫 - 会员版</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: none;
+        :root {
+            --bg-color: #121214;
+            --panel-bg: #1c1c21;
+            --border-color: #383530;
+            --text-main: #d8d3c8;
+            --text-dim: #8a8478;
+            --accent-gold: #c89d54;
+            --accent-red: #b83b3b;
+            --accent-green: #4a8c5e;
+            --accent-blue: #4a769e;
         }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
         body {
-            background-color: #121212;
-            color: #fff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "SimSun", serif;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100vw;
             height: 100vh;
+            height: 100dvh;
             overflow: hidden;
         }
-        /* 登录/注册浮层 */
-        #login-overlay {
+
+        /* 登录遮罩层 */
+        #auth-modal {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(10, 10, 10, 0.96);
+            inset: 0;
+            background: rgba(0,0,0,0.92);
+            z-index: 1000;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 100;
-            transition: opacity 0.4s ease;
+            padding: 20px;
         }
-        #login-overlay.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-        .login-card {
-            background: #1e1e1e;
-            padding: 30px 40px;
-            border-radius: 14px;
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 15px 50px rgba(0,0,0,0.9);
+        .auth-box {
+            background: var(--panel-bg);
+            border: 2px solid var(--accent-gold);
+            border-radius: 10px;
+            padding: 25px;
+            max-width: 360px;
+            width: 100%;
             text-align: center;
-            width: 90%;
-            max-width: 380px;
         }
-        .login-card h1 {
-            color: #2196F3;
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-        .login-card p {
-            color: #aaa;
-            font-size: 13px;
-            margin-bottom: 20px;
-        }
-        .login-input {
+        .auth-box h2 { color: var(--accent-gold); margin-bottom: 15px; letter-spacing: 2px; }
+        .auth-box input {
             width: 100%;
-            padding: 12px 15px;
-            background: #2c2c2c;
-            border: 1px solid #444;
-            color: #fff;
-            font-size: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .login-input:focus {
-            border-color: #2196F3;
-        }
-        .register-btn {
-            background: #2196F3;
-            color: #fff;
-            border: none;
-            padding: 12px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 25px;
-            cursor: pointer;
-            width: 100%;
-            transition: background 0.2s, transform 0.1s;
-        }
-        .register-btn:hover {
-            background: #1e88e5;
-            transform: scale(1.02);
-        }
-
-        /* 游戏整体布局：手机端自适应 */
-        #game-wrapper {
-            display: none;
-            width: 100%;
-            height: 100%;
-            flex-direction: row;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
+            background: #121214;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
             padding: 10px;
-            background: #121212;
-        }
-        #game-wrapper.active {
-            display: flex;
-        }
-        #game-container {
-            position: relative;
-            width: 100%;
-            max-width: 800px;
-            aspect-ratio: 4 / 3;
-            max-height: 100vh;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 2px solid #333;
-            background: #000;
-        }
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-            background-color: #000;
-        }
-
-        /* UI 面板 */
-        .ui-panel {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(0, 0, 0, 0.85);
-            padding: 8px 12px;
+            margin-bottom: 12px;
             border-radius: 6px;
-            pointer-events: none;
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(255,255,255,0.15);
-            font-size: 12px;
-            min-width: 180px;
-            z-index: 5;
+            font-size: 0.95rem;
+            outline: none;
         }
-        .ui-panel h1 {
-            font-size: 14px;
-            margin-bottom: 4px;
-            color: #2196F3;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .ui-panel p {
-            margin: 2px 0;
-            color: #ddd;
-        }
-        .timer-highlight { color: #ffca28; font-weight: bold; }
-        .kills-highlight { color: #ff5252; font-weight: bold; }
-        .level-highlight { color: #e040fb; font-weight: bold; }
-
-        /* 经验条 */
-        .exp-bar-box {
-            width: 100%;
-            background: #333;
-            height: 6px;
-            border-radius: 3px;
-            margin: 4px 0;
-            overflow: hidden;
-            border: 1px solid #555;
-        }
-        .exp-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #00e676, #00b0ff);
-            width: 0%;
-        }
-        .buff-container {
-            margin-top: 4px;
-            padding-top: 4px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            font-size: 10px;
-        }
-        .buff-tag {
-            display: block;
-            background: rgba(33, 150, 243, 0.2);
-            border: 1px solid #2196F3;
-            color: #64b5f6;
-            padding: 1px 4px;
-            border-radius: 3px;
-            margin-top: 2px;
-        }
-
-        /* 暂停按钮样式 */
-        #pause-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.8);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: #fff;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            font-size: 16px;
+        .auth-box input:focus { border-color: var(--accent-gold); }
+        .auth-btns { display: flex; gap: 10px; margin-top: 10px; }
+        .auth-btns button {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 6;
-            backdrop-filter: blur(4px);
+            border: none;
         }
-        #pause-btn:active {
-            background: #2196F3;
-        }
+        .btn-login { background: var(--accent-gold); color: #121214; }
+        .btn-reg { background: #33333d; color: var(--text-main); border: 1px solid var(--border-color) !important; }
+        .auth-msg { color: var(--accent-red); font-size: 0.8rem; margin-top: 8px; height: 18px; }
 
-        /* 提示信息弹窗 (如护卫阵亡提示) */
-        #notification-toast {
-            position: absolute;
-            top: 15%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(244, 67, 54, 0.9);
-            color: white;
-            padding: 8px 18px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: bold;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            z-index: 8;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
-        #notification-toast.show {
-            opacity: 1;
-        }
-
-        .controls-hint {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 6px 10px;
-            border-radius: 4px;
-            font-size: 10px;
-            color: #aaa;
-            pointer-events: none;
-            display: none; /* 手机/PC通用，可通过媒体查询或自适应显示 */
-        }
-
-        /* 王者荣耀左侧虚拟摇杆样式 */
-        #joystick-base {
-            position: absolute;
-            bottom: 40px;
-            left: 40px;
-            width: 120px;
-            height: 120px;
-            background: rgba(255, 255, 255, 0.12);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            pointer-events: auto;
-            display: none; /* 运行时按需开启 */
-            z-index: 5;
-            touch-action: none;
-        }
-        #joystick-stick {
-            position: absolute;
-            top: 35px;
-            left: 35px;
-            width: 50px;
-            height: 50px;
-            background: rgba(33, 150, 243, 0.6);
-            border: 2px solid #2196F3;
-            border-radius: 50%;
-            pointer-events: none;
-        }
-
-        /* 右侧攻击按钮 (手机端备用，PC端可点或按空格) */
-        #attack-btn {
-            position: absolute;
-            bottom: 40px;
-            right: 40px;
-            width: 85px;
-            height: 85px;
-            background: rgba(255, 82, 82, 0.3);
-            border: 2px solid #ff5252;
-            border-radius: 50%;
-            color: #fff;
-            font-size: 14px;
-            font-weight: bold;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 5;
-            backdrop-filter: blur(4px);
-        }
-        #attack-btn:active {
-            background: rgba(255, 82, 82, 0.7);
-            transform: scale(0.95);
-        }
-
-        /* 暂停浮层 / 游戏结束浮层通用样式 */
-        .overlay-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+        /* 顶部状态栏 */
+        header {
+            background: var(--panel-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 8px 12px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
+            gap: 6px;
+            flex-shrink: 0;
             z-index: 10;
         }
-        .overlay-screen.active {
-            opacity: 1;
-            pointer-events: auto;
+
+        .title-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .overlay-screen h2 {
-            font-size: 26px;
-            margin-bottom: 10px;
+
+        .title-bar h1 {
+            font-size: 1rem;
+            color: var(--accent-gold);
         }
-        .overlay-screen p {
-            font-size: 14px;
-            margin-bottom: 6px;
-            color: #eee;
-        }
-        .overlay-btn {
-            background: #2196F3;
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            font-size: 15px;
-            border-radius: 20px;
+
+        .sys-btns { display: flex; gap: 4px; }
+        .sys-btns button {
+            background: #2a2a30;
+            color: var(--text-dim);
+            border: 1px solid var(--border-color);
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            border-radius: 4px;
             cursor: pointer;
-            margin-top: 15px;
-            transition: background 0.2s;
         }
-        .overlay-btn:hover { background: #1e88e5; }
 
-        /* 右侧战绩排行榜 (大屏显示) */
-        #leaderboard {
-            width: 250px;
-            background: #252525;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.1);
-            max-height: 550px;
-            display: flex;
-            flex-direction: column;
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            font-size: 0.75rem;
+            background: #141417;
+            padding: 5px 8px;
+            border-radius: 6px;
+            border: 1px solid #282622;
         }
-        #leaderboard h2 {
-            font-size: 14px;
-            color: #2196F3;
-            margin-bottom: 10px;
-            padding-bottom: 6px;
-            border-bottom: 1px solid #444;
-            text-align: center;
-        }
-        .score-list {
-            list-style: none;
+
+        .stat-item span { color: var(--accent-gold); font-weight: bold; }
+        .stat-hp span { color: var(--accent-red); }
+        .stat-mp span { color: var(--accent-blue); }
+
+        #game-log {
+            flex: 1;
             overflow-y: auto;
-            flex-grow: 1;
+            padding: 15px;
+            line-height: 1.75;
+            font-size: 0.95rem;
+            scroll-behavior: smooth;
         }
-        .score-item {
-            display: flex;
-            flex-direction: column;
-            padding: 6px;
-            font-size: 11px;
-            border-bottom: 1px solid #333;
-            color: #ccc;
-        }
-        .score-item:nth-child(even) { background: rgba(255,255,255,0.03); }
-        .score-row-top { display: flex; justify-content: space-between; margin-bottom: 2px; }
-        .score-row-bottom { display: flex; justify-content: space-between; color: #888; font-size: 10px; }
-        .score-item .index { color: #ffca28; font-weight: bold; }
-        .score-item .time { color: #4fc3f7; font-weight: bold; }
-        .score-item .kills { color: #ff5252; font-weight: bold; }
-        .no-records { text-align: center; color: #666; font-size: 11px; padding: 15px 0; }
 
-        /* 响应式媒体查询：移动端竖屏/小屏自动缩放隐藏侧边榜单 */
-        @media (max-width: 900px) {
-            body {
-                width: 100vw;
-                height: 100vh;
-                overflow: hidden;
-                position: fixed;
-            }
-            #game-wrapper {
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                padding: 0;
-                gap: 0;
-                width: 100vw;
-                height: 100vh;
-            }
-            #leaderboard {
-                display: none; /* 手机端隐藏排行榜以留出游戏画面 */
-            }
-            #game-container {
-                width: 100vw;
-                height: 100vh;
-                max-width: none;
-                max-height: none;
-                border-radius: 0;
-                border: none;
-                aspect-ratio: auto;
-            }
-            #joystick-base, #attack-btn {
-                display: flex; /* 移动端显示虚拟摇杆和攻击按钮 */
-            }
-            .controls-hint {
-                display: none;
-            }
+        .msg { margin-bottom: 14px; animation: fadeIn 0.3s ease; }
+        .msg-system { color: var(--accent-gold); font-weight: bold; border-left: 3px solid var(--accent-gold); padding-left: 10px; }
+        .msg-story { color: var(--text-main); text-indent: 2em; }
+        .msg-combat { color: #e06c75; }
+        .msg-reward { color: var(--accent-green); font-weight: bold; }
+        .msg-user { color: var(--text-dim); font-size: 0.85rem; text-align: right; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        #quick-actions {
+            background: #17171b;
+            border-top: 1px solid var(--border-color);
+            padding: 10px 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            max-height: 140px;
+            overflow-y: auto;
+            flex-shrink: 0;
+            z-index: 20;
         }
+
+        .action-chip {
+            background: #252429;
+            color: var(--accent-gold);
+            border: 1px solid #4a4235;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .action-chip:active, .action-chip:hover { background: var(--accent-gold); color: #121214; }
+
+        #input-area {
+            background: var(--panel-bg);
+            border-top: 1px solid var(--border-color);
+            padding: 10px 12px;
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        #cmd-input {
+            flex: 1;
+            background: #121214;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        #send-btn {
+            background: var(--accent-gold); color: #121214; border: none; padding: 0 18px; border-radius: 6px; font-weight: bold; cursor: pointer;
+        }
+
+        #modal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; justify-content: center; align-items: center; padding: 20px;
+        }
+        .modal-content {
+            background: var(--panel-bg); border: 1px solid var(--accent-gold); border-radius: 8px; padding: 20px; max-width: 450px; width: 100%; line-height: 1.6;
+        }
+        .modal-content h3 { color: var(--accent-gold); margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .close-modal { margin-top: 15px; width: 100%; padding: 10px; background: #333; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<!-- 用户登录浮层 -->
-<div id="login-overlay">
-    <div class="login-card">
-        <h1 id="registerTitle">荒野求生</h1>
-        <p>输入昵称，开启王者转盘与战狼护卫之旅</p>
-        <input type="text" id="usernameInput" class="login-input" placeholder="输入您的昵称 (例如: 拳王阿强)" maxlength="16">
-        <button class="register-btn" onclick="registerUser()">开始游戏</button>
+<!-- 会员登录注册弹窗 -->
+<div id="auth-modal">
+    <div class="auth-box">
+        <h2>⚔️ 笑傲江湖·江湖令</h2>
+        <input type="text" id="username" placeholder="请输入江湖侠名（用户名）" autocomplete="off">
+        <input type="password" id="password" placeholder="请输入通行密令（密码）">
+        <div class="auth-msg" id="auth-msg"></div>
+        <div class="auth-btns">
+            <button class="btn-reg" onclick="handleRegister()">注册账号</button>
+            <button class="btn-login" onclick="handleLogin()">登入江湖</button>
+        </div>
     </div>
 </div>
 
-<!-- 游戏主体 -->
-<div id="game-wrapper">
-    <div id="game-container">
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
-        
-        <button id="pause-btn" onclick="togglePause()" title="暂停 (Esc)">⏸️</button>
-
-        <div id="notification-toast">护卫战狼阵亡！</div>
-
-        <div class="ui-panel">
-            <h1 id="gameTitle">🥊 荒野求生</h1>
-            <p>玩家: <span id="userNameDisplay" style="color:#00e5ff; font-weight:bold;">玩家</span></p>
-            <p>当前在线: <span id="onlineCount" style="color:#00e676; font-weight:bold;">1</span> 人</p>
-            <p>历史玩过: <span id="totalPlayersCount" style="color:#ffca28; font-weight:bold;">128</span> 人</p>
-            <p>等级: <span id="playerLevel" class="level-highlight">Lv.1</span> (Max 99)</p>
-            <div class="exp-bar-box">
-                <div class="exp-bar-fill" id="expBarFill"></div>
-            </div>
-            <p>生存: <span id="survivalTime" class="timer-highlight">0.0</span>s | 击杀: <span id="killCount" class="kills-highlight">0</span></p>
-            <div class="buff-container" id="buffContainer">
-                <span style="color:#aaa;">道具状态: 无 (有效30秒)</span>
-            </div>
-        </div>
-
-        <div class="controls-hint">
-            移动: 方向键/WASD | 攻击: [空格键] | 暂停: [Esc]
-        </div>
-
-        <!-- 王者荣耀左侧转盘控件 -->
-        <div id="joystick-base">
-            <div id="joystick-stick"></div>
-        </div>
-
-        <!-- 右侧攻击按钮（手机端） -->
-        <div id="attack-btn">普攻/发射</div>
-
-        <!-- 暂停浮层 -->
-        <div id="pause-overlay" class="overlay-screen">
-            <h2 style="color: #ffca28;">游戏已暂停</h2>
-            <p>按 [Esc] 键或点击下方按钮继续游戏</p>
-            <button class="overlay-btn" onclick="togglePause()">继续游戏</button>
-        </div>
-
-        <!-- 游戏结束浮层 -->
-        <div id="game-over-overlay" class="overlay-screen">
-            <h2 style="color: #f44336;">K.O.! 拳王力尽</h2>
-            <p>被妖怪击败了！</p>
-            <p>最终等级: <span id="finalLevel" class="level-highlight">Lv.1</span></p>
-            <p>生存时间: <span id="finalTime" class="timer-highlight">0.0</span> 秒</p>
-            <p>击杀妖怪: <span id="finalKills" class="kills-highlight">0</span> 只</p>
-            <button class="overlay-btn" onclick="resetGame()">再战一局</button>
+<header>
+    <div class="title-bar">
+        <h1 id="user-title">⚔️ 侠客：未登录</h1>
+        <div class="sys-btns">
+            <button id="music-btn" onclick="toggleBGM()">🎵 音乐:关</button>
+            <button onclick="logout()">注销</button>
+            <button onclick="showStatus()">档案</button>
+            <button onclick="manualSave()">手动存档</button>
         </div>
     </div>
-
-    <!-- 战绩表 -->
-    <div id="leaderboard">
-        <h2>最近10次战绩表</h2>
-        <ul class="score-list" id="scoreList">
-            <li class="no-records">⚠️ 暂无战绩记录</li>
-        </ul>
+    <div class="stats-grid">
+        <div class="stat-item stat-hp">气血: <span id="ui-hp">100/100</span></div>
+        <div class="stat-item stat-mp">内力: <span id="ui-mp">50/50</span></div>
+        <div class="stat-item">剑法: <span id="ui-atk">10</span></div>
+        <div class="stat-item">身法: <span id="ui-agi">10</span></div>
+        <div class="stat-item">境界: <span id="ui-realm">初出茅庐</span></div>
+        <div class="stat-item">银两: <span id="ui-gold">20</span></div>
+        <div class="stat-item">声望: <span id="ui-fame">0</span></div>
+        <div class="stat-item">心性: <span id="ui-align">中立</span></div>
     </div>
+</header>
+
+<div id="game-log"></div>
+<div id="quick-actions"></div>
+
+<div id="input-area">
+    <input type="text" id="cmd-input" placeholder="输入指令或点击上方按钮..." autocomplete="off">
+    <button id="send-btn" onclick="handleInput()">行令</button>
+</div>
+
+<div id="modal" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal-content" id="modal-body"></div>
 </div>
 
 <script>
-// --- Web Audio API 8bit 复古音效 & 背景音乐 ---
-let audioCtx = null;
-let bgmInterval = null;
+    /* ================= 8-Bit 音乐引擎 ================= */
+    let audioCtx = null, bgmInterval = null, isBgmPlaying = false;
+    const xiaoaoNotes = [
+        392.00, 523.25, 587.33, 659.25, 587.33, 523.25, 392.00, 0,
+        392.00, 523.25, 587.33, 659.25, 783.99, 659.25, 587.33, 0,
+        659.25, 783.99, 880.00, 783.99, 659.25, 587.33, 523.25, 392.00,
+        293.66, 392.00, 523.25, 587.33, 523.25, 392.00, 329.63, 0
+    ];
+    let noteIndex = 0;
 
-function initAudio() {
-    if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function initAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
     }
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
-    startBGM();
-}
 
-function startBGM() {
-    if (bgmInterval) return;
-    let notes = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63];
-    let step = 0;
-    bgmInterval = setInterval(() => {
-        if (!audioCtx || audioCtx.state !== 'running' || isPaused || isGameOver) return;
+    function playChiptuneNote(freq) {
+        if (!audioCtx || !isBgmPlaying || freq === 0) return;
         try {
-            let osc = audioCtx.createOscillator();
-            let gain = audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(notes[step % notes.length], audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.25);
-            step++;
-        } catch(e) {}
-    }, 320);
-}
-
-function playSoundShoot() {
-    if (!audioCtx) return;
-    try {
-        let osc = audioCtx.createOscillator();
-        let gain = audioCtx.createGain();
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.08);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.08);
-    } catch(e) {}
-}
-
-function playSoundHit() {
-    if (!audioCtx) return;
-    try {
-        let now = audioCtx.currentTime;
-        let osc = audioCtx.createOscillator();
-        let gain = audioCtx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(987.77, now);
-        osc.frequency.setValueAtTime(1318.51, now + 0.08);
-        gain.gain.setValueAtTime(0.12, now);
-        gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(now + 0.2);
-    } catch(e) {}
-}
-
-function playSoundPowerup() {
-    if (!audioCtx) return;
-    try {
-        let now = audioCtx.currentTime;
-        let notes = [523.25, 659.25, 783.99, 1046.50];
-        notes.forEach((freq, idx) => {
-            let osc = audioCtx.createOscillator();
-            let gain = audioCtx.createGain();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
             osc.type = 'square';
-            osc.frequency.setValueAtTime(freq, now + idx * 0.07);
-            gain.gain.setValueAtTime(0.12, now + idx * 0.07);
-            gain.gain.linearRampToValueAtTime(0.01, now + (idx + 1) * 0.07);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start(now + idx * 0.07);
-            osc.stop(now + (idx + 1) * 0.07);
-        });
-    } catch(e) {}
-}
-
-function playSoundLevelUp() {
-    if (!audioCtx) return;
-    try {
-        let now = audioCtx.currentTime;
-        let notes = [440, 554.37, 659.25, 880];
-        notes.forEach((freq, idx) => {
-            let osc = audioCtx.createOscillator();
-            let gain = audioCtx.createGain();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(freq, now + idx * 0.08);
-            gain.gain.setValueAtTime(0.14, now + idx * 0.08);
-            gain.gain.linearRampToValueAtTime(0.01, now + (idx + 1) * 0.08);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start(now + idx * 0.08);
-            osc.stop(now + (idx + 1) * 0.08);
-        });
-    } catch(e) {}
-}
-
-function playSoundGameOver() {
-    if (!audioCtx) return;
-    try {
-        let now = audioCtx.currentTime;
-        let freqs = [400, 350, 300, 220];
-        freqs.forEach((freq, idx) => {
-            let osc = audioCtx.createOscillator();
-            let gain = audioCtx.createGain();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(freq, now + idx * 0.12);
-            gain.gain.setValueAtTime(0.15, now + idx * 0.12);
-            gain.gain.linearRampToValueAtTime(0.01, now + (idx + 1) * 0.12);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start(now + idx * 0.12);
-            osc.stop(now + (idx + 1) * 0.12);
-        });
-    } catch(e) {}
-}
-
-// --- 真正精准的在线人数（当前正在使用该页面的用户）与历史总游玩人数统计 ---
-let activeUsersCount = 1;
-let totalPlayersCount = 1;
-
-try {
-    let storedTotal = localStorage.getItem('survival_game_total_players');
-    let hasCountedThisDevice = sessionStorage.getItem('survival_game_counted');
-    
-    if (!storedTotal) {
-        totalPlayersCount = 128; // 基础初始基数
-        localStorage.setItem('survival_game_total_players', totalPlayersCount);
-    } else {
-        totalPlayersCount = parseInt(storedTotal, 10);
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.07, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+        } catch(e) {}
     }
 
-    if (!hasCountedThisDevice) {
-        totalPlayersCount += 1;
-        localStorage.setItem('survival_game_total_players', totalPlayersCount);
-        sessionStorage.setItem('survival_game_counted', 'true');
-    }
-} catch(e) {
-    totalPlayersCount = 1;
-}
-
-// 跨标签页/当前浏览器活跃在线人数实时统计 (BroadcastChannel + Visibility API)
-const pageSessionId = Math.random().toString(36).substring(2, 15);
-let activeTabChannel = null;
-
-try {
-    activeTabChannel = new BroadcastChannel('survival_game_active_users_v2');
-    let peers = {};
-    peers[pageSessionId] = Date.now();
-
-    activeTabChannel.onmessage = (event) => {
-        if (event.data && event.data.id && event.data.type === 'ping') {
-            peers[event.data.id] = Date.now();
-            activeTabChannel.postMessage({ id: pageSessionId, type: 'pong' });
-        } else if (event.data && event.data.id && event.data.type === 'pong') {
-            peers[event.data.id] = Date.now();
-        }
-    };
-
-    function broadcastPresence() {
-        if (document.visibilityState === 'visible') {
-            peers[pageSessionId] = Date.now();
-            if (activeTabChannel) {
-                activeTabChannel.postMessage({ id: pageSessionId, type: 'ping' });
-            }
-        }
-    }
-
-    broadcastPresence();
-    setInterval(broadcastPresence, 2000);
-
-    // 清理过期心跳 (超过6秒无响应视为离开)
-    setInterval(() => {
-        let now = Date.now();
-        let count = 0;
-        for (let id in peers) {
-            if (now - peers[id] > 6000) {
-                delete peers[id];
-            } else {
-                count++;
-            }
-        }
-        activeUsersCount = Math.max(1, count);
-        
-        let onlineEl = document.getElementById('onlineCount');
-        if (onlineEl) onlineEl.textContent = activeUsersCount;
-
-        let totalEl = document.getElementById('totalPlayersCount');
-        if (totalEl) totalEl.textContent = totalPlayersCount;
-    }, 2000);
-
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-            broadcastPresence();
-        }
-    });
-} catch (e) {
-    let onlineEl = document.getElementById('onlineCount');
-    if (onlineEl) onlineEl.textContent = "1";
-    let totalEl = document.getElementById('totalPlayersCount');
-    if (totalEl) totalEl.textContent = totalPlayersCount;
-}
-
-window.addEventListener('DOMContentLoaded', () => {
-    let onlineEl = document.getElementById('onlineCount');
-    if (onlineEl) onlineEl.textContent = activeUsersCount;
-    let totalEl = document.getElementById('totalPlayersCount');
-    if (totalEl) totalEl.textContent = totalPlayersCount;
-});
-
-// --- 提示弹窗函数 ---
-function showNotification(msg) {
-    let toast = document.getElementById('notification-toast');
-    toast.textContent = msg;
-    toast.classList.add('show');
-    setTimeout(() => {
-        toast.classList.remove('show');
-    }, 2500);
-}
-
-let currentUserName = "";
-let records = [];
-
-window.addEventListener('DOMContentLoaded', () => {
-    let savedUser = localStorage.getItem('xz_evolution_mob_username');
-    if (savedUser) {
-        document.getElementById('usernameInput').value = savedUser;
-    }
-});
-
-function registerUser() {
-    let inputVal = document.getElementById('usernameInput').value.trim();
-    if (!inputVal) {
-        alert("请输入有效的游戏用户名称！");
-        return;
-    }
-
-    initAudio();
-
-    currentUserName = inputVal;
-    localStorage.setItem('xz_evolution_mob_username', currentUserName);
-
-    let allRecords = JSON.parse(localStorage.getItem('xz_evolution_mob_all_records') || '{}');
-    records = allRecords[currentUserName] || [];
-
-    document.getElementById('userNameDisplay').textContent = currentUserName;
-    document.getElementById('gameTitle').textContent = `🥊 ${currentUserName} - 荒野求生`;
-    document.getElementById('registerTitle').textContent = `${currentUserName} - 荒野求生`;
-
-    let overlay = document.getElementById('login-overlay');
-    overlay.classList.add('hidden');
-    
-    setTimeout(() => {
-        document.getElementById('game-wrapper').classList.add('active');
-        startGameLoop();
-    }, 400);
-}
-
-// --- Perlin Noise 地形 ---
-const Perlin = {
-    p: new Uint8Array(512),
-    init: function() {
-        let permutation = new Uint8Array(256);
-        for (let i = 0; i < 256; i++) permutation[i] = i;
-        for (let i = 255; i > 0; i--) {
-            let j = Math.floor(Math.random() * (i + 1));
-            [permutation[i], permutation[j]] = [permutation[j], permutation[i]];
-        }
-        for (let i = 0; i < 512; i++) this.p[i] = permutation[i & 255];
-    },
-    fade: t => t * t * t * (t * (t * 6 - 15) + 10),
-    lerp: (t, a, b) => a + t * (b - a),
-    grad: (hash, x, y) => {
-        let h = hash & 7;
-        let u = h < 4 ? x : y;
-        let v = h < 4 ? y : x;
-        return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);
-    },
-    noise: function(x, y) {
-        let X = Math.floor(x) & 255, Y = Math.floor(y) & 255;
-        x -= Math.floor(x); y -= Math.floor(y);
-        let u = this.fade(x), v = this.fade(y);
-        let A = this.p[X] + Y, B = this.p[X + 1] + Y;
-        return this.lerp(v, 
-            this.lerp(u, this.grad(this.p[A], x, y), this.grad(this.p[B], x - 1, y)),
-            this.lerp(u, this.grad(this.p[A + 1], x, y - 1), this.grad(this.p[B + 1], x - 1, y - 1))
-        );
-    }
-};
-Perlin.init();
-
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-
-const TILE_SIZE = 32;
-const VIEW_WIDTH = canvas.width / TILE_SIZE;
-const VIEW_HEIGHT = canvas.height / TILE_SIZE;
-
-const TERRAINS = [
-    { name: '深海', color: '#1d4e89', speedMultiplier: 0.5 },
-    { name: '浅水', color: '#0077b6', speedMultiplier: 0.7 },
-    { name: '沙滩', color: '#e9c46a', speedMultiplier: 0.9 },
-    { name: '草地', color: '#2a9d8f', speedMultiplier: 1.0 },
-    { name: '森林', color: '#196127', speedMultiplier: 0.85 },
-    { name: '山地', color: '#6c757d', speedMultiplier: 0.75 },
-    { name: '雪山', color: '#e9ecef', speedMultiplier: 0.6 }
-];
-
-const ITEM_TYPES = [
-    { type: 'speed', name: '疾风跑鞋', color: '#00e676', icon: '👟', desc: '移动速度+35%' },
-    { type: 'multishot', name: '散弹拳套', color: '#ff9100', icon: '🥊', desc: '一次发射3连发拳波' },
-    { type: 'rapid', name: '连环快速拳', color: '#29b6f6', icon: '⚡', desc: '子弹射速大幅提升' },
-    { type: 'shield', name: '金钟护体', color: '#ffd700', icon: '🛡️', desc: '免疫1次攻击' },
-    { type: 'wolf', name: '忠诚战狼护卫', color: '#ff5722', icon: '🐺', desc: '召唤永久战狼护卫帮你打怪！' }
-];
-
-let player = {};
-let wolf = null;
-let monsters = [];
-let bullets = [];
-let items = [];
-let floatingTexts = [];
-
-let survivalTime = 0;
-let killCount = 0;
-let isGameOver = false;
-let isPaused = false;
-
-let lastShootTime = 0;
-let lastItemSpawnTime = 0;
-
-// --- 王者荣耀转盘与右手单击发射控制状态 ---
-const joystickState = {
-    active: false,
-    startX: 0,
-    startY: 0,
-    currentX: 0,
-    currentY: 0,
-    vectorX: 0,
-    vectorY: 0
-};
-
-const keys = {};
-
-// PC 键盘事件
-window.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-        togglePause();
-        return;
-    }
-    keys[e.key] = true;
-    if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
-        e.preventDefault();
-    }
-});
-window.addEventListener('keyup', e => {
-    keys[e.key] = false;
-});
-
-// 右手单击屏幕发射子弹 (PC点击画布右侧或任意位置单击)
-canvas.addEventListener('pointerdown', e => {
-    if (isGameOver || isPaused) return;
-    // 如果点击的是左侧摇杆区域则跳过
-    if (e.clientX < window.innerWidth / 2 && window.innerWidth <= 900) return;
-    shootBullet();
-});
-
-// 手机端右侧攻击按钮单击事件
-document.getElementById('attack-btn').addEventListener('pointerdown', e => {
-    e.preventDefault();
-    if (!isGameOver && !isPaused) {
-        shootBullet();
-    }
-});
-
-// 王者荣耀左侧虚拟摇杆触控监听
-const joystickBase = document.getElementById('joystick-base');
-const joystickStick = document.getElementById('joystick-stick');
-
-joystickBase.addEventListener('pointerdown', e => {
-    joystickState.active = true;
-    joystickState.startX = e.clientX;
-    joystickState.startY = e.clientY;
-    joystickState.currentX = e.clientX;
-    joystickState.currentY = e.clientY;
-    joystickBase.setPointerCapture(e.pointerId);
-});
-
-joystickBase.addEventListener('pointermove', e => {
-    if (!joystickState.active) return;
-    joystickState.currentX = e.clientX;
-    joystickState.currentY = e.clientY;
-
-    let dx = joystickState.currentX - joystickState.startX;
-    let dy = joystickState.currentY - joystickState.startY;
-    let dist = Math.hypot(dx, dy);
-    let maxDist = 45; // 摇杆最大活动半径
-
-    if (dist > maxDist) {
-        dx = (dx / dist) * maxDist;
-        dy = (dy / dist) * maxDist;
-    }
-
-    joystickStick.style.transform = `translate(${dx}px, ${dy}px)`;
-
-    let normDist = Math.min(1.0, dist / maxDist);
-    joystickState.vectorX = (dx / maxDist) * normDist;
-    joystickState.vectorY = (dy / maxDist) * normDist;
-});
-
-function resetJoystick() {
-    joystickState.active = false;
-    joystickState.vectorX = 0;
-    joystickState.vectorY = 0;
-    joystickStick.style.transform = `translate(0px, 0px)`;
-}
-
-joystickBase.addEventListener('pointerup', resetJoystick);
-joystickBase.addEventListener('pointercancel', resetJoystick);
-
-function togglePause() {
-    if (isGameOver) return;
-    isPaused = !isPaused;
-    let pauseOverlay = document.getElementById('pause-overlay');
-    if (isPaused) {
-        pauseOverlay.classList.add('active');
-    } else {
-        pauseOverlay.classList.remove('active');
-    }
-}
-
-function getTerrain(wx, wy) {
-    let scale = 0.04;
-    let val = Perlin.noise(wx * scale, wy * scale) * 1.0 +
-              Perlin.noise(wx * scale * 2, wy * scale * 2) * 0.5 +
-              Perlin.noise(wx * scale * 4, wy * scale * 4) * 0.25;
-    val = (val + 1) / 2;
-    val = Math.max(0, Math.min(1, val));
-
-    if (val < 0.3) return TERRAINS[0];
-    if (val < 0.4) return TERRAINS[1];
-    if (val < 0.45) return TERRAINS[2];
-    if (val < 0.65) return TERRAINS[3];
-    if (val < 0.8) return TERRAINS[4];
-    if (val < 0.9) return TERRAINS[5];
-    return TERRAINS[6];
-}
-
-function getObjectAt(wx, wy, terrainName) {
-    let hash = Math.sin(wx * 12.9898 + wy * 78.233) * 43758.5453;
-    hash = hash - Math.floor(hash);
-    if (terrainName === '森林' && hash > 0.45) return 'tree';
-    if (terrainName === '草地' && hash > 0.88) return 'flower';
-    if (terrainName === '山地' && hash > 0.75) return 'rock';
-    return null;
-}
-
-function addFloatingText(text, x, y, color = '#fff') {
-    floatingTexts.push({ text, x, y, color, life: 1.0, vy: -0.8 });
-}
-
-const MONSTER_TYPES = [
-    { name: '史莱姆', shape: 'blob', hp: 1, speed: 0.9, size: 18, color: '#ab47bc', exp: 10, isBoss: false },
-    { name: '僵尸怪', shape: 'zombie', hp: 3, speed: 0.7, size: 22, color: '#26a69a', exp: 25, isBoss: false },
-    { name: '刺猬兽', shape: 'spike', hp: 1, speed: 1.3, size: 16, color: '#ff7043', exp: 15, isBoss: false }
-];
-
-function spawnMonster(isBoss = false) {
-    let angle = Math.random() * Math.PI * 2;
-    let distance = 13 + Math.random() * 5;
-
-    let levelFactor = 1 + (player.level - 1) * 0.08;
-    let timeFactor = 1 + (survivalTime / 90) * 0.1;
-    let globalScaling = levelFactor * timeFactor;
-
-    if (isBoss) {
-        monsters.push({
-            id: Math.random().toString(36).substr(2, 9),
-            x: player.x + Math.cos(angle) * distance,
-            y: player.y + Math.sin(angle) * distance,
-            isBoss: true,
-            name: '远古魔王 BOSS',
-            hp: 30,
-            maxHp: 30,
-            speed: 0.55 * Math.min(1.8, globalScaling),
-            size: 42,
-            color: '#d50000',
-            shape: 'boss',
-            exp: 300
-        });
-        playSoundLevelUp();
-        addFloatingText("🚨 警告：【远古魔王 BOSS】降临！需要攻击30次！", player.x, player.y - 1.5, "#ff1744");
-    } else {
-        let template = MONSTER_TYPES[Math.floor(Math.random() * MONSTER_TYPES.length)];
-        monsters.push({
-            id: Math.random().toString(36).substr(2, 9),
-            x: player.x + Math.cos(angle) * distance,
-            y: player.y + Math.sin(angle) * distance,
-            isBoss: false,
-            name: template.name,
-            hp: template.hp,
-            maxHp: template.hp,
-            speed: template.speed * Math.min(2.0, globalScaling),
-            size: template.size,
-            color: template.color,
-            shape: template.shape,
-            exp: template.exp
-        });
-    }
-}
-
-function spawnItem() {
-    let angle = Math.random() * Math.PI * 2;
-    let distance = 4 + Math.random() * 6;
-    let template = ITEM_TYPES[Math.floor(Math.random() * ITEM_TYPES.length)];
-
-    items.push({
-        ...template,
-        x: player.x + Math.cos(angle) * distance,
-        y: player.y + Math.sin(angle) * distance,
-        life: 25.0
-    });
-    addFloatingText(`🌟 出现道具 [${template.name}]!`, player.x, player.y - 1, template.color);
-}
-
-function addExp(amount) {
-    if (player.level >= 99) return;
-    player.exp += amount;
-    
-    let needed = player.maxExp;
-    while (player.exp >= needed && player.level < 99) {
-        player.exp -= needed;
-        player.level++;
-        player.bulletDamage += 1;
-        player.maxExp = Math.floor(player.maxExp * 1.35);
-        playSoundLevelUp();
-        addFloatingText(`⭐ 升级啦！当前 Lv.${player.level}！属性大幅提升！`, player.x, player.y - 1.5, "#00e5ff");
-    }
-    updateUI();
-}
-
-function shootBullet() {
-    if (isGameOver || isPaused) return;
-    let now = performance.now();
-    let baseCooldown = Math.max(200, 1000 - (player.level - 1) * 10);
-    let cooldown = player.buffs.rapid.active ? baseCooldown * 0.4 : baseCooldown;
-
-    if (now - lastShootTime < cooldown) return;
-    lastShootTime = now;
-
-    playSoundShoot();
-
-    let target = getClosestMonster(player.x, player.y);
-    let baseVx = player.facingX || 0;
-    let baseVy = player.facingY || -1;
-
-    if (target) {
-        let dx = target.x - player.x;
-        let dy = target.y - player.y;
-        let dist = Math.hypot(dx, dy);
-        if (dist > 0) {
-            baseVx = dx / dist;
-            baseVy = dy / dist;
-        }
-    }
-
-    let angles = [0];
-    if (player.buffs.multishot.active) angles = [-0.25, 0, 0.25];
-
-    angles.forEach(ang => {
-        let cos = Math.cos(ang), sin = Math.sin(ang);
-        let vx = baseVx * cos - baseVy * sin;
-        let vy = baseVx * sin + baseVy * cos;
-
-        bullets.push({
-            x: player.x,
-            y: player.y,
-            vx, vy,
-            speed: player.baseSpeed * 2.6,
-            damage: player.bulletDamage,
-            targetId: target ? target.id : null,
-            life: 4.5
-        });
-    });
-}
-
-function getClosestMonster(x, y) {
-    let closest = null;
-    let minDist = Infinity;
-    monsters.forEach(m => {
-        let dist = Math.hypot(m.x - x, m.y - y);
-        if (dist < minDist) { minDist = dist; closest = m; }
-    });
-    return closest;
-}
-
-function resetGame() {
-    player = {
-        x: 0, y: 0,
-        level: 1,
-        exp: 0,
-        maxExp: 50,
-        baseSpeed: 5.6,
-        bulletDamage: 1,
-        facingX: 0, facingY: 1,
-        isMoving: false,
-        runCycle: 0,
-        buffs: {
-            speed: { active: false, timeLeft: 0 },
-            multishot: { active: false, timeLeft: 0 },
-            rapid: { active: false, timeLeft: 0 },
-            shield: { active: false, timeLeft: 0 }
-        }
-    };
-    wolf = null;
-    monsters = [];
-    bullets = [];
-    items = [];
-    floatingTexts = [];
-    survivalTime = 0;
-    killCount = 0;
-    isGameOver = false;
-    isPaused = false;
-    lastShootTime = 0;
-    lastItemSpawnTime = 0;
-
-    for (let i = 0; i < 4; i++) spawnMonster(false);
-    spawnItem();
-
-    document.getElementById('game-over-overlay').classList.remove('active');
-    document.getElementById('pause-overlay').classList.remove('active');
-    updateUI();
-    updateLeaderboardUI();
-}
-
-function addRecord(time, kills, level) {
-    records.unshift({ time: time.toFixed(1), kills, level });
-    if (records.length > 10) records.pop();
-
-    let allRecords = JSON.parse(localStorage.getItem('xz_evolution_mob_all_records') || '{}');
-    allRecords[currentUserName] = records;
-    localStorage.setItem('xz_evolution_mob_all_records', JSON.stringify(allRecords));
-
-    updateLeaderboardUI();
-}
-
-function updateLeaderboardUI() {
-    const listEl = document.getElementById('scoreList');
-    listEl.innerHTML = '';
-    if (records.length === 0) {
-        listEl.innerHTML = '<li class="no-records">⚠️ 暂无战绩记录</li>';
-        return;
-    }
-    records.forEach((rec, idx) => {
-        let li = document.createElement('li');
-        li.className = 'score-item';
-        li.innerHTML = `
-            <div class="score-row-top">
-                <span class="index">#${idx + 1}</span>
-                <span class="time">⏱️ ${rec.time}秒</span>
-                <span class="kills">🥊 ${rec.kills}击杀</span>
-            </div>
-            <div class="score-row-bottom">
-                <span>等级: Lv.${rec.level}</span>
-            </div>
-        `;
-        listEl.appendChild(li);
-    });
-}
-
-function updateUI() {
-    document.getElementById('playerLevel').textContent = `Lv.${player.level}`;
-    document.getElementById('survivalTime').textContent = survivalTime.toFixed(1);
-    document.getElementById('killCount').textContent = killCount;
-
-    let expPercent = Math.min(100, (player.exp / player.maxExp) * 100);
-    document.getElementById('expBarFill').style.width = `${expPercent}%`;
-
-    const buffContainer = document.getElementById('buffContainer');
-    let activeBuffs = [];
-    
-    for (let key in player.buffs) {
-        let b = player.buffs[key];
-        if (b.active) {
-            let nameMap = { speed: '👟 疾风跑鞋', multishot: '🥊 散弹拳套', rapid: '⚡ 连环快速', shield: '🛡️ 金钟护体' };
-            activeBuffs.push(`<span class="buff-tag">${nameMap[key]} (${b.timeLeft.toFixed(1)}s)</span>`);
-        }
-    }
-    if (wolf) {
-        activeBuffs.push(`<span class="buff-tag" style="border-color:#ff5722; color:#ff7043;">🐺 战狼护卫 (Lv.${wolf.level})</span>`);
-    }
-
-    buffContainer.innerHTML = activeBuffs.length === 0 ? '<span style="color:#aaa;">道具状态: 无 (有效30秒)</span>' : activeBuffs.join('');
-}
-
-function updateGame(deltaTime) {
-    if (isGameOver || isPaused) return;
-
-    let deltaSec = deltaTime / 1000;
-    survivalTime += deltaSec;
-
-    for (let key in player.buffs) {
-        let b = player.buffs[key];
-        if (b.active) {
-            b.timeLeft -= deltaSec;
-            if (b.timeLeft <= 0) {
-                b.active = false;
-                addFloatingText(`⌛ [${key}] 道具效果已失效`, player.x, player.y - 1, '#aaa');
-            }
-        }
-    }
-
-    if (survivalTime - lastItemSpawnTime > 14) {
-        lastItemSpawnTime = survivalTime;
-        spawnItem();
-    }
-
-    if (keys[' ']) shootBullet();
-
-    let maxMonsters = Math.min(18, 4 + Math.floor(player.level * 0.8) + Math.floor(survivalTime / 25));
-    if (monsters.length < maxMonsters) {
-        spawnMonster(false);
-    }
-
-    let currentGridX = Math.floor(player.x);
-    let currentGridY = Math.floor(player.y);
-    let currentTerrain = getTerrain(currentGridX, currentGridY);
-
-    let speedBuffMultiplier = player.buffs.speed.active ? 1.35 : 1.0;
-    let levelSpeedBonus = 1 + (player.level - 1) * 0.02;
-    let currentSpeed = player.baseSpeed * levelSpeedBonus * speedBuffMultiplier * currentTerrain.speedMultiplier * deltaSec;
-
-    let moveX = 0, moveY = 0;
-
-    // 键盘移动
-    if (keys['ArrowUp'] || keys['w'] || keys['W']) moveY -= 1;
-    if (keys['ArrowDown'] || keys['s'] || keys['S']) moveY += 1;
-    if (keys['ArrowLeft'] || keys['a'] || keys['A']) moveX -= 1;
-    if (keys['ArrowRight'] || keys['d'] || keys['D']) moveX += 1;
-
-    // 王者荣耀转盘摇杆移动叠加
-    if (joystickState.active && (joystickState.vectorX !== 0 || joystickState.vectorY !== 0)) {
-        moveX = joystickState.vectorX;
-        moveY = joystickState.vectorY;
-    }
-
-    if (moveX !== 0 && moveY !== 0 && (keys['ArrowUp'] || keys['w'] || keys['W'] || keys['ArrowDown'] || keys['s'] || keys['S'] || keys['ArrowLeft'] || keys['a'] || keys['A'])) {
-        moveX *= 0.7071; moveY *= 0.7071;
-    }
-
-    if (moveX !== 0 || moveY !== 0) {
-        player.isMoving = true;
-        player.facingX = moveX;
-        player.facingY = moveY;
-        player.runCycle += deltaTime * 0.015;
-    } else {
-        player.isMoving = false;
-        player.runCycle = 0;
-    }
-
-    player.x += moveX * currentSpeed;
-    player.y += moveY * currentSpeed;
-
-    // --- 护卫狼 AI ---
-    if (wolf) {
-        wolf.level = player.level;
-        let targetMonster = getClosestMonster(wolf.x, wolf.y);
-        let wolfSpeed = 4.2 * deltaSec;
-
-        if (targetMonster && Math.hypot(targetMonster.x - wolf.x, targetMonster.y - wolf.y) < 7) {
-            let wdx = targetMonster.x - wolf.x;
-            let wdy = targetMonster.y - wolf.y;
-            let wdist = Math.hypot(wdx, wdy);
-            if (wdist > 0) {
-                wolf.x += (wdx / wdist) * wolfSpeed;
-                wolf.y += (wdy / wdist) * wolfSpeed;
-            }
-
-            if (wdist < 0.9 && performance.now() - wolf.lastAttackTime > 800) {
-                wolf.lastAttackTime = performance.now();
-                let isUlt = Math.random() < 0.25;
-                let dmg = isUlt ? player.bulletDamage * 3 : player.bulletDamage;
-                targetMonster.hp -= dmg;
-
-                if (isUlt) {
-                    addFloatingText(`🐺 战狼【狂野烈牙绝息斩】! -${dmg}`, targetMonster.x, targetMonster.y - 1, "#ff9100");
-                } else {
-                    addFloatingText(`🐺 战狼扑击 -${dmg}`, targetMonster.x, targetMonster.y, "#ff7043");
-                }
-
-                if (targetMonster.hp <= 0) {
-                    playSoundHit();
-                    addFloatingText(targetMonster.isBoss ? "👑 战狼助攻BOSS击破!" : "K.O.!", targetMonster.x, targetMonster.y, "#ffca28");
-                    let mIndex = monsters.findIndex(m => m.id === targetMonster.id);
-                    if (mIndex !== -1) monsters.splice(mIndex, 1);
-                    killCount++;
-                    addExp(targetMonster.exp);
-
-                    if (killCount % 100 === 0) {
-                        spawnMonster(true);
+    function toggleBGM() {
+        initAudio();
+        isBgmPlaying = !isBgmPlaying;
+        const btn = document.getElementById('music-btn');
+        if (isBgmPlaying) {
+            btn.innerText = "🎵 音乐:开";
+            if (!bgmInterval) {
+                bgmInterval = setInterval(() => {
+                    if (isBgmPlaying) {
+                        playChiptuneNote(xiaoaoNotes[noteIndex]);
+                        noteIndex = (noteIndex + 1) % xiaoaoNotes.length;
                     }
-                    updateUI();
-                }
+                }, 220);
             }
+        } else { btn.innerText = "🎵 音乐:关"; }
+    }
+
+    /* ================= 会员系统逻辑 ================= */
+    let currentUser = null;
+    let state = getDefaultState();
+
+    function getDefaultState() {
+        return {
+            name: "少侠", sect: "无门无派",
+            hp: 100, maxHp: 100, mp: 50, maxMp: 50,
+            atk: 12, agi: 10, gold: 20, fame: 0, karma: 0,
+            day: 1, scene: "intro",
+            skills: ["基础剑法"], items: ["金创药"], flags: {}, enemy: null
+        };
+    }
+
+    // 注册账号
+    function handleRegister() {
+        const u = document.getElementById('username').value.trim();
+        const p = document.getElementById('password').value.trim();
+        const msg = document.getElementById('auth-msg');
+
+        if (!u || !p) { msg.innerText = "侠名与密令不能为空！"; return; }
+        
+        let users = JSON.parse(localStorage.getItem('xiaoao_users') || '{}');
+        if (users[u]) {
+            msg.innerText = "此侠名已被占用，请更换！";
+            return;
+        }
+
+        // 注册新用户并初始化初始存档
+        users[u] = { password: p, save: getDefaultState() };
+        localStorage.setItem('xiaoao_users', JSON.stringify(users));
+        
+        msg.style.color = "var(--accent-green)";
+        msg.innerText = "注册成功！请点击登入江湖。";
+    }
+
+    // 登录账号
+    function handleLogin() {
+        const u = document.getElementById('username').value.trim();
+        const p = document.getElementById('password').value.trim();
+        const msg = document.getElementById('auth-msg');
+
+        if (!u || !p) { msg.innerText = "请输入侠名与密令！"; return; }
+
+        let users = JSON.parse(localStorage.getItem('xiaoao_users') || '{}');
+        if (!users[u]) {
+            msg.innerText = "此侠名不存在，请先注册！";
+            return;
+        }
+        if (users[u].password !== p) {
+            msg.innerText = "密令（密码）错误！";
+            return;
+        }
+
+        // 登录成功
+        currentUser = u;
+        state = users[u].save;
+        document.getElementById('user-title').innerText = `⚔️ 侠客：${u}`;
+        document.getElementById('auth-modal').style.display = 'none';
+
+        initAudio(); // 允许音频
+        logEl.innerHTML = '';
+        if (state.enemy) startCombat(state.enemy);
+        else goScene(state.scene);
+    }
+
+    // 注销/切换账号
+    function logout() {
+        autoSave();
+        currentUser = null;
+        document.getElementById('auth-modal').style.display = 'flex';
+        document.getElementById('password').value = '';
+        document.getElementById('auth-msg').innerText = "已安全登出江湖。";
+    }
+
+    // 自动存档（每次进入新剧情或战斗结束时触发）
+    function autoSave() {
+        if (!currentUser) return;
+        let users = JSON.parse(localStorage.getItem('xiaoao_users') || '{}');
+        if (users[currentUser]) {
+            users[currentUser].save = state;
+            localStorage.setItem('xiaoao_users', JSON.stringify(users));
+        }
+    }
+
+    function manualSave() {
+        autoSave();
+        print("【系统】当前账号进度已成功保存至服务器/本地凭证！", "system");
+    }
+
+    /* ================= 游戏主剧情与战斗逻辑 ================= */
+    const logEl = document.getElementById('game-log');
+    const actionsEl = document.getElementById('quick-actions');
+    const inputEl = document.getElementById('cmd-input');
+
+    inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleInput(); });
+
+    function print(text, type = 'story') {
+        const div = document.createElement('div');
+        div.className = `msg msg-${type}`;
+        div.innerHTML = text;
+        logEl.appendChild(div);
+        logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function updateUI() {
+        document.getElementById('ui-hp').innerText = `${state.hp}/${state.maxHp}`;
+        document.getElementById('ui-mp').innerText = `${state.mp}/${state.maxMp}`;
+        document.getElementById('ui-atk').innerText = state.atk;
+        document.getElementById('ui-agi').innerText = state.agi;
+        document.getElementById('ui-gold').innerText = state.gold;
+        document.getElementById('ui-fame').innerText = state.fame;
+
+        let power = state.atk + state.agi + Math.floor(state.maxMp / 5);
+        let realm = "初出茅庐";
+        if (power > 180) realm = "一代宗师";
+        else if (power > 120) realm = "名震江湖";
+        else if (power > 75) realm = "登堂入室";
+        else if (power > 40) realm = "小有所成";
+        document.getElementById('ui-realm').innerText = realm;
+
+        let align = "亦正亦邪";
+        if (state.karma >= 30) align = "侠义无双";
+        else if (state.karma >= 10) align = "名门正派";
+        else if (state.karma <= -30) align = "魔道巨擘";
+        else if (state.karma <= -10) align = "心狠手辣";
+        document.getElementById('ui-align').innerText = align;
+        autoSave(); // 实时更迭自动存档
+    }
+
+    const SCENES = {
+        intro: {
+            enter: () => {
+                print("【序章：风雨欲来】", "system");
+                print("明末乱世，江湖暗流涌动。日月神教虎视眈眈，一卷《辟邪剑谱》将福建福威镖局推向灭顶之灾。");
+                print("你行至福州城外破庙避雨，听见外面传来兵刃交击声。青城派正围攻一名身负重伤的福威镖局镖头。");
+            },
+            options: [
+                { text: "1. 拔剑相助，击退青城派", cmd: "1", action: () => {
+                    state.karma += 10; state.fame += 5;
+                    print("你大喝一声破门而出，虽武艺尚浅却逼退了青城派。镖头临终前将《辟邪剑法(残篇)》托付于你！", "story");
+                    learnSkill("辟邪剑法(残篇)"); goScene("choose_sect");
+                }},
+                { text: "2. 暗中观察，坐收渔利", cmd: "2", action: () => {
+                    state.karma -= 10; state.gold += 20;
+                    print("镖头与青城弟子同归于尽。你搜刮了残缺剑谱与二十两银子。", "story");
+                    learnSkill("辟邪剑法(残篇)"); goScene("choose_sect");
+                }},
+                { text: "3. 悄然离开，事不关己", cmd: "3", action: () => {
+                    print("你趁着夜色离开破庙，一路北上。", "story");
+                    state.agi += 3; goScene("choose_sect");
+                }}
+            ]
+        },
+        choose_sect: {
+            enter: () => {
+                print("【第一章：拜入山门】", "system");
+                print("你来到中原，决定寻找安身立命之所：");
+            },
+            options: [
+                { text: "1. 拜入华山派（气宗正统）", cmd: "1", action: () => {
+                    state.sect = "华山派"; state.maxMp += 40; state.mp += 40; state.karma += 5;
+                    learnSkill("华山基础剑法"); goScene("huashan_hub");
+                }},
+                { text: "2. 投奔衡山派（快剑音律）", cmd: "2", action: () => {
+                    state.sect = "衡山派"; state.agi += 8; state.atk += 4;
+                    learnSkill("百变千幻云雾十三式"); goScene("huashan_hub");
+                }},
+                { text: "3. 潜入日月神教（魔教秘法）", cmd: "3", action: () => {
+                    state.sect = "日月神教"; state.atk += 8; state.karma -= 10;
+                    learnSkill("黑血神针"); goScene("huashan_hub");
+                }}
+            ]
+        },
+        huashan_hub: {
+            enter: () => {
+                print(`【江湖日常 · 第 ${state.day} 天】（当前侠客：${currentUser} | 门派：${state.sect}）`, "system");
+                print("嵩山派正密谋五岳并派，思过崖藏有秘密。你可以自由进行修炼或下山：");
+            },
+            options: [
+                { text: "1. 演武场练剑（提升攻击）", cmd: "练剑", action: () => doTrain("sword") },
+                { text: "2. 静室打坐（提升内力）", cmd: "打坐", action: () => doTrain("meditate") },
+                { text: "3. 探索华山思过崖", cmd: "思过崖", action: () => goScene("siguoya") },
+                { text: "4. 下山历练与战斗", cmd: "下山", action: () => goScene("jianghu_event") },
+                { text: "5. 前往金盆洗手大会（需剑法+身法>=35）", cmd: "金盆洗手", action: () => {
+                    if (state.atk + state.agi < 35) {
+                        print("【提示】武功尚浅，贸然前往恐有危险，建议先修炼几日！", "combat");
+                        renderActions(SCENES.huashan_hub.options);
+                    } else { goScene("liuzhengfeng"); }
+                }}
+            ]
+        },
+        siguoya: {
+            enter: () => {
+                print("【奇遇：思过崖石壁】", "system");
+                if (state.flags.siguoyaDone) { print("思过崖石壁你已参悟透彻。"); }
+                else { print("你在洞内发现了破招石壁，风清扬前辈向你走来……"); }
+            },
+            options: [
+                { text: "1. 请教风清扬前辈", cmd: "1", action: () => {
+                    if (state.flags.siguoyaDone) { goScene("huashan_hub"); return; }
+                    if (state.karma >= 0) {
+                        print("风清扬大笑：“传你独孤九剑真谛！”", "dialogue");
+                        learnSkill("独孤九剑(总诀式)"); state.atk += 18; state.agi += 12; state.flags.siguoyaDone = true;
+                    } else { print("风清扬冷哼：“戾气太重，滚吧！”", "combat"); state.hp = Math.max(10, state.hp - 20); }
+                    updateUI(); goScene("huashan_hub");
+                }},
+                { text: "2. 强记魔教破招之法", cmd: "2", action: () => {
+                    if (!state.flags.siguoyaDone) {
+                        state.atk += 15; state.hp = Math.max(10, state.hp - 30); state.karma -= 5; state.flags.siguoyaDone = true;
+                        print("你强行记住诡异招式，走火入魔吐血，但攻击大增！", "story"); updateUI();
+                    }
+                    goScene("huashan_hub");
+                }},
+                { text: "3. 返回驻地", cmd: "3", action: () => goScene("huashan_hub") }
+            ]
+        },
+        jianghu_event: {
+            enter: () => {
+                print("【江湖历练】", "system");
+                let roll = Math.random();
+                if (roll < 0.45) {
+                    startCombat({ name: "万里独行·田伯光", hp: 90, maxHp: 90, atk: 16, agi: 18, rewardGold: 30, rewardFame: 15, desc: "田伯光正纠缠恒山派小尼姑仪琳！" });
+                } else if (roll < 0.8) {
+                    startCombat({ name: "嵩山十三太保·费彬", hp: 120, maxHp: 120, atk: 20, agi: 14, rewardGold: 50, rewardFame: 25, desc: "费彬带人截住你，狞笑逼问秘密！" });
+                } else {
+                    print("你偶遇琴师谈论音律，获赠【九花玉露丸】与二十两银子。", "reward");
+                    state.gold += 20; state.items.push("九花玉露丸"); state.day++;
+                    updateUI(); renderActions([{ text: "返回门派", cmd: "返回", action: () => goScene("huashan_hub") }]);
+                }
+            },
+            options: []
+        },
+        liuzhengfeng: {
+            enter: () => {
+                print("【第二章：衡山城·金盆洗手】", "system");
+                print("嵩山派费彬逼迫刘正风与魔教曲洋自相残杀。局势一触即发！");
+            },
+            options: [
+                { text: "1. 拔剑突围，护送刘曲二人", cmd: "1", action: () => {
+                    state.karma += 20; state.fame += 30; state.maxMp += 60; state.mp = state.maxMp; state.flags.gotMusic = true;
+                    print("你挡在身前，刘曲二人将《笑傲江湖曲》托付给你，内力大增。", "reward"); goScene("chapter3_xixing");
+                }},
+                { text: "2. 助嵩山派灭魔教妖人", cmd: "2", action: () => {
+                    state.karma -= 20; state.fame += 20; learnSkill("寒冰真气"); state.atk += 20;
+                    print("左冷禅大喜，赐你《寒冰真气》残卷！", "reward"); goScene("chapter3_xixing");
+                }},
+                { text: "3. 潜入后院搜刮秘宝", cmd: "3", action: () => {
+                    state.karma -= 10; state.gold += 100; state.items.push("九花玉露丸");
+                    print("你趁乱洗劫了书房百两黄金与灵丹妙药。", "reward"); goScene("chapter3_xixing");
+                }}
+            ]
+        },
+        chapter3_xixing: {
+            enter: () => {
+                print("【第三章：梅庄地牢】", "system");
+                print("西湖梅庄地牢深处，你遭遇任我行。脚下刻着《吸星大法》，怀中辟邪剑谱发烫……");
+            },
+            options: [
+                { text: "1. 逆转经脉，强修吸星大法", cmd: "1", action: () => {
+                    learnSkill("吸星大法"); state.maxMp += 150; state.mp = state.maxMp; state.atk += 25; state.karma -= 15;
+                    print("你与任我行内力对流，吸得数十年精纯内力！", "reward"); goScene("finale_prelude");
+                }},
+                { text: "2. 斩断铁链，助任我行脱困", cmd: "2", action: () => {
+                    state.fame += 40; state.atk += 20;
+                    print("任我行脱困狂笑：“黑木崖少教主之位给你留着！”", "dialogue"); goScene("finale_prelude");
+                }},
+                { text: "3. 挥剑自宫，修炼完整《辟邪剑法》", cmd: "自宫", action: () => {
+                    if (!state.skills.includes("辟邪剑法(残篇)")) {
+                        print("你没有辟邪剑谱残篇，无法修炼！", "combat");
+                        renderActions(SCENES.chapter3_xixing.options); return;
+                    }
+                    learnSkill("辟邪剑法(大成)"); state.atk += 55; state.agi += 60; state.karma -= 30; state.flags.bixieMax = true;
+                    print("‘欲练此功，必先自宫！’身法剑速暴增至鬼魅之境！", "combat"); updateUI(); goScene("finale_prelude");
+                }}
+            ]
+        },
+        finale_prelude: {
+            enter: () => {
+                print("【终章：黑木崖决战】", "system");
+                print("成德殿内，东方不败一袭红衣，绣花针逼绝群雄。她冷冷看向你：“你也想来送死么？”");
+            },
+            options: [
+                { text: "1. 决战东方不败！", cmd: "1", action: () => {
+                    startCombat({ name: "天下第一·东方不败", hp: 260, maxHp: 260, atk: 42, agi: 45, isFinalBoss: true, desc: "东方不败身形化作红影，绣花针直刺眉心！" });
+                }}
+            ]
+        }
+    };
+
+    function doTrain(type) {
+        state.day++;
+        if (type === "sword") {
+            if (state.hp <= 20) { print("气血不足，请先休整！", "combat"); }
+            else {
+                let gain = 4 + Math.floor(Math.random() * 4);
+                state.atk += gain; state.hp -= 15;
+                print(`刻苦练剑，【剑法】+${gain} （气血 -15）`, "reward");
+            }
+        } else if (type === "meditate") {
+            let mpGain = 10 + Math.floor(Math.random() * 6);
+            state.maxMp += mpGain; state.mp = state.maxMp;
+            state.hp = Math.min(state.maxHp, state.hp + 35);
+            print(`打坐吐纳，【内力上限】+${mpGain}，气血恢复。`, "reward");
+        }
+        updateUI(); renderActions(SCENES.huashan_hub.options);
+    }
+
+    function learnSkill(name) {
+        if (!state.skills.includes(name)) { state.skills.push(name); print(`【习得绝学】《${name}》！`, "reward"); }
+    }
+
+    function startCombat(enemy) {
+        state.enemy = enemy;
+        print(`⚔️ 【遭遇强敌：${enemy.name}】`, "combat");
+        print(enemy.desc, "story");
+        renderCombatActions();
+    }
+
+    function renderCombatActions() {
+        let opts = [
+            { text: "1. 普通剑招攻击", cmd: "攻击", action: () => combatTurn("normal") },
+            { text: "2. 绝学暴击（消耗20内力）", cmd: "绝学", action: () => combatTurn("skill") },
+            { text: "3. 服用丹药", cmd: "吃药", action: () => combatTurn("heal") }
+        ];
+        if (!state.enemy.isFinalBoss) opts.push({ text: "4. 轻功撤退", cmd: "逃跑", action: () => combatTurn("flee") });
+        renderActions(opts);
+    }
+
+    function combatTurn(move) {
+        let e = state.enemy;
+        if (!e) return;
+        if (move === "heal") {
+            if (state.items.length > 0) {
+                state.items.pop(); state.hp = Math.min(state.maxHp, state.hp + 100);
+                print("服下丹药，气血大涨！", "reward");
+            } else { print("行囊中没有丹药了！", "combat"); }
+        } else if (move === "flee") {
+            if (state.agi >= e.agi || Math.random() > 0.4) {
+                print("你成功施展轻功逃脱！", "story");
+                state.enemy = null; updateUI(); goScene("huashan_hub"); return;
+            } else { print("退路被封，无法逃跑！", "combat"); }
         } else {
-            let pdist = Math.hypot(player.x - wolf.x, player.y - wolf.y);
-            if (pdist > 1.8) {
-                let pdx = player.x - wolf.x;
-                let pdy = player.y - wolf.y;
-                wolf.x += (pdx / pdist) * wolfSpeed;
-                wolf.y += (pdy / pdist) * wolfSpeed;
-            }
+            let dmg = Math.max(5, state.atk + Math.floor(Math.random() * 8) - Math.floor(e.agi / 3));
+            if (move === "skill") {
+                if (state.mp >= 20) { state.mp -= 20; dmg = Math.floor(dmg * 2.1); print(`绝学爆发！造成 ${dmg} 点暴击伤害！`, "combat"); }
+                else { print("内力不足！", "combat"); }
+            } else { print(`一剑刺中，造成 ${dmg} 点伤害。`, "combat"); }
+            e.hp -= dmg;
         }
 
-        // 护卫狼阵亡机制与提示
-        let attackersCount = monsters.filter(m => Math.hypot(m.x - wolf.x, m.y - wolf.y) < 1.0).length;
-        if (attackersCount >= 2) {
-            showNotification("💀 警告：战狼护卫遭到多只怪物围攻牺牲了！");
-            playSoundGameOver();
-            wolf = null;
-            updateUI();
+        if (e.hp <= 0) {
+            print(`🎉 击败【${e.name}】！`, "reward");
+            if (e.isFinalBoss) { triggerEnding(); return; }
+            state.gold += e.rewardGold || 20; state.fame += e.rewardFame || 10; state.day++;
+            state.enemy = null; updateUI();
+            renderActions([{ text: "返回门派休整", cmd: "返回", action: () => goScene("huashan_hub") }]); return;
         }
+
+        let eDmg = Math.max(4, e.atk + Math.floor(Math.random() * 6) - Math.floor(state.agi / 3));
+        state.hp -= eDmg;
+        print(`${e.name} 反击，你气血 -${eDmg} （敌血：${e.hp}）`, "combat");
+
+        if (state.hp <= 0) {
+            state.hp = 0; updateUI();
+            print("【胜败兵家常事】你重伤倒地，江湖路尽……", "system");
+            renderActions([{ text: "重新开始", cmd: "重开", action: () => resetGame() }]); return;
+        }
+        updateUI(); renderCombatActions();
     }
 
-    for (let i = items.length - 1; i >= 0; i--) {
-        let it = items[i];
-        it.life -= deltaSec;
-        if (it.life <= 0) { items.splice(i, 1); continue; }
-        if (Math.hypot(it.x - player.x, it.y - player.y) < 0.9) {
-            if (it.type === 'wolf') {
-                wolf = {
-                    x: player.x + 1,
-                    y: player.y + 1,
-                    level: player.level,
-                    lastAttackTime: 0
-                };
-                playSoundPowerup();
-                showNotification("🐺 成功召唤【战狼护卫】！永久跟随帮你战斗！");
-                addFloatingText(`🐺 召唤战狼护卫成功！`, player.x, player.y - 1, "#ff5722");
-            } else {
-                player.buffs[it.type].active = true;
-                player.buffs[it.type].timeLeft = 30.0;
-                playSoundPowerup();
-                addFloatingText(`✨ 获得 30 秒强力buff: ${it.name}!`, player.x, player.y - 1, it.color);
-            }
-            items.splice(i, 1);
-            updateUI();
-        }
+    function triggerEnding() {
+        print("====================================", "system");
+        print("【大结局：笑傲江湖】", "system");
+        if (state.flags.bixieMax) print("【隐藏结局：东方再世·孤独魔神】");
+        else if (state.flags.gotMusic && state.karma >= 25) print("【真结局：琴箫合奏·笑傲江湖】");
+        else print("【武林盟主/一代枭雄结局】");
+        renderActions([{ text: "再入江湖", cmd: "重开", action: () => resetGame() }]);
     }
 
-    monsters.forEach(m => {
-        let dx = player.x - m.x, dy = player.y - m.y;
-        let dist = Math.hypot(dx, dy);
-        if (dist > 0) {
-            let mTerrain = getTerrain(Math.floor(m.x), Math.floor(m.y));
-            let mSpeed = m.speed * mTerrain.speedMultiplier * deltaSec;
-            m.x += (dx / dist) * mSpeed;
-            m.y += (dy / dist) * mSpeed;
-        }
-        if (dist < 0.75) {
-            if (player.buffs.shield.active) {
-                player.buffs.shield.active = false;
-                playSoundPowerup();
-                addFloatingText("🛡️ 金钟护体抵挡了一次致命攻击！", player.x, player.y - 1, "#ffd700");
-                m.x -= (dx / dist) * 4; m.y -= (dy / dist) * 4;
-                updateUI();
-            } else {
-                triggerGameOver();
-            }
-        }
-    });
-
-    for (let i = bullets.length - 1; i >= 0; i--) {
-        let b = bullets[i];
-        b.life -= deltaSec;
-        if (b.life <= 0) { bullets.splice(i, 1); continue; }
-
-        let target = monsters.find(m => m.id === b.targetId);
-        if (!target) { target = getClosestMonster(b.x, b.y); if (target) b.targetId = target.id; }
-
-        if (target) {
-            let tdx = target.x - b.x, tdy = target.y - b.y;
-            let tDist = Math.hypot(tdx, tdy);
-            if (tDist > 0) {
-                b.vx = b.vx * 0.82 + (tdx / tDist) * 0.18;
-                b.vy = b.vy * 0.82 + (tdy / tDist) * 0.18;
-                let vLen = Math.hypot(b.vx, b.vy);
-                b.vx /= vLen; b.vy /= vLen;
-            }
-        }
-
-        b.x += b.vx * b.speed * deltaSec;
-        b.y += b.vy * b.speed * deltaSec;
-
-        let hitIndex = -1;
-        for (let j = 0; j < monsters.length; j++) {
-            if (Math.hypot(monsters[j].x - b.x, monsters[j].y - b.y) < 0.7) { hitIndex = j; break; }
-        }
-
-        if (hitIndex !== -1) {
-            let m = monsters[hitIndex];
-            m.hp -= b.damage;
-            bullets.splice(i, 1);
-
-            if (m.hp <= 0) {
-                playSoundHit();
-                addFloatingText(m.isBoss ? "👑 BOSS 击破!" : "K.O.!", m.x, m.y, m.isBoss ? "#ffca28" : "#ff1744");
-                monsters.splice(hitIndex, 1);
-                killCount++;
-                addExp(m.exp);
-
-                if (killCount % 100 === 0) {
-                    spawnMonster(true);
-                }
-
-                updateUI();
-            } else {
-                addFloatingText(`-${b.damage}`, m.x, m.y, "#fff");
-            }
-        }
+    function goScene(key) {
+        state.scene = key; updateUI();
+        const sc = SCENES[key];
+        if (sc) { sc.enter(); if (sc.options) renderActions(sc.options); }
     }
 
-    for (let i = floatingTexts.length - 1; i >= 0; i--) {
-        let ft = floatingTexts[i];
-        ft.life -= deltaSec * 1.2;
-        ft.y += ft.vy * deltaSec;
-        if (ft.life <= 0) floatingTexts.splice(i, 1);
-    }
-}
-
-function triggerGameOver() {
-    isGameOver = true;
-    playSoundGameOver();
-    document.getElementById('finalLevel').textContent = `Lv.${player.level}`;
-    document.getElementById('finalTime').textContent = survivalTime.toFixed(1);
-    document.getElementById('finalKills').textContent = killCount;
-    document.getElementById('game-over-overlay').classList.add('active');
-    addRecord(survivalTime, killCount, player.level);
-}
-
-function drawBoxerHero(cx, cy, p) {
-    let runAngle = p.isMoving ? Math.sin(p.runCycle) * 0.6 : 0;
-    let bounce = p.isMoving ? Math.abs(Math.sin(p.runCycle * 2)) * 3 : Math.sin(performance.now() * 0.003) * 1.5;
-
-    ctx.save();
-    ctx.translate(cx, cy - bounce);
-
-    ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    ctx.beginPath();
-    ctx.ellipse(0, 24 + bounce, 16, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    if (p.buffs.shield.active) {
-        ctx.strokeStyle = 'rgba(255, 215, 0, 0.7)';
-        ctx.lineWidth = 3.5;
-        ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 15;
-        ctx.beginPath(); ctx.arc(0, -10, 28, 0, Math.PI * 2); ctx.stroke();
-        ctx.shadowBlur = 0;
+    let currentOptions = [];
+    function renderActions(opts) {
+        currentOptions = opts;
+        actionsEl.innerHTML = '';
+        opts.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'action-chip';
+            btn.innerText = opt.text;
+            btn.onclick = (e) => {
+                if(e) e.preventDefault();
+                print(`> ${opt.text}`, 'user');
+                opt.action();
+            };
+            actionsEl.appendChild(btn);
+        });
     }
 
-    ctx.fillStyle = '#c68642';
-    ctx.save(); ctx.translate(-5, 8); ctx.rotate(-runAngle);
-    ctx.beginPath(); ctx.roundRect(-3.5, 0, 7, 16, 3); ctx.fill(); ctx.restore();
+    function handleInput() {
+        const raw = inputEl.value.trim();
+        if (!raw) return;
+        inputEl.value = '';
+        print(`> ${raw}`, 'user');
 
-    ctx.save(); ctx.translate(5, 8); ctx.rotate(runAngle);
-    ctx.beginPath(); ctx.roundRect(-3.5, 0, 7, 16, 3); ctx.fill(); ctx.restore();
+        if (raw.includes("状态") || raw.includes("档案")) { showStatus(); return; }
+        if (raw.includes("存档")) { manualSave(); return; }
+        if (raw.includes("重开")) { resetGame(); return; }
 
-    ctx.fillStyle = '#0277bd';
-    ctx.beginPath(); ctx.roundRect(-12, -2, 24, 12, [2, 2, 4, 4]); ctx.fill();
-    ctx.fillStyle = '#111'; ctx.fillRect(-12, -2, 24, 4);
-
-    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(-9, 3); ctx.lineTo(-6, 7); ctx.lineTo(-8, 7); ctx.lineTo(-5, 10); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(9, 3); ctx.lineTo(6, 7); ctx.lineTo(8, 7); ctx.lineTo(5, 10); ctx.stroke();
-
-    ctx.fillStyle = '#d89351';
-    ctx.beginPath(); ctx.roundRect(-13, -22, 26, 21, [6, 6, 2, 2]); ctx.fill();
-
-    ctx.save(); ctx.translate(-14, -18); ctx.rotate(runAngle * 1.2);
-    ctx.fillStyle = '#c68642'; ctx.beginPath(); ctx.roundRect(-3, 0, 6, 13, 3); ctx.fill();
-    ctx.fillStyle = '#00bcd4'; ctx.shadowColor = '#00e5ff'; ctx.shadowBlur = 8;
-    ctx.beginPath(); ctx.arc(0, 13, 6, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; ctx.restore();
-
-    ctx.save(); ctx.translate(14, -18); ctx.rotate(-runAngle * 1.2);
-    ctx.fillStyle = '#c68642'; ctx.beginPath(); ctx.roundRect(-3, 0, 6, 13, 3); ctx.fill();
-    ctx.fillStyle = '#00bcd4'; ctx.shadowColor = '#00e5ff'; ctx.shadowBlur = 8;
-    ctx.beginPath(); ctx.arc(0, 13, 6, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; ctx.restore();
-
-    ctx.fillStyle = '#d89351';
-    ctx.beginPath(); ctx.arc(0, -30, 11, 0, Math.PI * 2); ctx.fill();
-
-    ctx.fillStyle = '#1e1b18';
-    ctx.beginPath(); ctx.moveTo(-6, -37); ctx.quadraticCurveTo(0, -44, 6, -37); ctx.lineTo(4, -30); ctx.lineTo(-4, -30); ctx.closePath(); ctx.fill();
-
-    ctx.restore();
-}
-
-function drawWolf(w, offsetX, offsetY) {
-    let wx = w.x * TILE_SIZE + offsetX;
-    let wy = w.y * TILE_SIZE + offsetY;
-
-    ctx.save();
-    ctx.translate(wx, wy);
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.beginPath(); ctx.ellipse(0, 10, 12, 4, 0, 0, Math.PI * 2); ctx.fill();
-
-    ctx.fillStyle = '#ff7043';
-    ctx.beginPath(); ctx.ellipse(0, 0, 14, 8, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(10, -4, 8, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(8, -10); ctx.lineTo(6, -14); ctx.lineTo(10, -11); ctx.closePath(); ctx.fill();
-
-    ctx.fillStyle = '#ffca28';
-    ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(`🐺Lv.${w.level}`, 0, -18);
-
-    ctx.restore();
-}
-
-function renderGame() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    let offsetX = (canvas.width / 2) - (player.x * TILE_SIZE);
-    let offsetY = (canvas.height / 2) - (player.y * TILE_SIZE);
-
-    let startX = Math.floor(player.x - VIEW_WIDTH / 2) - 1;
-    let endX = Math.ceil(player.x + VIEW_WIDTH / 2) + 1;
-    let startY = Math.floor(player.y - VIEW_HEIGHT / 2) - 1;
-    let endY = Math.ceil(player.y + VIEW_HEIGHT / 2) + 1;
-
-    for (let x = startX; x < endX; x++) {
-        for (let y = startY; y < endY; y++) {
-            let terrain = getTerrain(x, y);
-            let drawX = x * TILE_SIZE + offsetX;
-            let drawY = y * TILE_SIZE + offsetY;
-
-            ctx.fillStyle = terrain.color;
-            ctx.fillRect(Math.floor(drawX), Math.floor(drawY), TILE_SIZE + 1, TILE_SIZE + 1);
-
-            let obj = getObjectAt(x, y, terrain.name);
-            if (obj === 'tree') {
-                ctx.fillStyle = '#0f380f';
-                ctx.beginPath(); ctx.arc(drawX + TILE_SIZE/2, drawY + TILE_SIZE/2, TILE_SIZE/2 - 2, 0, Math.PI * 2); ctx.fill();
-            } else if (obj === 'rock') {
-                ctx.fillStyle = '#495057';
-                ctx.beginPath(); ctx.arc(drawX + TILE_SIZE/2, drawY + TILE_SIZE/2, TILE_SIZE/4, 0, Math.PI * 2); ctx.fill();
-            } else if (obj === 'flower') {
-                ctx.fillStyle = '#ffb703'; ctx.fillRect(drawX + TILE_SIZE/2 - 2, drawY + TILE_SIZE/2 - 2, 4, 4);
-            }
-        }
+        let matched = currentOptions.find((opt, idx) => raw === String(idx + 1) || (opt.cmd && raw.includes(opt.cmd)) || opt.text.includes(raw));
+        if (matched) matched.action();
+        else print("【提示】无效指令，请点击选项或输入数字。", "system");
     }
 
-    items.forEach(it => {
-        let itDrawX = it.x * TILE_SIZE + offsetX;
-        let itDrawY = it.y * TILE_SIZE + offsetY;
-        let pulse = Math.sin(performance.now() * 0.005) * 3;
-
-        ctx.fillStyle = it.color; ctx.globalAlpha = 0.3;
-        ctx.beginPath(); ctx.arc(itDrawX, itDrawY, 14 + pulse, 0, Math.PI * 2); ctx.fill();
-        ctx.globalAlpha = 1.0;
-
-        ctx.beginPath(); ctx.arc(itDrawX, itDrawY, 10, 0, Math.PI * 2); ctx.fill();
-        ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(it.icon, itDrawX, itDrawY);
-    });
-
-    bullets.forEach(b => {
-        let bDrawX = b.x * TILE_SIZE + offsetX;
-        let bDrawY = b.y * TILE_SIZE + offsetY;
-        ctx.shadowColor = '#00e5ff'; ctx.shadowBlur = 10;
-        ctx.fillStyle = '#e0f7fa';
-        ctx.beginPath(); ctx.arc(bDrawX, bDrawY, 5 + Math.min(3, b.damage * 0.5), 0, Math.PI * 2); ctx.fill();
-        ctx.shadowBlur = 0;
-    });
-
-    monsters.forEach(m => {
-        let mDrawX = m.x * TILE_SIZE + offsetX;
-        let mDrawY = m.y * TILE_SIZE + offsetY;
-
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-        ctx.beginPath(); ctx.ellipse(mDrawX, mDrawY + 8, m.size * 0.5, m.size * 0.25, 0, 0, Math.PI * 2); ctx.fill();
-
-        if (m.shape === 'blob') {
-            ctx.fillStyle = m.color;
-            ctx.beginPath(); ctx.arc(mDrawX, mDrawY, m.size / 2, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(mDrawX - 4, mDrawY - 4, 3, 3);
-            ctx.fillRect(mDrawX + 1, mDrawY - 4, 3, 3);
-        } else if (m.shape === 'zombie') {
-            ctx.fillStyle = m.color;
-            ctx.beginPath(); ctx.roundRect(mDrawX - m.size/2, mDrawY - m.size/2, m.size, m.size, 4); ctx.fill();
-            ctx.fillStyle = '#ffeb3b';
-            ctx.fillRect(mDrawX - 5, mDrawY - 6, 3, 3);
-            ctx.fillRect(mDrawX + 2, mDrawY - 6, 3, 3);
-        } else if (m.shape === 'spike') {
-            ctx.fillStyle = m.color;
-            ctx.beginPath();
-            ctx.moveTo(mDrawX, mDrawY - m.size/2);
-            ctx.lineTo(mDrawX + m.size/2, mDrawY + m.size/2);
-            ctx.lineTo(mDrawX - m.size/2, mDrawY + m.size/2);
-            ctx.closePath();
-            ctx.fill();
-        } else if (m.shape === 'boss') {
-            ctx.fillStyle = m.color;
-            ctx.beginPath(); ctx.arc(mDrawX, mDrawY, m.size / 2, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = '#ffeb3b'; ctx.lineWidth = 3; ctx.stroke();
-
-            let barW = 50;
-            let hpPercent = Math.max(0, m.hp / m.maxHp);
-            ctx.fillStyle = 'rgba(0,0,0,0.7)';
-            ctx.fillRect(mDrawX - barW/2, mDrawY - m.size/2 - 12, barW, 6);
-            ctx.fillStyle = '#f44336';
-            ctx.fillRect(mDrawX - barW/2, mDrawY - m.size/2 - 12, barW * hpPercent, 6);
-        }
-
-        if (!m.isBoss && m.maxHp > 1) {
-            let barW = 30;
-            let hpPercent = Math.max(0, m.hp / m.maxHp);
-            ctx.fillStyle = 'rgba(0,0,0,0.6)';
-            ctx.fillRect(mDrawX - barW/2, mDrawY - m.size/2 - 8, barW, 4);
-            ctx.fillStyle = '#4caf50';
-            ctx.fillRect(mDrawX - barW/2, mDrawY - m.size/2 - 8, barW * hpPercent, 4);
-        }
-    });
-
-    if (wolf) {
-        drawWolf(wolf, offsetX, offsetY);
+    function showStatus() {
+        const modal = document.getElementById('modal');
+        document.getElementById('modal-body').innerHTML = `
+            <h3>📜 侠客江湖档案</h3>
+            <p><strong>当前侠客：</strong>${currentUser}</p>
+            <p><strong>门派：</strong>${state.sect}</p>
+            <p><strong>天数：</strong>第 ${state.day} 天</p>
+            <p><strong>善恶：</strong>${state.karma}</p>
+            <p><strong>武学：</strong>${state.skills.join("、")}</p>
+            <p><strong>行囊：</strong>${state.items.join("、") || "空"}</p>
+            <button class="close-modal" onclick="document.getElementById('modal').style.display='none'">关闭</button>
+        `;
+        modal.style.display = 'flex';
     }
 
-    drawBoxerHero(canvas.width / 2, canvas.height / 2, player);
-
-    floatingTexts.forEach(ft => {
-        let ftDrawX = ft.x * TILE_SIZE + offsetX;
-        let ftDrawY = ft.y * TILE_SIZE + offsetY;
-        ctx.save();
-        ctx.globalAlpha = Math.max(0, ft.life);
-        ctx.fillStyle = ft.color;
-        ctx.font = 'bold 14px Segoe UI, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.shadowColor = '#000'; ctx.shadowBlur = 4;
-        ctx.fillText(ft.text, ftDrawX, ftDrawY);
-        ctx.restore();
-    });
-}
-
-function startGameLoop() {
-    resetGame();
-    let lastTime = performance.now();
-    function loop(now) {
-        let deltaTime = now - lastTime;
-        lastTime = now;
-        updateGame(deltaTime);
-        renderGame();
-        requestAnimationFrame(loop);
+    function resetGame() {
+        state = getDefaultState();
+        logEl.innerHTML = '';
+        goScene("intro");
     }
-    requestAnimationFrame(loop);
-}
 </script>
-
 </body>
 </html>
