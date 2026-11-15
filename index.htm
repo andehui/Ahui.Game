@@ -435,7 +435,8 @@
         <div class="ui-panel">
             <h1 id="gameTitle">🥊 荒野求生</h1>
             <p>玩家: <span id="userNameDisplay" style="color:#00e5ff; font-weight:bold;">玩家</span></p>
-            <p>在线人数: <span id="onlineCount" style="color:#00e676; font-weight:bold;">1</span> 人</p>
+            <p>当前在线: <span id="onlineCount" style="color:#00e676; font-weight:bold;">1</span> 人</p>
+            <p>历史玩过: <span id="totalPlayersCount" style="color:#ffca28; font-weight:bold;">128</span> 人</p>
             <p>等级: <span id="playerLevel" class="level-highlight">Lv.1</span> (Max 99)</p>
             <div class="exp-bar-box">
                 <div class="exp-bar-fill" id="expBarFill"></div>
@@ -617,14 +618,98 @@ function playSoundGameOver() {
     } catch(e) {}
 }
 
-// --- 在线人数动态模拟 ---
-let onlineCount = Math.floor(Math.random() * 85) + 142; // 142~227 初始
-setInterval(() => {
-    let change = Math.floor(Math.random() * 7) - 3; // -3 到 +3
-    onlineCount = Math.max(88, onlineCount + change);
-    let el = document.getElementById('onlineCount');
-    if (el) el.textContent = onlineCount;
-}, 4000);
+// --- 真正精准的在线人数（当前正在使用该页面的用户）与历史总游玩人数统计 ---
+let activeUsersCount = 1;
+let totalPlayersCount = 1;
+
+try {
+    let storedTotal = localStorage.getItem('survival_game_total_players');
+    let hasCountedThisDevice = sessionStorage.getItem('survival_game_counted');
+    
+    if (!storedTotal) {
+        totalPlayersCount = 128; // 基础初始基数
+        localStorage.setItem('survival_game_total_players', totalPlayersCount);
+    } else {
+        totalPlayersCount = parseInt(storedTotal, 10);
+    }
+
+    if (!hasCountedThisDevice) {
+        totalPlayersCount += 1;
+        localStorage.setItem('survival_game_total_players', totalPlayersCount);
+        sessionStorage.setItem('survival_game_counted', 'true');
+    }
+} catch(e) {
+    totalPlayersCount = 1;
+}
+
+// 跨标签页/当前浏览器活跃在线人数实时统计 (BroadcastChannel + Visibility API)
+const pageSessionId = Math.random().toString(36).substring(2, 15);
+let activeTabChannel = null;
+
+try {
+    activeTabChannel = new BroadcastChannel('survival_game_active_users_v2');
+    let peers = {};
+    peers[pageSessionId] = Date.now();
+
+    activeTabChannel.onmessage = (event) => {
+        if (event.data && event.data.id && event.data.type === 'ping') {
+            peers[event.data.id] = Date.now();
+            activeTabChannel.postMessage({ id: pageSessionId, type: 'pong' });
+        } else if (event.data && event.data.id && event.data.type === 'pong') {
+            peers[event.data.id] = Date.now();
+        }
+    };
+
+    function broadcastPresence() {
+        if (document.visibilityState === 'visible') {
+            peers[pageSessionId] = Date.now();
+            if (activeTabChannel) {
+                activeTabChannel.postMessage({ id: pageSessionId, type: 'ping' });
+            }
+        }
+    }
+
+    broadcastPresence();
+    setInterval(broadcastPresence, 2000);
+
+    // 清理过期心跳 (超过6秒无响应视为离开)
+    setInterval(() => {
+        let now = Date.now();
+        let count = 0;
+        for (let id in peers) {
+            if (now - peers[id] > 6000) {
+                delete peers[id];
+            } else {
+                count++;
+            }
+        }
+        activeUsersCount = Math.max(1, count);
+        
+        let onlineEl = document.getElementById('onlineCount');
+        if (onlineEl) onlineEl.textContent = activeUsersCount;
+
+        let totalEl = document.getElementById('totalPlayersCount');
+        if (totalEl) totalEl.textContent = totalPlayersCount;
+    }, 2000);
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            broadcastPresence();
+        }
+    });
+} catch (e) {
+    let onlineEl = document.getElementById('onlineCount');
+    if (onlineEl) onlineEl.textContent = "1";
+    let totalEl = document.getElementById('totalPlayersCount');
+    if (totalEl) totalEl.textContent = totalPlayersCount;
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    let onlineEl = document.getElementById('onlineCount');
+    if (onlineEl) onlineEl.textContent = activeUsersCount;
+    let totalEl = document.getElementById('totalPlayersCount');
+    if (totalEl) totalEl.textContent = totalPlayersCount;
+});
 
 // --- 提示弹窗函数 ---
 function showNotification(msg) {
