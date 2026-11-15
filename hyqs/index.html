@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -415,7 +414,7 @@
             <h1 id="gameTitle">🥊 华山论剑</h1>
             <p>玩家: <span id="userNameDisplay" style="color:#00e5ff; font-weight:bold;">玩家</span></p>
             <p>生命: <span id="livesDisplay" class="lives-highlight">❤️❤️❤️ (3)</span></p>
-            <p>形态: <span id="weaponFormDisplay" style="color:#4fc3f7; font-weight:bold;">第1命 · 蓝拳子弹</span></p>
+            <p>形态: <span id="weaponFormDisplay" style="color:#4fc3f7; font-weight:bold;">第1命 · 南宁老登</span></p>
 
             <p>等级: <span id="playerLevel" class="level-highlight">Lv.1</span> (攻击: <span id="atkDisplay" style="color:#ff8a80;">1</span>)</p>
             <div class="exp-bar-box">
@@ -626,9 +625,7 @@ function playSoundGameOver() {
     } catch(e) {}
 }
 
-// --- 在线人数与历史游玩统计 ---
 let activeUsersCount = 1;
-// 历史英雄统计功能已移除
 
 function showNotification(msg) {
     let toast = document.getElementById('notification-toast');
@@ -788,11 +785,10 @@ let lastBossKillMilestone = 0;
 let isGameOver = false;
 let isPaused = false;
 
-// 三条命 & 复活状态控制
-let livesLeft = 3;          // 剩余总命数（初始3条）
-let isRespawning = false;   // 是否正处于死亡后等待5秒复活阶段
-let respawnTimer = 0;       // 复活倒计时（5秒）
-let lastIntSecond = 5;      // 记录整数秒用于触发倒计时音效
+let livesLeft = 3;
+let isRespawning = false;
+let respawnTimer = 0;
+let lastIntSecond = 5;
 
 let lastShootTime = 0;
 let lastItemSpawnTime = 0;
@@ -802,7 +798,6 @@ function getCurrentLifeForm() {
     return LIFE_FORMS[lifeIndex];
 }
 
-// --- 虚拟摇杆与控制状态 ---
 const joystickState = {
     active: false,
     startX: 0,
@@ -897,7 +892,6 @@ function togglePause() {
     }
 }
 
-// --- 地形与障碍物系统 ---
 function getTerrain(wx, wy) {
     if (Math.abs(wx) <= 3 && Math.abs(wy) <= 3) {
         return TERRAINS[3];
@@ -980,7 +974,6 @@ function addFloatingText(text, x, y, color = '#fff') {
     floatingTexts.push({ text, x, y, color, life: 1.1, vy: -0.85 });
 }
 
-// --- 怪物配置 ---
 const MONSTER_TYPES = [
     { name: '西河怪鱼', shape: 'ghost', hp: 1, speed: 1.85, size: 16, color: '#00e5ff', exp: 15, sound: 'ghost' },
     { name: '北宁咖啡怪', shape: 'spike', hp: 2, speed: 1.55, size: 17, color: '#ff7043', exp: 18, sound: 'spike' },
@@ -1031,12 +1024,12 @@ function playMonsterRoar(type) {
     } catch(e) {}
 }
 
-const BOSS_NAMES = [
-    '荒野巨兽·克洛斯',
-    '暗夜领主·莫格',
-    '熔岩泰坦·伊格尼斯',
-    '深渊魔将·萨卡',
-    '虚空毁灭者·奥米伽'
+const BOSS_CONFIGS = [
+    { name: '南宁巨鳄王', shape: 'boss_croc', color: '#004d40', accent: '#00e676' },
+    { name: '北宁雪山巨魔', shape: 'boss_yeti', color: '#37474f', accent: '#90caf9' },
+    { name: '华山熔岩魔君', shape: 'boss_demon', color: '#b71c1c', accent: '#ff9100' },
+    { name: '东宫九头妖王', shape: 'boss_hydra', color: '#4a148c', accent: '#e040fb' },
+    { name: '虚空毁灭霸主', shape: 'boss_void', color: '#212121', accent: '#00e5ff' }
 ];
 
 function spawnMonster(isBoss = false) {
@@ -1064,10 +1057,11 @@ function spawnMonster(isBoss = false) {
 
     if (isBoss) {
         bossCount++;
+        let bossConfig = BOSS_CONFIGS[(bossCount - 1) % BOSS_CONFIGS.length];
         let bossMaxHp = Math.round((35 + (bossCount - 1) * 28) * (1 + (player.level - 1) * 0.08));
         let bossSpeed = Math.min(1.65, 0.85 + (bossCount - 1) * 0.08);
-        let bossSize = Math.min(62, 42 + bossCount * 3);
-        let bossName = BOSS_NAMES[(bossCount - 1) % BOSS_NAMES.length] + ` (第${bossCount}波)`;
+        let bossSize = Math.min(68, 46 + bossCount * 3);
+        let bossName = bossConfig.name + ` (第${bossCount}波)`;
 
         monsters.push({
             id: Math.random().toString(36).substr(2, 9),
@@ -1080,8 +1074,9 @@ function spawnMonster(isBoss = false) {
             maxHp: bossMaxHp,
             speed: bossSpeed,
             size: bossSize,
-            color: '#d50000',
-            shape: 'boss',
+            color: bossConfig.color,
+            accent: bossConfig.accent,
+            shape: bossConfig.shape,
             exp: 180 + bossCount * 60
         });
         playSoundLevelUp();
@@ -1398,7 +1393,6 @@ function moveEntityWithCollision(entity, dx, dy, radius) {
     }
 }
 
-// 玩家掉命及切换复活处理
 function handlePlayerDeath() {
     livesLeft--;
     if (livesLeft > 0) {
@@ -1421,7 +1415,6 @@ function updateGame(deltaTime) {
 
     let deltaSec = Math.min(0.1, deltaTime / 1000);
 
-    // 复活倒计时
     if (isRespawning) {
         respawnTimer -= deltaSec;
         let currentCeil = Math.ceil(respawnTimer);
@@ -2148,14 +2141,58 @@ function renderGame() {
             ctx.fillRect(mDrawX - 5, mDrawY - 5, 3, 3);
             ctx.fillRect(mDrawX + 2, mDrawY - 5, 3, 3);
             ctx.restore();
-        } else if (m.shape === 'boss') {
-            ctx.strokeStyle = 'rgba(255, 23, 68, 0.5)';
-            ctx.lineWidth = 4;
-            ctx.beginPath(); ctx.arc(mDrawX, mDrawY, m.size / 2 + 5, 0, Math.PI * 2); ctx.stroke();
+        } else if (m.shape && m.shape.startsWith('boss_')) {
+            ctx.save();
+            ctx.translate(mDrawX, mDrawY);
 
-            ctx.fillStyle = m.color;
-            ctx.beginPath(); ctx.arc(mDrawX, mDrawY, m.size / 2, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = '#ffeb3b'; ctx.lineWidth = 3; ctx.stroke();
+            ctx.strokeStyle = m.accent || '#ff5252';
+            ctx.lineWidth = 3.5;
+            ctx.setLineDash([6, 4]);
+            ctx.beginPath(); ctx.arc(0, 0, m.size / 2 + 6, 0, Math.PI * 2); ctx.stroke();
+            ctx.setLineDash([]);
+
+            if (m.shape === 'boss_croc') {
+                ctx.fillStyle = m.color;
+                ctx.beginPath(); ctx.ellipse(0, 0, m.size/2, m.size/2.4, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = m.accent;
+                ctx.beginPath(); ctx.moveTo(m.size/2 - 4, -8); ctx.lineTo(m.size/2 + 14, 0); ctx.lineTo(m.size/2 - 4, 8); ctx.closePath(); ctx.fill();
+                ctx.fillStyle = '#ffeb3b';
+                ctx.fillRect(4, -6, 4, 4); ctx.fillRect(4, 2, 4, 4);
+            } else if (m.shape === 'boss_yeti') {
+                ctx.fillStyle = m.color;
+                ctx.beginPath(); ctx.roundRect(-m.size/2, -m.size/2, m.size, m.size, 12); ctx.fill();
+                ctx.fillStyle = m.accent;
+                ctx.beginPath(); ctx.moveTo(-10, -m.size/2); ctx.lineTo(-18, -m.size/2 - 12); ctx.lineTo(-4, -m.size/2); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(10, -m.size/2); ctx.lineTo(18, -m.size/2 - 12); ctx.lineTo(4, -m.size/2); ctx.fill();
+                ctx.fillStyle = '#ff1744';
+                ctx.fillRect(-8, -4, 5, 5); ctx.fillRect(3, -4, 5, 5);
+            } else if (m.shape === 'boss_demon') {
+                ctx.fillStyle = m.color;
+                ctx.beginPath(); ctx.arc(0, 0, m.size/2, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = m.accent;
+                ctx.beginPath(); ctx.moveTo(-12, -m.size/2 + 2); ctx.lineTo(-18, -m.size/2 - 14); ctx.lineTo(-6, -m.size/2 + 4); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(12, -m.size/2 + 2); ctx.lineTo(18, -m.size/2 - 14); ctx.lineTo(6, -m.size/2 + 4); ctx.fill();
+                ctx.fillStyle = '#ffeb3b';
+                ctx.beginPath(); ctx.arc(0, 2, 8, 0, Math.PI).ctx.fill();
+            } else if (m.shape === 'boss_hydra') {
+                ctx.fillStyle = m.color;
+                ctx.beginPath(); ctx.arc(0, 0, m.size/2, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = m.accent;
+                ctx.beginPath(); ctx.arc(-12, -10, 7, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(12, -10, 7, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(0, 12, 8, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#00e5ff';
+                ctx.fillRect(-13, -11, 3, 3); ctx.fillRect(11, -11, 3, 3);
+            } else {
+                ctx.fillStyle = m.color;
+                ctx.beginPath(); ctx.arc(0, 0, m.size/2, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = m.accent; ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.arc(0, 0, m.size/2 - 6, 0, Math.PI * 2); ctx.stroke();
+                ctx.fillStyle = '#fff';
+                ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI * 2); ctx.fill();
+            }
+
+            ctx.restore();
 
             ctx.fillStyle = '#ffeb3b';
             ctx.font = 'bold 11px sans-serif';
@@ -2211,7 +2248,6 @@ function renderGame() {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 简洁清爽的 54321 倒计时与新英雄即将登场提示
     if (isRespawning) {
         let nextForm = getCurrentLifeForm();
         let currentSec = Math.ceil(respawnTimer);
