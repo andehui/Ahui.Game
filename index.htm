@@ -256,12 +256,13 @@
             left: 40px;
             width: 120px;
             height: 120px;
-            background: rgba(255, 255, 255, 0.08);
-            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.12);
+            border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            pointer-events: none;
+            pointer-events: auto;
             display: none; /* 运行时按需开启 */
             z-index: 5;
+            touch-action: none;
         }
         #joystick-stick {
             position: absolute;
@@ -269,7 +270,7 @@
             left: 35px;
             width: 50px;
             height: 50px;
-            background: rgba(33, 150, 243, 0.5);
+            background: rgba(33, 150, 243, 0.6);
             border: 2px solid #2196F3;
             border-radius: 50%;
             pointer-events: none;
@@ -384,12 +385,20 @@
 
         /* 响应式媒体查询：移动端竖屏/小屏自动缩放隐藏侧边榜单 */
         @media (max-width: 900px) {
+            body {
+                width: 100vw;
+                height: 100vh;
+                overflow: hidden;
+                position: fixed;
+            }
             #game-wrapper {
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                padding: 5px;
-                gap: 5px;
+                padding: 0;
+                gap: 0;
+                width: 100vw;
+                height: 100vh;
             }
             #leaderboard {
                 display: none; /* 手机端隐藏排行榜以留出游戏画面 */
@@ -401,9 +410,10 @@
                 max-height: none;
                 border-radius: 0;
                 border: none;
+                aspect-ratio: auto;
             }
             #joystick-base, #attack-btn {
-                display: block; /* 移动端显示虚拟摇杆和攻击按钮 */
+                display: flex; /* 移动端显示虚拟摇杆和攻击按钮 */
             }
             .controls-hint {
                 display: none;
