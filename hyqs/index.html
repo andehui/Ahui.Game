@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>荒野求生 - 困难进阶与障碍地形版</title>
+    <title>华山论剑 - 困难进阶与障碍地形版</title>
     <style>
         * {
             box-sizing: border-box;
@@ -427,10 +427,10 @@
 <!-- 用户登录浮层 -->
 <div id="login-overlay">
     <div class="login-card">
-        <h1 id="registerTitle">荒野求生 · 进阶版</h1>
+        <h1 id="registerTitle">华山论剑 · 加强版</h1>
         <p>地形障碍升级 | 每20杀递增小BOSS | 怪物狂潮</p>
-        <input type="text" id="usernameInput" class="login-input" placeholder="输入您的昵称 (例如: 拳王阿强)" maxlength="16">
-        <button class="register-btn" onclick="registerUser()">开始挑战</button>
+        <input type="text" id="usernameInput" class="login-input" placeholder="输入您的昵称 (例如: 大头辉)" maxlength="16">
+        <button class="register-btn" onclick="registerUser()">发起挑战</button>
     </div>
 </div>
 
@@ -444,7 +444,7 @@
         <div id="notification-toast">警告！</div>
 
         <div class="ui-panel">
-            <h1 id="gameTitle">🥊 荒野求生</h1>
+            <h1 id="gameTitle">🥊 华山论剑</h1>
             <p>玩家: <span id="userNameDisplay" style="color:#00e5ff; font-weight:bold;">玩家</span></p>
             <p>当前在线: <span id="onlineCount" style="color:#00e676; font-weight:bold;">1</span> 人 | 历史: <span id="totalPlayersCount" style="color:#ffca28; font-weight:bold;">128</span></p>
             <p>等级: <span id="playerLevel" class="level-highlight">Lv.1</span> (攻击: <span id="atkDisplay" style="color:#ff8a80;">1</span>)</p>
@@ -479,8 +479,8 @@
 
         <!-- 游戏结束浮层 -->
         <div id="game-over-overlay" class="overlay-screen">
-            <h2 style="color: #f44336;">K.O.! 拳王力尽</h2>
-            <p>荒野险恶，你被怪物包围击败了！</p>
+            <h2 style="color: #f44336;">胜败兵家常事，请重新来过</h2>
+            <p>华山险恶，你被怪物包围击败了！</p>
             <p>最终等级: <span id="finalLevel" class="level-highlight">Lv.1</span></p>
             <p>生存时间: <span id="finalTime" class="timer-highlight">0.0</span> 秒</p>
             <p>击杀妖怪: <span id="finalKills" class="kills-highlight">0</span> 只</p>
@@ -750,8 +750,8 @@ function registerUser() {
     records = allRecords[currentUserName] || [];
 
     document.getElementById('userNameDisplay').textContent = currentUserName;
-    document.getElementById('gameTitle').textContent = `🥊 ${currentUserName} - 荒野求生`;
-    document.getElementById('registerTitle').textContent = `${currentUserName} - 荒野求生`;
+    document.getElementById('gameTitle').textContent = `🥊 ${currentUserName} - 华山论剑`;
+    document.getElementById('registerTitle').textContent = `${currentUserName} - 华山论剑`;
 
     let overlay = document.getElementById('login-overlay');
     overlay.classList.add('hidden');
@@ -817,7 +817,9 @@ const ITEM_TYPES = [
     { type: 'multishot', name: '散弹拳套', color: '#ff9100', icon: '🥊', desc: '一次发射3连发拳波' },
     { type: 'rapid', name: '连环快速拳', color: '#29b6f6', icon: '⚡', desc: '子弹射速大幅提升' },
     { type: 'shield', name: '金钟护体', color: '#ffd700', icon: '🛡️', desc: '免疫1次攻击' },
-    { type: 'wolf', name: '忠诚战狼护卫', color: '#ff5722', icon: '🐺', desc: '召唤永久战狼护卫帮你打怪！' }
+    { type: 'wolf', name: '忠诚战狼护卫', color: '#ff5722', icon: '🐺', desc: '召唤永久战狼护卫帮你打怪！' },
+    { type: 'invincible', name: '无敌金身', color: '#ffeb3b', icon: '⭐', desc: '10秒绝对无敌免疫伤害' },
+    { type: 'clone', name: '影分身符', color: '#ab47bc', icon: '👥', desc: '召唤2个分身影子跟随并同步射击15秒' }
 ];
 
 let player = {};
@@ -957,27 +959,28 @@ function getTerrain(wx, wy) {
 
 function getObjectAt(wx, wy, terrainName) {
     // 出生点周围不生成实体障碍物
-    if (Math.abs(wx) <= 3 && Math.abs(wy) <= 3) return null;
+    if (Math.abs(wx) <= 4 && Math.abs(wy) <= 4) return null;
 
     let hash = Math.sin(wx * 12.9898 + wy * 78.233) * 43758.5453;
     hash = hash - Math.floor(hash);
 
+    // 大幅调低障碍物生成概率，让地图非常开阔舒适
     if (terrainName === '森林') {
-        if (hash > 0.62) return 'tree';      // 不可穿过的参天大树
-        if (hash > 0.48) return 'bush';      // 装饰灌木（可穿过）
+        if (hash > 0.88) return 'tree';      // 仅保留少量参天大树
+        if (hash > 0.78) return 'bush';      // 灌木
     }
     if (terrainName === '草地') {
-        if (hash > 0.94) return 'rock';      // 草地零星巨石（不可穿过）
-        if (hash > 0.85) return 'flower';    // 花丛（可穿过）
+        if (hash > 0.97) return 'rock';      // 极少量的零星巨石
+        if (hash > 0.90) return 'flower';
     }
     if (terrainName === '山地') {
-        if (hash > 0.68) return 'rock';      // 山地障碍巨石（不可穿过）
+        if (hash > 0.85) return 'rock';      // 山地少量岩石
     }
     if (terrainName === '沙滩') {
-        if (hash > 0.93) return 'rock';      // 礁石（不可穿过）
+        if (hash > 0.98) return 'rock';
     }
     if (terrainName === '雪山') {
-        if (hash > 0.78) return 'ice_pillar'; // 冰柱障碍（不可穿过）
+        if (hash > 0.92) return 'ice_pillar';
     }
     return null;
 }
@@ -1022,11 +1025,58 @@ function addFloatingText(text, x, y, color = '#fff') {
 
 // --- 怪物与难度增强配置 ---
 const MONSTER_TYPES = [
-    { name: '狂暴史莱姆', shape: 'blob', hp: 2, speed: 1.05, size: 18, color: '#ab47bc', exp: 12, isBoss: false },
-    { name: '重装僵尸怪', shape: 'zombie', hp: 4, speed: 0.85, size: 22, color: '#26a69a', exp: 28, isBoss: false },
-    { name: '疾风刺猬兽', shape: 'spike', hp: 2, speed: 1.55, size: 17, color: '#ff7043', exp: 18, isBoss: false },
-    { name: '暗影猎手', shape: 'shadow', hp: 3, speed: 1.40, size: 20, color: '#5c6bc0', exp: 32, isBoss: false }
+    { name: '狂暴史莱姆', shape: 'blob', hp: 2, speed: 1.05, size: 18, color: '#ab47bc', exp: 12, isBoss: false, sound: 'slime' },
+    { name: '重装僵尸怪', shape: 'zombie', hp: 4, speed: 0.85, size: 22, color: '#26a69a', exp: 28, isBoss: false, sound: 'zombie' },
+    { name: '疾风刺猬兽', shape: 'spike', hp: 2, speed: 1.55, size: 17, color: '#ff7043', exp: 18, isBoss: false, sound: 'spike' },
+    { name: '暗影猎手', shape: 'shadow', hp: 3, speed: 1.40, size: 20, color: '#5c6bc0', exp: 32, isBoss: false, sound: 'shadow' },
+    { name: '烈焰狂兽', shape: 'beast', hp: 6, speed: 1.25, size: 26, color: '#e65100', exp: 45, isBoss: false, sound: 'roar' },
+    { name: '虚空幽灵', shape: 'ghost', hp: 3, speed: 1.65, size: 19, color: '#7b1fa2', exp: 40, isBoss: false, sound: 'ghost' }
 ];
+
+// 特殊怪物叫声合成函数 (Web Audio API)
+function playMonsterRoar(type) {
+    if (!audioCtx) return;
+    try {
+        let now = audioCtx.currentTime;
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        
+        if (type === 'roar') {
+            // 烈焰狂兽低沉咆哮
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(140, now);
+            osc.frequency.exponentialRampToValueAtTime(55, now + 0.35);
+            gain.gain.setValueAtTime(0.12, now);
+            gain.gain.linearRampToValueAtTime(0.001, now + 0.35);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.35);
+        } else if (type === 'boss') {
+            // BOSS 震撼怒吼
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(90, now);
+            osc.frequency.exponentialRampToValueAtTime(35, now + 0.5);
+            gain.gain.setValueAtTime(0.18, now);
+            gain.gain.linearRampToValueAtTime(0.001, now + 0.5);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.5);
+        } else if (type === 'ghost') {
+            // 幽灵尖啸
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(450, now);
+            osc.frequency.linearRampToValueAtTime(850, now + 0.2);
+            gain.gain.setValueAtTime(0.08, now);
+            gain.gain.linearRampToValueAtTime(0.001, now + 0.25);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.25);
+        }
+    } catch(e) {}
+}
 
 const BOSS_NAMES = [
     '荒野巨兽·克洛斯',
@@ -1086,6 +1136,7 @@ function spawnMonster(isBoss = false) {
             exp: 180 + bossCount * 60
         });
         playSoundLevelUp();
+        playMonsterRoar('boss');
         showNotification(`🚨 第 ${bossCount} 波小BOSS【${bossName}】降临！血量:${bossMaxHp}`);
         addFloatingText(`🚨 小BOSS降临！HP:${bossMaxHp}`, player.x, player.y - 1.5, "#ff1744");
         updateUI();
@@ -1109,6 +1160,9 @@ function spawnMonster(isBoss = false) {
             shape: template.shape,
             exp: Math.round(template.exp * (1 + bossCount * 0.1))
         });
+        if (template.sound && Math.random() < 0.3) {
+            playMonsterRoar(template.sound);
+        }
     }
 }
 
@@ -1159,38 +1213,55 @@ function shootBullet() {
 
     playSoundShoot();
 
-    let target = getClosestMonster(player.x, player.y);
-    let baseVx = player.facingX || 0;
-    let baseVy = player.facingY || -1;
+    // 辅助发射子弹的核心逻辑闭包
+    function createBulletAt(startX, startY) {
+        let target = getClosestMonster(startX, startY);
+        let baseVx = player.facingX || 0;
+        let baseVy = player.facingY || -1;
 
-    if (target) {
-        let dx = target.x - player.x;
-        let dy = target.y - player.y;
-        let dist = Math.hypot(dx, dy);
-        if (dist > 0) {
-            baseVx = dx / dist;
-            baseVy = dy / dist;
+        if (target) {
+            let dx = target.x - startX;
+            let dy = target.y - startY;
+            let dist = Math.hypot(dx, dy);
+            if (dist > 0) {
+                baseVx = dx / dist;
+                baseVy = dy / dist;
+            }
         }
+
+        let angles = [0];
+        if (player.buffs.multishot.active) angles = [-0.25, 0, 0.25];
+
+        angles.forEach(ang => {
+            let cos = Math.cos(ang), sin = Math.sin(ang);
+            let vx = baseVx * cos - baseVy * sin;
+            let vy = baseVx * sin + baseVy * cos;
+
+            bullets.push({
+                x: startX,
+                y: startY,
+                vx, vy,
+                speed: player.baseSpeed * 2.7,
+                damage: player.bulletDamage,
+                targetId: target ? target.id : null,
+                life: 4.5
+            });
+        });
     }
 
-    let angles = [0];
-    if (player.buffs.multishot.active) angles = [-0.25, 0, 0.25];
+    // 玩家本体发射
+    createBulletAt(player.x, player.y);
 
-    angles.forEach(ang => {
-        let cos = Math.cos(ang), sin = Math.sin(ang);
-        let vx = baseVx * cos - baseVy * sin;
-        let vy = baseVx * sin + baseVy * cos;
-
-        bullets.push({
-            x: player.x,
-            y: player.y,
-            vx, vy,
-            speed: player.baseSpeed * 2.7,
-            damage: player.bulletDamage,
-            targetId: target ? target.id : null,
-            life: 4.5
-        });
-    });
+    // 如果分身道具激活，2个影子分身同步发射子弹
+    if (player.buffs.clone.active) {
+        let angleTime = performance.now() * 0.008;
+        let clone1X = player.x + Math.cos(angleTime) * 1.2;
+        let clone1Y = player.y + Math.sin(angleTime) * 1.2;
+        let clone2X = player.x + Math.cos(angleTime + Math.PI) * 1.2;
+        let clone2Y = player.y + Math.sin(angleTime + Math.PI) * 1.2;
+        createBulletAt(clone1X, clone1Y);
+        createBulletAt(clone2X, clone2Y);
+    }
 }
 
 function getClosestMonster(x, y) {
@@ -1226,7 +1297,9 @@ function resetGame() {
             speed: { active: false, timeLeft: 0 },
             multishot: { active: false, timeLeft: 0 },
             rapid: { active: false, timeLeft: 0 },
-            shield: { active: false, timeLeft: 0 }
+            shield: { active: false, timeLeft: 0 },
+            invincible: { active: false, timeLeft: 0 },
+            clone: { active: false, timeLeft: 0 }
         }
     };
     wolf = null;
@@ -1307,7 +1380,7 @@ function updateUI() {
     for (let key in player.buffs) {
         let b = player.buffs[key];
         if (b.active) {
-            let nameMap = { speed: '👟 疾风跑鞋', multishot: '🥊 散弹拳套', rapid: '⚡ 连环快速', shield: '🛡️ 金钟护体' };
+            let nameMap = { speed: '👟 疾风跑鞋', multishot: '🥊 散弹拳套', rapid: '⚡ 连环快速', shield: '🛡️ 金钟护体', invincible: '⭐ 无敌金身', clone: '👥 影分身' };
             activeBuffs.push(`<span class="buff-tag">${nameMap[key]} (${b.timeLeft.toFixed(1)}s)</span>`);
         }
     }
@@ -1477,9 +1550,12 @@ function updateGame(deltaTime) {
                 addFloatingText(`🐺 召唤战狼护卫成功！`, player.x, player.y - 1, "#ff5722");
             } else {
                 player.buffs[it.type].active = true;
-                player.buffs[it.type].timeLeft = 30.0;
+                let duration = 30.0;
+                if (it.type === 'invincible') duration = 10.0;
+                if (it.type === 'clone') duration = 15.0;
+                player.buffs[it.type].timeLeft = duration;
                 playSoundPowerup();
-                addFloatingText(`✨ 获得 30 秒强力buff: ${it.name}!`, player.x, player.y - 1, it.color);
+                addFloatingText(`✨ 获得 ${duration} 秒强力buff: ${it.name}!`, player.x, player.y - 1, it.color);
             }
             items.splice(i, 1);
             updateUI();
@@ -1500,11 +1576,18 @@ function updateGame(deltaTime) {
 
         let hitDist = m.isBoss ? 0.95 : 0.72;
         if (dist < hitDist) {
-            if (player.buffs.shield.active) {
+            if (player.buffs.invincible.active) {
+                // 无敌状态下免疫伤害并震退周围怪物
+                let odx = m.x - player.x;
+                let ody = m.y - player.y;
+                let odist = Math.hypot(odx, ody);
+                if (odist > 0) {
+                    moveEntityWithCollision(m, (odx / odist) * 2.5, (ody / odist) * 2.5, 0.28);
+                }
+            } else if (player.buffs.shield.active) {
                 player.buffs.shield.active = false;
                 playSoundPowerup();
                 addFloatingText("🛡️ 金钟护体抵挡了一次致命攻击！", player.x, player.y - 1, "#ffd700");
-                // 震退周围所有靠近的怪物，防止瞬间连续受击
                 monsters.forEach(otherM => {
                     let odx = otherM.x - player.x;
                     let ody = otherM.y - player.y;
@@ -1613,6 +1696,13 @@ function drawBoxerHero(cx, cy, p) {
         ctx.lineWidth = 3.5;
         ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 15;
         ctx.beginPath(); ctx.arc(0, -10, 28, 0, Math.PI * 2); ctx.stroke();
+        ctx.shadowBlur = 0;
+    }
+    if (p.buffs.invincible.active) {
+        ctx.strokeStyle = 'rgba(255, 235, 59, 0.95)';
+        ctx.lineWidth = 4.5;
+        ctx.shadowColor = '#ffeb3b'; ctx.shadowBlur = 25;
+        ctx.beginPath(); ctx.arc(0, -10, 34, 0, Math.PI * 2); ctx.stroke();
         ctx.shadowBlur = 0;
     }
 
@@ -1843,6 +1933,23 @@ function renderGame() {
             ctx.fillStyle = '#ff1744';
             ctx.fillRect(mDrawX - 4, mDrawY - 2, 3, 3);
             ctx.fillRect(mDrawX + 1, mDrawY - 2, 3, 3);
+        } else if (m.shape === 'beast') {
+            // 烈焰狂兽
+            ctx.fillStyle = m.color;
+            ctx.beginPath(); ctx.ellipse(mDrawX, mDrawY, m.size/2, m.size/2.4, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#ffeb3b';
+            ctx.fillRect(mDrawX - 6, mDrawY - 5, 4, 4);
+            ctx.fillRect(mDrawX + 2, mDrawY - 5, 4, 4);
+        } else if (m.shape === 'ghost') {
+            // 虚空幽灵半透明
+            ctx.save();
+            ctx.globalAlpha = 0.75;
+            ctx.fillStyle = m.color;
+            ctx.beginPath(); ctx.arc(mDrawX, mDrawY - 2, m.size / 2, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#00ffff';
+            ctx.fillRect(mDrawX - 5, mDrawY - 5, 3, 3);
+            ctx.fillRect(mDrawX + 2, mDrawY - 5, 3, 3);
+            ctx.restore();
         } else if (m.shape === 'boss') {
             // 小BOSS光环特效
             ctx.strokeStyle = 'rgba(255, 23, 68, 0.5)';
@@ -1881,6 +1988,21 @@ function renderGame() {
 
     if (wolf) {
         drawWolf(wolf, offsetX, offsetY);
+    }
+
+    // 如果分身道具激活，渲染 2 个幻影分身影子
+    if (player.buffs.clone.active) {
+        let angleTime = performance.now() * 0.008;
+        let c1OffsetX = Math.cos(angleTime) * 1.2 * TILE_SIZE;
+        let c1OffsetY = Math.sin(angleTime) * 1.2 * TILE_SIZE;
+        let c2OffsetX = Math.cos(angleTime + Math.PI) * 1.2 * TILE_SIZE;
+        let c2OffsetY = Math.sin(angleTime + Math.PI) * 1.2 * TILE_SIZE;
+
+        ctx.save();
+        ctx.globalAlpha = 0.55;
+        drawBoxerHero((canvas.width / 2) + c1OffsetX, (canvas.height / 2) + c1OffsetY, player);
+        drawBoxerHero((canvas.width / 2) + c2OffsetX, (canvas.height / 2) + c2OffsetY, player);
+        ctx.restore();
     }
 
     drawBoxerHero(canvas.width / 2, canvas.height / 2, player);
