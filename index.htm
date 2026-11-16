@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
     <title>华山论剑 - 双截龙神兵版</title>
-    <!-- Google AdSense 主脚本放在 head 中提前异步加载 -->
+    <!-- Google 广告主脚本放在 head 中提前异步加载 -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1805477885216561"
          crossorigin="anonymous"></script>
     <style>
@@ -552,12 +552,12 @@
                 <button class="ad-close-btn" onclick="attemptCloseAd()" title="关闭广告">✕</button>
                 <h3 style="color: #ff9100; margin-bottom: 6px; font-size: 15px;">📺 赞助商广告</h3>
                 
-                <!-- 赋予固定尺寸的广告容器，防止自适应坍缩或因隐藏计算错误 -->
+                <!-- 赋予固定尺寸的广告容器，已填入新的广告单元 ID: ca-app-pub-1805477885216561/9689603314 -->
                 <div id="adsense-wrapper" style="width: 300px; min-height: 250px; margin: 0 auto; background: #262626; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 6px;">
                     <ins class="adsbygoogle"
                          style="display:inline-block;width:300px;height:250px"
                          data-ad-client="ca-pub-1805477885216561"
-                         data-ad-slot="2172920426"></ins>
+                         data-ad-slot="ca-app-pub-1805477885216561/9689603314"></ins>
                 </div>
                 
                 <div id="ad-slot-container" class="ad-placeholder-area">
@@ -2498,19 +2498,19 @@ function watchAdToContinue() {
     claimBtn.style.setProperty('display', 'none', 'important');
     adIsCompleted = false;
 
-    // 重新注入 AdSense 代码并安全加载
+    // 重新注入广告代码（已填入新的广告单元 ID: ca-app-pub-1805477885216561/9689603314）
     let wrapper = document.getElementById('adsense-wrapper');
     wrapper.innerHTML = `
         <ins class="adsbygoogle"
              style="display:inline-block;width:300px;height:250px"
              data-ad-client="ca-pub-1805477885216561"
-             data-ad-slot="2172920426"></ins>
+             data-ad-slot="ca-app-pub-1805477885216561/9689603314"></ins>
     `;
     setTimeout(() => {
         try {
             (adsbygoogle = window.adsbygoogle || []).push({});
         } catch (e) {
-            console.error('AdSense 加载异常:', e);
+            console.error('广告加载异常:', e);
         }
     }, 150);
 
