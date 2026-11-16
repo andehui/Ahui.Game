@@ -1,742 +1,3153 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>笑傲江湖：剑心劫 - 会员版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
+    <title>华山论剑 - 双截龙神兵版</title>
     <style>
-        :root {
-            --bg-color: #121214;
-            --panel-bg: #1c1c21;
-            --border-color: #383530;
-            --text-main: #d8d3c8;
-            --text-dim: #8a8478;
-            --accent-gold: #c89d54;
-            --accent-red: #b83b3b;
-            --accent-green: #4a8c5e;
-            --accent-blue: #4a769e;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
         }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
         body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "SimSun", serif;
+            background-color: #121212;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100vw;
             height: 100vh;
-            height: 100dvh;
             overflow: hidden;
-        }
-
-        /* 登录遮罩层 */
-        #auth-modal {
             position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.92);
-            z-index: 1000;
+        }
+        /* 登录/注册浮层 */
+        #login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 10, 0.96);
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            z-index: 100;
+            transition: opacity 0.4s ease;
         }
-        .auth-box {
-            background: var(--panel-bg);
-            border: 2px solid var(--accent-gold);
-            border-radius: 10px;
-            padding: 25px;
-            max-width: 360px;
-            width: 100%;
+        #login-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .login-card {
+            background: #1e1e1e;
+            padding: 30px 40px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.9);
             text-align: center;
+            width: 90%;
+            max-width: 380px;
         }
-        .auth-box h2 { color: var(--accent-gold); margin-bottom: 15px; letter-spacing: 2px; }
-        .auth-box input {
+        .login-card h1 {
+            color: #2196F3;
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        .login-card p {
+            color: #aaa;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+        .login-input {
             width: 100%;
-            background: #121214;
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 10px;
-            margin-bottom: 12px;
-            border-radius: 6px;
-            font-size: 0.95rem;
+            padding: 12px 15px;
+            background: #2c2c2c;
+            border: 1px solid #444;
+            color: #fff;
+            font-size: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
             outline: none;
+            transition: border-color 0.2s;
         }
-        .auth-box input:focus { border-color: var(--accent-gold); }
-        .auth-btns { display: flex; gap: 10px; margin-top: 10px; }
-        .auth-btns button {
-            flex: 1;
-            padding: 10px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
+        .login-input:focus {
+            border-color: #2196F3;
+        }
+        .register-btn {
+            background: #2196F3;
+            color: #fff;
             border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s, transform 0.1s;
         }
-        .btn-login { background: var(--accent-gold); color: #121214; }
-        .btn-reg { background: #33333d; color: var(--text-main); border: 1px solid var(--border-color) !important; }
-        .auth-msg { color: var(--accent-red); font-size: 0.8rem; margin-top: 8px; height: 18px; }
+        .register-btn:hover {
+            background: #1e88e5;
+            transform: scale(1.02);
+        }
 
-        /* 顶部状态栏 */
-        header {
-            background: var(--panel-bg);
-            border-bottom: 1px solid var(--border-color);
+        /* 游戏整体布局 */
+        #game-wrapper {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            padding: 0;
+            background: #121212;
+            overflow: hidden;
+        }
+        #game-wrapper.active {
+            display: flex;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            max-width: none;
+            max-height: none;
+            border-radius: 0;
+            overflow: hidden;
+            border: none;
+            background: #000;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            object-fit: cover;
+        }
+
+        /* UI 面板 */
+        .ui-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.85);
             padding: 8px 12px;
+            border-radius: 6px;
+            pointer-events: none;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.15);
+            font-size: 12px;
+            min-width: 240px;
+            z-index: 5;
+        }
+        .ui-panel h1 {
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: #2196F3;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ui-panel p {
+            margin: 2px 0;
+            color: #ddd;
+        }
+        .timer-highlight { color: #ffca28; font-weight: bold; }
+        .kills-highlight { color: #ff5252; font-weight: bold; }
+        .level-highlight { color: #e040fb; font-weight: bold; }
+        .boss-highlight { color: #ff9100; font-weight: bold; }
+        .lives-highlight { color: #ff4081; font-weight: bold; letter-spacing: 1px; }
+        .round-highlight { color: #00e676; font-weight: bold; }
+        .weapon-highlight { color: #ffeb3b; font-weight: bold; }
+
+        /* 经验条 */
+        .exp-bar-box {
+            width: 100%;
+            background: #333;
+            height: 6px;
+            border-radius: 3px;
+            margin: 4px 0;
+            overflow: hidden;
+            border: 1px solid #555;
+        }
+        .exp-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00e676, #00b0ff);
+            width: 0%;
+        }
+        .buff-container {
+            margin-top: 4px;
+            padding-top: 4px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 10px;
+        }
+        .buff-tag {
+            display: block;
+            background: rgba(33, 150, 243, 0.2);
+            border: 1px solid #2196F3;
+            color: #64b5f6;
+            padding: 1px 4px;
+            border-radius: 3px;
+            margin-top: 2px;
+        }
+
+        /* 暂停按钮样式 */
+        #pause-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 6;
+            backdrop-filter: blur(4px);
+        }
+        #pause-btn:active {
+            background: #2196F3;
+        }
+
+        /* 提示信息弹窗 */
+        #notification-toast {
+            position: absolute;
+            top: 15%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(244, 67, 54, 0.92);
+            color: white;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 8;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            white-space: nowrap;
+        }
+        #notification-toast.show {
+            opacity: 1;
+        }
+
+        .controls-hint {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #bbb;
+            pointer-events: none;
+        }
+
+        /* 左侧虚拟摇杆样式 */
+        #joystick-base {
+            position: absolute;
+            bottom: 30px;
+            left: 40px;
+            width: 110px;
+            height: 110px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            pointer-events: auto;
+            display: flex;
+            z-index: 5;
+            touch-action: none;
+        }
+        #joystick-stick {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            width: 46px;
+            height: 46px;
+            background: rgba(33, 150, 243, 0.6);
+            border: 2px solid #2196F3;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        /* 右侧攻击按钮 */
+        #attack-btn {
+            position: absolute;
+            bottom: 30px;
+            right: 40px;
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 82, 82, 0.3);
+            border: 2px solid #ff5252;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 13px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            backdrop-filter: blur(4px);
+        }
+        #attack-btn:active {
+            background: rgba(255, 82, 82, 0.7);
+            transform: scale(0.95);
+        }
+
+        /* 浮层通用样式 */
+        .overlay-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
             display: flex;
             flex-direction: column;
-            gap: 6px;
-            flex-shrink: 0;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
             z-index: 10;
+            text-align: center;
+            padding: 0 20px;
+        }
+        .overlay-screen.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .overlay-screen h2 {
+            font-size: 26px;
+            margin-bottom: 10px;
+        }
+        .overlay-screen p {
+            font-size: 14px;
+            margin-bottom: 6px;
+            color: #eee;
+        }
+        .overlay-btn-group {
+            display: flex;
+            flex-direction: row;
+            gap: 15px;
+            margin-top: 18px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .overlay-btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            font-size: 15px;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .overlay-btn:hover { background: #1e88e5; transform: scale(1.03); }
+        .overlay-btn.ad-btn {
+            background: linear-gradient(135deg, #ff9100, #ff3d00);
+            box-shadow: 0 4px 15px rgba(255, 145, 0, 0.45);
+        }
+        .overlay-btn.ad-btn:hover {
+            background: linear-gradient(135deg, #ffa726, #ff5722);
         }
 
-        .title-bar {
+        /* 模拟广告弹窗容器样式（替换真实广告时可调整） */
+        #ad-overlay {
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.94);
+        }
+        .ad-box {
+            background: #1e1e1e;
+            border: 2px solid #ff9100;
+            border-radius: 12px;
+            padding: 25px 30px;
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+        }
+        .ad-placeholder-area {
+            background: #2b2b2b;
+            border: 1px dashed #666;
+            border-radius: 8px;
+            padding: 30px 15px;
+            margin: 15px 0;
+            color: #ffca28;
+            font-size: 14px;
+        }
+
+        /* 右侧战绩排行榜 */
+        #leaderboard {
+            display: none;
+        }
+        .score-list {
+            list-style: none;
+            margin-top: 10px;
+            overflow-y: auto;
+        }
+        .score-item {
+            background: #1e1e1e;
+            padding: 8px 10px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-size: 12px;
+            border-left: 3px solid #2196F3;
+        }
+        .score-row-top {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            margin-bottom: 3px;
+            font-weight: bold;
+        }
+        .score-row-bottom {
+            color: #999;
+            font-size: 11px;
         }
 
-        .title-bar h1 {
-            font-size: 1rem;
-            color: var(--accent-gold);
+        @media (min-width: 901px) {
+            #game-wrapper {
+                flex-direction: row;
+                padding: 10px;
+                gap: 15px;
+                width: 100%;
+                height: 100%;
+            }
+            #game-container {
+                width: auto;
+                height: 100%;
+                max-width: 800px;
+                aspect-ratio: 4 / 3;
+                max-height: 100vh;
+                border-radius: 8px;
+                border: 2px solid #333;
+            }
+            #leaderboard {
+                width: 250px;
+                background: #252525;
+                padding: 12px;
+                border-radius: 8px;
+                border: 1px solid rgba(255,255,255,0.1);
+                max-height: 550px;
+                display: flex;
+                flex-direction: column;
+            }
+            #joystick-base, #attack-btn {
+                display: none;
+            }
+            .controls-hint {
+                display: block;
+            }
         }
-
-        .sys-btns { display: flex; gap: 4px; }
-        .sys-btns button {
-            background: #2a2a30;
-            color: var(--text-dim);
-            border: 1px solid var(--border-color);
-            padding: 4px 8px;
-            font-size: 0.75rem;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 4px;
-            font-size: 0.75rem;
-            background: #141417;
-            padding: 5px 8px;
-            border-radius: 6px;
-            border: 1px solid #282622;
-        }
-
-        .stat-item span { color: var(--accent-gold); font-weight: bold; }
-        .stat-hp span { color: var(--accent-red); }
-        .stat-mp span { color: var(--accent-blue); }
-
-        #game-log {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-            line-height: 1.75;
-            font-size: 0.95rem;
-            scroll-behavior: smooth;
-        }
-
-        .msg { margin-bottom: 14px; animation: fadeIn 0.3s ease; }
-        .msg-system { color: var(--accent-gold); font-weight: bold; border-left: 3px solid var(--accent-gold); padding-left: 10px; }
-        .msg-story { color: var(--text-main); text-indent: 2em; }
-        .msg-combat { color: #e06c75; }
-        .msg-reward { color: var(--accent-green); font-weight: bold; }
-        .msg-user { color: var(--text-dim); font-size: 0.85rem; text-align: right; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-
-        #quick-actions {
-            background: #17171b;
-            border-top: 1px solid var(--border-color);
-            padding: 10px 12px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            max-height: 140px;
-            overflow-y: auto;
-            flex-shrink: 0;
-            z-index: 20;
-        }
-
-        .action-chip {
-            background: #252429;
-            color: var(--accent-gold);
-            border: 1px solid #4a4235;
-            padding: 8px 14px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            cursor: pointer;
-        }
-        .action-chip:active, .action-chip:hover { background: var(--accent-gold); color: #121214; }
-
-        #input-area {
-            background: var(--panel-bg);
-            border-top: 1px solid var(--border-color);
-            padding: 10px 12px;
-            display: flex;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-
-        #cmd-input {
-            flex: 1;
-            background: #121214;
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 10px 12px;
-            border-radius: 6px;
-            font-size: 0.95rem;
-            outline: none;
-        }
-
-        #send-btn {
-            background: var(--accent-gold); color: #121214; border: none; padding: 0 18px; border-radius: 6px; font-weight: bold; cursor: pointer;
-        }
-
-        #modal {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; justify-content: center; align-items: center; padding: 20px;
-        }
-        .modal-content {
-            background: var(--panel-bg); border: 1px solid var(--accent-gold); border-radius: 8px; padding: 20px; max-width: 450px; width: 100%; line-height: 1.6;
-        }
-        .modal-content h3 { color: var(--accent-gold); margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
-        .close-modal { margin-top: 15px; width: 100%; padding: 10px; background: #333; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<!-- 会员登录注册弹窗 -->
-<div id="auth-modal">
-    <div class="auth-box">
-        <h2>⚔️ 笑傲江湖·江湖令</h2>
-        <input type="text" id="username" placeholder="请输入江湖侠名（用户名）" autocomplete="off">
-        <input type="password" id="password" placeholder="请输入通行密令（密码）">
-        <div class="auth-msg" id="auth-msg"></div>
-        <div class="auth-btns">
-            <button class="btn-reg" onclick="handleRegister()">注册账号</button>
-            <button class="btn-login" onclick="handleLogin()">登入江湖</button>
-        </div>
+<!-- 用户登录浮层 -->
+<div id="login-overlay">
+    <div class="login-card">
+        <h1 id="registerTitle">华山论剑 · 双截龙神兵版</h1>
+        <p>剑在手，问天下谁是英雄</p>
+        <input type="text" id="usernameInput" class="login-input" placeholder="输入您的昵称 (例如: 大头辉)" maxlength="16">
+        <button class="register-btn" onclick="registerUser()">发起挑战</button>
     </div>
 </div>
 
-<header>
-    <div class="title-bar">
-        <h1 id="user-title">⚔️ 侠客：未登录</h1>
-        <div class="sys-btns">
-            <button id="music-btn" onclick="toggleBGM()">🎵 音乐:关</button>
-            <button onclick="logout()">注销</button>
-            <button onclick="showStatus()">档案</button>
-            <button onclick="manualSave()">手动存档</button>
+<!-- 游戏主体 -->
+<div id="game-wrapper">
+    <div id="game-container">
+        <canvas id="gameCanvas" width="960" height="600"></canvas>
+        
+        <button id="pause-btn" onclick="togglePause()" title="暂停 (Esc)">⏸️</button>
+
+        <div id="notification-toast">警告！</div>
+
+        <div class="ui-panel">
+            <h1 id="gameTitle">🥊 华山论剑</h1>
+            <p>玩家: <span id="userNameDisplay" style="color:#00e5ff; font-weight:bold;">玩家</span></p>
+            <p>生命: <span id="livesDisplay" class="lives-highlight">❤️❤️❤️ (3)</span></p>
+            <p>形态: <span id="weaponFormDisplay" style="color:#4fc3f7; font-weight:bold;">第1命 · 南宁老登</span></p>
+            <p>武器: <span id="currentWeaponDisplay" class="weapon-highlight">初始·气功弹</span></p>
+            <p>轮回: <span id="roundDisplay" class="round-highlight">第 1 回 (经典论剑)</span></p>
+
+            <p>等级: <span id="playerLevel" class="level-highlight">Lv.1</span> (攻击: <span id="atkDisplay" style="color:#ff8a80;">1</span>)</p>
+            <div class="exp-bar-box">
+                <div class="exp-bar-fill" id="expBarFill"></div>
+            </div>
+            <p>生存: <span id="survivalTime" class="timer-highlight">0.0</span>s | 击杀: <span id="killCount" class="kills-highlight">0</span></p>
+            <p>下个BOSS: 击杀 <span id="nextBossKills" class="boss-highlight">50</span> 只 (已出 <span id="bossWaveCount">0</span> 波)</p>
+            <div class="buff-container" id="buffContainer">
+                <span style="color:#aaa;">临时道具: 无 (武器胶囊永久有效至阵亡)</span>
+            </div>
         </div>
+
+        <div class="controls-hint">
+            移动: WASD/方向键 | 攻击: 空格/点击 | 暂停: Esc
+        </div>
+
+        <!-- 左侧转盘控件 -->
+        <div id="joystick-base">
+            <div id="joystick-stick"></div>
+        </div>
+
+        <!-- 右侧攻击按钮（手机端） -->
+        <div id="attack-btn">普攻/发射</div>
+
+        <!-- 暂停浮层 -->
+        <div id="pause-overlay" class="overlay-screen">
+            <h2 style="color: #ffca28;">游戏已暂停</h2>
+            <p>按 [Esc] 键或点击下方按钮继续游戏</p>
+            <button class="overlay-btn" onclick="togglePause()">继续游戏</button>
+        </div>
+
+        <!-- 游戏结束浮层 -->
+        <div id="game-over-overlay" class="overlay-screen">
+            <h2 style="color: #f44336;">胜败乃兵家常事，请大侠重新来过！</h2>
+            <p> @AndehuiZ 制造</p>
+            <p>最终等级: <span id="finalLevel" class="level-highlight">Lv.1</span></p>
+            <p>生存时间: <span id="finalTime" class="timer-highlight">0.0</span> 秒</p>
+            <p>击杀妖怪: <span id="finalKills" class="kills-highlight">0</span> 只</p>
+            <div class="overlay-btn-group">
+                <button class="overlay-btn" onclick="resetGame()">再次挑战</button>
+                <button class="overlay-btn ad-btn" onclick="watchAdToContinue()">📺 看广告，继续挑战</button>
+            </div>
+        </div>
+
+        <!-- ==================== 【广告代码替换区域 - HTML弹窗结构 START】 ==================== -->
+        <!-- 如果你使用的是第三方广告SDK（如 Google AdSense/IMA、穿山甲、优量汇、Telegram Ads 等），
+             可直接替换下方 #ad-overlay 内的广告容器或直接修改下方 JS 中的 watchAdToContinue() 函数 -->
+        <div id="ad-overlay" class="overlay-screen">
+            <div class="ad-box">
+                <h3 style="color: #ffca28; margin-bottom: 6px;">📺 激励视频广告</h3>
+                <p style="font-size: 12px; color: #aaa;">观看完整广告即可在当前进度恢复 3 条命继续战斗！</p>
+                
+                <!-- 真实广告代码嵌入位（可在此处放入广告 iframe / script / banner） -->
+                
+                <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1805477885216561"
+     crossorigin="anonymous"></script>
+<!-- game -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-1805477885216561"
+     data-ad-slot="2172920426"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+                
+                
+                
+                <div id="ad-slot-container" class="ad-placeholder-area">
+                    <p style="font-size: 16px; font-weight: bold; margin-bottom: 8px;">🔥 广告播放中...</p>
+                    <p style="font-size: 13px; color: #ddd;">剩余时间: <span id="adCountdown" style="color: #00e676; font-weight: bold; font-size: 18px;">15</span> 秒</p>
+                </div>
+
+                <button id="adClaimBtn" class="overlay-btn ad-btn" style="display: none; width: 100%; margin-top: 10px;" onclick="reviveFromAd()">✅ 领取 3 条命继续挑战</button>
+            </div>
+        </div>
+        <!-- ==================== 【广告代码替换区域 - HTML弹窗结构 END】 ==================== -->
     </div>
-    <div class="stats-grid">
-        <div class="stat-item stat-hp">气血: <span id="ui-hp">100/100</span></div>
-        <div class="stat-item stat-mp">内力: <span id="ui-mp">50/50</span></div>
-        <div class="stat-item">剑法: <span id="ui-atk">10</span></div>
-        <div class="stat-item">身法: <span id="ui-agi">10</span></div>
-        <div class="stat-item">境界: <span id="ui-realm">初出茅庐</span></div>
-        <div class="stat-item">银两: <span id="ui-gold">20</span></div>
-        <div class="stat-item">声望: <span id="ui-fame">0</span></div>
-        <div class="stat-item">心性: <span id="ui-align">中立</span></div>
+
+    <!-- 战绩表 -->
+    <div id="leaderboard">
+        <h2>血战排行榜</h2>
+        <ul class="score-list" id="scoreList">
+            <li class="no-records">⚠️ 暂无战绩记录</li>
+        </ul>
     </div>
-</header>
-
-<div id="game-log"></div>
-<div id="quick-actions"></div>
-
-<div id="input-area">
-    <input type="text" id="cmd-input" placeholder="输入指令或点击上方按钮..." autocomplete="off">
-    <button id="send-btn" onclick="handleInput()">行令</button>
-</div>
-
-<div id="modal" onclick="if(event.target===this)this.style.display='none'">
-    <div class="modal-content" id="modal-body"></div>
 </div>
 
 <script>
-    /* ================= 8-Bit 音乐引擎 ================= */
-    let audioCtx = null, bgmInterval = null, isBgmPlaying = false;
-    const xiaoaoNotes = [
-        392.00, 523.25, 587.33, 659.25, 587.33, 523.25, 392.00, 0,
-        392.00, 523.25, 587.33, 659.25, 783.99, 659.25, 587.33, 0,
-        659.25, 783.99, 880.00, 783.99, 659.25, 587.33, 523.25, 392.00,
-        293.66, 392.00, 523.25, 587.33, 523.25, 392.00, 329.63, 0
+// --- Web Audio API 8bit 复古音效 & 双截龙二代第二关 BGM ---
+let audioCtx = null;
+let bgmInterval = null;
+
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    startBGM();
+}
+
+function startBGM() {
+    if (bgmInterval) return;
+    let melodyNotes = [
+        329.63, 329.63, 392.00, 329.63, 293.66, 261.63, 293.66, 329.63,
+        440.00, 440.00, 523.25, 440.00, 392.00, 349.23, 392.00, 440.00,
+        349.23, 349.23, 440.00, 349.23, 329.63, 293.66, 261.63, 246.94,
+        220.00, 246.94, 293.66, 329.63, 349.23, 392.00, 440.00, 523.25
     ];
-    let noteIndex = 0;
-
-    function initAudio() {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-    }
-
-    function playChiptuneNote(freq) {
-        if (!audioCtx || !isBgmPlaying || freq === 0) return;
+    let step = 0;
+    bgmInterval = setInterval(() => {
+        if (!audioCtx || audioCtx.state !== 'running' || isPaused || isGameOver) return;
         try {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
             osc.type = 'square';
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.07, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+            osc.frequency.setValueAtTime(melodyNotes[step % melodyNotes.length], audioCtx.currentTime);
+            
+            gain.gain.setValueAtTime(0.028, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.16);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.16);
+            step++;
         } catch(e) {}
-    }
+    }, 170);
+}
 
-    function toggleBGM() {
-        initAudio();
-        isBgmPlaying = !isBgmPlaying;
-        const btn = document.getElementById('music-btn');
-        if (isBgmPlaying) {
-            btn.innerText = "🎵 音乐:开";
-            if (!bgmInterval) {
-                bgmInterval = setInterval(() => {
-                    if (isBgmPlaying) {
-                        playChiptuneNote(xiaoaoNotes[noteIndex]);
-                        noteIndex = (noteIndex + 1) % xiaoaoNotes.length;
-                    }
-                }, 220);
-            }
-        } else { btn.innerText = "🎵 音乐:关"; }
-    }
+function playSoundTick() {
+    if (!audioCtx) return;
+    try {
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.08);
+    } catch(e) {}
+}
 
-    /* ================= 会员系统逻辑 ================= */
-    let currentUser = null;
-    let state = getDefaultState();
-
-    function getDefaultState() {
-        return {
-            name: "少侠", sect: "无门无派",
-            hp: 100, maxHp: 100, mp: 50, maxMp: 50,
-            atk: 12, agi: 10, gold: 20, fame: 0, karma: 0,
-            day: 1, scene: "intro",
-            skills: ["基础剑法"], items: ["金创药"], flags: {}, enemy: null
-        };
-    }
-
-    // 注册账号
-    function handleRegister() {
-        const u = document.getElementById('username').value.trim();
-        const p = document.getElementById('password').value.trim();
-        const msg = document.getElementById('auth-msg');
-
-        if (!u || !p) { msg.innerText = "侠名与密令不能为空！"; return; }
-        
-        let users = JSON.parse(localStorage.getItem('xiaoao_users') || '{}');
-        if (users[u]) {
-            msg.innerText = "此侠名已被占用，请更换！";
-            return;
+function playSoundShoot(weaponType, mod = 'normal') {
+    if (!audioCtx) return;
+    try {
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        if (mod === 'laser') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(980, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(180, audioCtx.currentTime + 0.14);
+        } else if (mod === 'flame') {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(240, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(85, audioCtx.currentTime + 0.15);
+        } else if (weaponType === 'arrow') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(650, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(220, audioCtx.currentTime + 0.09);
+        } else if (weaponType === 'boomerang') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(420, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(780, audioCtx.currentTime + 0.12);
+        } else if (weaponType === 'tank_shell') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(55, audioCtx.currentTime + 0.18);
+        } else {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.08);
         }
+        gain.gain.setValueAtTime(weaponType === 'tank_shell' ? 0.13 : 0.09, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.15);
+    } catch(e) {}
+}
 
-        // 注册新用户并初始化初始存档
-        users[u] = { password: p, save: getDefaultState() };
-        localStorage.setItem('xiaoao_users', JSON.stringify(users));
-        
-        msg.style.color = "var(--accent-green)";
-        msg.innerText = "注册成功！请点击登入江湖。";
+function playSoundHit() {
+    if (!audioCtx) return;
+    try {
+        let now = audioCtx.currentTime;
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(987.77, now);
+        osc.frequency.setValueAtTime(1318.51, now + 0.08);
+        gain.gain.setValueAtTime(0.11, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(now + 0.2);
+    } catch(e) {}
+}
+
+function playSoundPowerup() {
+    if (!audioCtx) return;
+    try {
+        let now = audioCtx.currentTime;
+        let notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+            gain.gain.setValueAtTime(0.11, now + idx * 0.07);
+            gain.gain.linearRampToValueAtTime(0.01, now + (idx + 1) * 0.07);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + idx * 0.07);
+            osc.stop(now + (idx + 1) * 0.07);
+        });
+    } catch(e) {}
+}
+
+function playSoundLevelUp() {
+    if (!audioCtx) return;
+    try {
+        let now = audioCtx.currentTime;
+        let notes = [440, 554.37, 659.25, 880];
+        notes.forEach((freq, idx) => {
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+            gain.gain.setValueAtTime(0.13, now + idx * 0.08);
+            gain.gain.linearRampToValueAtTime(0.01, now + (idx + 1) * 0.08);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + idx * 0.08);
+            osc.stop(now + (idx + 1) * 0.08);
+        });
+    } catch(e) {}
+}
+
+function playSoundGameOver() {
+    if (!audioCtx) return;
+    try {
+        let now = audioCtx.currentTime;
+        let freqs = [400, 350, 300, 220];
+        freqs.forEach((freq, idx) => {
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+            gain.gain.setValueAtTime(0.14, now + idx * 0.12);
+            gain.gain.linearRampToValueAtTime(0.01, now + (idx + 1) * 0.12);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + idx * 0.12);
+            osc.stop(now + (idx + 1) * 0.12);
+        });
+    } catch(e) {}
+}
+
+function showNotification(msg) {
+    let toast = document.getElementById('notification-toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+let currentUserName = "";
+let records = [];
+
+window.addEventListener('DOMContentLoaded', () => {
+    let savedUser = localStorage.getItem('xz_evolution_mob_username');
+    if (savedUser) {
+        document.getElementById('usernameInput').value = savedUser;
+    }
+});
+
+function registerUser() {
+    let inputVal = document.getElementById('usernameInput').value.trim();
+    if (!inputVal) {
+        alert("请输入有效的游戏用户名称！");
+        return;
     }
 
-    // 登录账号
-    function handleLogin() {
-        const u = document.getElementById('username').value.trim();
-        const p = document.getElementById('password').value.trim();
-        const msg = document.getElementById('auth-msg');
+    initAudio();
 
-        if (!u || !p) { msg.innerText = "请输入侠名与密令！"; return; }
+    currentUserName = inputVal;
+    localStorage.setItem('xz_evolution_mob_username', currentUserName);
 
-        let users = JSON.parse(localStorage.getItem('xiaoao_users') || '{}');
-        if (!users[u]) {
-            msg.innerText = "此侠名不存在，请先注册！";
-            return;
+    let allRecords = JSON.parse(localStorage.getItem('xz_evolution_mob_all_records') || '{}');
+    records = allRecords[currentUserName] || [];
+
+    document.getElementById('userNameDisplay').textContent = currentUserName;
+    document.getElementById('gameTitle').textContent = `🥊 ${currentUserName} - 华山论剑`;
+    document.getElementById('registerTitle').textContent = `${currentUserName} - 华山论剑`;
+
+    let overlay = document.getElementById('login-overlay');
+    overlay.classList.add('hidden');
+    
+    setTimeout(() => {
+        document.getElementById('game-wrapper').classList.add('active');
+        startGameLoop();
+    }, 400);
+}
+
+// --- Perlin Noise 地形 ---
+const Perlin = {
+    p: new Uint8Array(512),
+    init: function() {
+        let permutation = new Uint8Array(256);
+        for (let i = 0; i < 256; i++) permutation[i] = i;
+        for (let i = 255; i > 0; i--) {
+            let j = Math.floor(Math.random() * (i + 1));
+            [permutation[i], permutation[j]] = [permutation[j], permutation[i]];
         }
-        if (users[u].password !== p) {
-            msg.innerText = "密令（密码）错误！";
-            return;
+        for (let i = 0; i < 512; i++) this.p[i] = permutation[i & 255];
+    },
+    fade: t => t * t * t * (t * (t * 6 - 15) + 10),
+    lerp: (t, a, b) => a + t * (b - a),
+    grad: (hash, x, y) => {
+        let h = hash & 7;
+        let u = h < 4 ? x : y;
+        let v = h < 4 ? y : x;
+        return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);
+    },
+    noise: function(x, y) {
+        let X = Math.floor(x) & 255, Y = Math.floor(y) & 255;
+        x -= Math.floor(x); y -= Math.floor(y);
+        let u = this.fade(x), v = this.fade(y);
+        let A = this.p[X] + Y, B = this.p[X + 1] + Y;
+        return this.lerp(v, 
+            this.lerp(u, this.grad(this.p[A], x, y), this.grad(this.p[B], x - 1, y)),
+            this.lerp(u, this.grad(this.p[A + 1], x, y - 1), this.grad(this.p[B + 1], x - 1, y - 1))
+        );
+    }
+};
+Perlin.init();
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const TILE_SIZE = 32;
+const VIEW_WIDTH = canvas.width / TILE_SIZE;
+const VIEW_HEIGHT = canvas.height / TILE_SIZE;
+
+const TERRAINS_ROUND1 = [
+    { name: '深海', color: '#153b6b', speedMultiplier: 0.0, solid: true },
+    { name: '浅水', color: '#0077b6', speedMultiplier: 0.72, solid: false },
+    { name: '沙滩', color: '#e9c46a', speedMultiplier: 0.92, solid: false },
+    { name: '草地', color: '#2a9d8f', speedMultiplier: 1.0, solid: false },
+    { name: '森林', color: '#1b6b2b', speedMultiplier: 0.88, solid: false },
+    { name: '山地', color: '#6c757d', speedMultiplier: 0.8, solid: false },
+    { name: '雪山', color: '#dce4ec', speedMultiplier: 0.65, solid: false }
+];
+
+const TERRAINS_ROUND2 = [
+    { name: '虚空死海', color: '#0b091a', speedMultiplier: 0.0, solid: true },
+    { name: '暗影沼泽', color: '#1f1135', speedMultiplier: 0.75, solid: false },
+    { name: '星金沙丘', color: '#4a154b', speedMultiplier: 0.92, solid: false },
+    { name: '霓虹原野', color: '#111936', speedMultiplier: 1.05, solid: false },
+    { name: '幽冥魔林', color: '#270830', speedMultiplier: 0.88, solid: false },
+    { name: '钛金岩山', color: '#312c40', speedMultiplier: 0.82, solid: false },
+    { name: '极寒冰晶', color: '#00363a', speedMultiplier: 0.68, solid: false }
+];
+
+function getTerrainList() {
+    return gameRound > 1 ? TERRAINS_ROUND2 : TERRAINS_ROUND1;
+}
+
+const WEAPON_CAPSULES = [
+    {
+        isWeapon: true,
+        weaponMod: 'spread',
+        letter: 'S',
+        color: '#ff3d00',
+        borderColor: '#ffd740',
+        heroNames: {
+            1: '【S】五向气功散弹',
+            2: '【S】七星连珠箭阵',
+            3: '【S】四方旋风回旋镖'
         }
-
-        // 登录成功
-        currentUser = u;
-        state = users[u].save;
-        document.getElementById('user-title').innerText = `⚔️ 侠客：${u}`;
-        document.getElementById('auth-modal').style.display = 'none';
-
-        initAudio(); // 允许音频
-        logEl.innerHTML = '';
-        if (state.enemy) startCombat(state.enemy);
-        else goScene(state.scene);
-    }
-
-    // 注销/切换账号
-    function logout() {
-        autoSave();
-        currentUser = null;
-        document.getElementById('auth-modal').style.display = 'flex';
-        document.getElementById('password').value = '';
-        document.getElementById('auth-msg').innerText = "已安全登出江湖。";
-    }
-
-    // 自动存档（每次进入新剧情或战斗结束时触发）
-    function autoSave() {
-        if (!currentUser) return;
-        let users = JSON.parse(localStorage.getItem('xiaoao_users') || '{}');
-        if (users[currentUser]) {
-            users[currentUser].save = state;
-            localStorage.setItem('xiaoao_users', JSON.stringify(users));
+    },
+    {
+        isWeapon: true,
+        weaponMod: 'machine',
+        letter: 'M',
+        color: '#00e5ff',
+        borderColor: '#ffffff',
+        heroNames: {
+            1: '【M】机关连发气功炮',
+            2: '【M】疾风连珠神箭',
+            3: '【M】双旋高速风火镖'
+        }
+    },
+    {
+        isWeapon: true,
+        weaponMod: 'laser',
+        letter: 'L',
+        color: '#d500f9',
+        borderColor: '#ea80fc',
+        heroNames: {
+            1: '【L】离子贯穿激光波',
+            2: '【L】破甲贯日长虹箭',
+            3: '【L】超巨型光刃旋镖'
+        }
+    },
+    {
+        isWeapon: true,
+        weaponMod: 'flame',
+        letter: 'F',
+        color: '#ff9100',
+        borderColor: '#ffea00',
+        heroNames: {
+            1: '【F】烈焰爆裂气功弹',
+            2: '【F】火凤燎原爆裂箭',
+            3: '【F】烈火焚天风火轮'
         }
     }
+];
 
-    function manualSave() {
-        autoSave();
-        print("【系统】当前账号进度已成功保存至服务器/本地凭证！", "system");
+const ITEM_TYPES = [
+    { type: 'speed', name: '疾风跑鞋', color: '#00e676', icon: '👟', desc: '移动速度+35%' },
+    { type: 'multishot', name: '散弹拳套', color: '#ff9100', icon: '🥊', desc: '临时额外增加散射数量' },
+    { type: 'rapid', name: '连环快速拳', color: '#29b6f6', icon: '⚡', desc: '临时攻速大幅提升' },
+    { type: 'shield', name: '金钟护体', color: '#ffd700', icon: '🛡️', desc: '免疫1次攻击' },
+    { type: 'wolf', name: '护卫战狼', color: '#ff5722', icon: '🐺', desc: '护卫战狼' },
+    { type: 'invincible', name: '无敌金身', color: '#ffeb3b', icon: '⭐', desc: '10秒绝对无敌免疫伤害' },
+    { type: 'clone', name: '影分身符', color: '#ab47bc', icon: '👥', desc: '召唤2个分身影子跟随并同步射击15秒' },
+    { type: 'full_support', name: '天降神兵', color: '#ff1744', icon: '🚀', desc: '召唤3名无敌援军全屏无差别轰炸5秒' },
+    { type: 'decoy', name: '替身草人', color: '#ff4081', icon: '🪆', desc: '在最远地方生成替身吸引全场仇恨5秒' }
+];
+
+const LIFE_FORMS = {
+    1: {
+        lifeNum: 1,
+        title: '第1命 · 南宁老登',
+        shortName: '南宁老登',
+        weapon: 'bullet',
+        baseWeaponName: '初始·气功弹',
+        shortsColor: '#0277bd',
+        gloveColor: '#00bcd4',
+        glowColor: '#00e5ff',
+        hairColor: '#1e1b18',
+        headbandColor: null,
+        uiColor: '#4fc3f7'
+    },
+    2: {
+        lifeNum: 2,
+        title: '第2命 · 北宁小后裔',
+        shortName: '北宁小后裔',
+        weapon: 'arrow',
+        baseWeaponName: '初始·追魂箭',
+        shortsColor: '#2e7d32',
+        gloveColor: '#76ff03',
+        glowColor: '#69f0ae',
+        hairColor: '#3e2723',
+        headbandColor: '#76ff03',
+        uiColor: '#69f0ae'
+    },
+    3: {
+        lifeNum: 3,
+        title: '第3命 · 章大头',
+        shortName: '章大头',
+        weapon: 'boomerang',
+        baseWeaponName: '初始·回旋镖',
+        shortsColor: '#c62828',
+        gloveColor: '#ff9100',
+        glowColor: '#ff3d00',
+        hairColor: '#ffeb3b',
+        headbandColor: '#ff1744',
+        uiColor: '#ff8a80'
+    }
+};
+
+let player = {};
+let wolf = null;
+let decoy = null;
+let supportAllies = [];
+let supportTimer = 0;
+let monsters = [];
+let bullets = [];
+let items = [];
+let floatingTexts = [];
+let blastEffects = [];
+
+let survivalTime = 0;
+let killCount = 0;
+let bossCount = 0;
+let gameRound = 1;
+
+let isGameOver = false;
+let isPaused = false;
+
+let livesLeft = 3;
+let isRespawning = false;
+let respawnTimer = 0;
+let lastIntSecond = 5;
+
+let lastShootTime = 0;
+let lastItemSpawnTime = 0;
+
+function getNextBossMilestone(currentBossCount) {
+    let milestones = [50, 100, 200, 400, 800, 1200];
+    if (currentBossCount < milestones.length) {
+        return milestones[currentBossCount];
+    }
+    return 1200 + (currentBossCount - milestones.length + 1) * 600;
+}
+
+function getCurrentLifeForm() {
+    let lifeIndex = Math.min(3, Math.max(1, 4 - livesLeft));
+    return LIFE_FORMS[lifeIndex];
+}
+
+function getCurrentWeaponDisplayInfo() {
+    let form = getCurrentLifeForm();
+    let mod = player.weaponMod || 'normal';
+    if (mod === 'normal') {
+        return { name: form.baseWeaponName, color: form.uiColor };
+    }
+    let cap = WEAPON_CAPSULES.find(c => c.weaponMod === mod);
+    if (!cap) return { name: form.baseWeaponName, color: form.uiColor };
+    return {
+        name: cap.heroNames[form.lifeNum],
+        color: cap.borderColor
+    };
+}
+
+const joystickState = {
+    active: false,
+    startX: 0,
+    startY: 0,
+    currentX: 0,
+    currentY: 0,
+    vectorX: 0,
+    vectorY: 0
+};
+
+const keys = {};
+
+window.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        togglePause();
+        return;
+    }
+    keys[e.key] = true;
+    if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+        e.preventDefault();
+    }
+});
+window.addEventListener('keyup', e => {
+    keys[e.key] = false;
+});
+
+canvas.addEventListener('pointerdown', e => {
+    if (isGameOver || isPaused || isRespawning) return;
+    if (e.clientX < window.innerWidth / 2 && window.innerWidth <= 900) return;
+    shootBullet();
+});
+
+document.getElementById('attack-btn').addEventListener('pointerdown', e => {
+    e.preventDefault();
+    if (!isGameOver && !isPaused && !isRespawning) {
+        shootBullet();
+    }
+});
+
+const joystickBase = document.getElementById('joystick-base');
+const joystickStick = document.getElementById('joystick-stick');
+
+joystickBase.addEventListener('pointerdown', e => {
+    joystickState.active = true;
+    joystickState.startX = e.clientX;
+    joystickState.startY = e.clientY;
+    joystickState.currentX = e.clientX;
+    joystickState.currentY = e.clientY;
+    joystickBase.setPointerCapture(e.pointerId);
+});
+
+joystickBase.addEventListener('pointermove', e => {
+    if (!joystickState.active) return;
+    joystickState.currentX = e.clientX;
+    joystickState.currentY = e.clientY;
+
+    let dx = joystickState.currentX - joystickState.startX;
+    let dy = joystickState.currentY - joystickState.startY;
+    let dist = Math.hypot(dx, dy);
+    let maxDist = 45;
+
+    if (dist > maxDist) {
+        dx = (dx / dist) * maxDist;
+        dy = (dy / dist) * maxDist;
     }
 
-    /* ================= 游戏主剧情与战斗逻辑 ================= */
-    const logEl = document.getElementById('game-log');
-    const actionsEl = document.getElementById('quick-actions');
-    const inputEl = document.getElementById('cmd-input');
+    joystickStick.style.transform = `translate(${dx}px, ${dy}px)`;
 
-    inputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleInput(); });
+    let normDist = Math.min(1.0, dist / maxDist);
+    joystickState.vectorX = (dx / maxDist) * normDist;
+    joystickState.vectorY = (dy / maxDist) * normDist;
+});
 
-    function print(text, type = 'story') {
-        const div = document.createElement('div');
-        div.className = `msg msg-${type}`;
-        div.innerHTML = text;
-        logEl.appendChild(div);
-        logEl.scrollTop = logEl.scrollHeight;
+function resetJoystick() {
+    joystickState.active = false;
+    joystickState.vectorX = 0;
+    joystickState.vectorY = 0;
+    joystickStick.style.transform = `translate(0px, 0px)`;
+}
+
+joystickBase.addEventListener('pointerup', resetJoystick);
+joystickBase.addEventListener('pointercancel', resetJoystick);
+
+function togglePause() {
+    if (isGameOver) return;
+    isPaused = !isPaused;
+    let pauseOverlay = document.getElementById('pause-overlay');
+    if (isPaused) {
+        pauseOverlay.classList.add('active');
+    } else {
+        pauseOverlay.classList.remove('active');
+    }
+}
+
+function getTerrain(wx, wy) {
+    let terrains = getTerrainList();
+    if (Math.abs(wx) <= 3 && Math.abs(wy) <= 3) {
+        return terrains[3];
     }
 
-    function updateUI() {
-        document.getElementById('ui-hp').innerText = `${state.hp}/${state.maxHp}`;
-        document.getElementById('ui-mp').innerText = `${state.mp}/${state.maxMp}`;
-        document.getElementById('ui-atk').innerText = state.atk;
-        document.getElementById('ui-agi').innerText = state.agi;
-        document.getElementById('ui-gold').innerText = state.gold;
-        document.getElementById('ui-fame').innerText = state.fame;
+    let scale = 0.045;
+    let val = Perlin.noise(wx * scale, wy * scale) * 1.0 +
+              Perlin.noise(wx * scale * 2, wy * scale * 2) * 0.5 +
+              Perlin.noise(wx * scale * 4, wy * scale * 4) * 0.25;
+    val = (val + 1) / 2;
+    val = Math.max(0, Math.min(1, val));
 
-        let power = state.atk + state.agi + Math.floor(state.maxMp / 5);
-        let realm = "初出茅庐";
-        if (power > 180) realm = "一代宗师";
-        else if (power > 120) realm = "名震江湖";
-        else if (power > 75) realm = "登堂入室";
-        else if (power > 40) realm = "小有所成";
-        document.getElementById('ui-realm').innerText = realm;
+    if (val < 0.24) return terrains[0];
+    if (val < 0.36) return terrains[1];
+    if (val < 0.43) return terrains[2];
+    if (val < 0.65) return terrains[3];
+    if (val < 0.80) return terrains[4];
+    if (val < 0.90) return terrains[5];
+    return terrains[6];
+}
 
-        let align = "亦正亦邪";
-        if (state.karma >= 30) align = "侠义无双";
-        else if (state.karma >= 10) align = "名门正派";
-        else if (state.karma <= -30) align = "魔道巨擘";
-        else if (state.karma <= -10) align = "心狠手辣";
-        document.getElementById('ui-align').innerText = align;
-        autoSave(); // 实时更迭自动存档
+function getObjectAt(wx, wy, terrainName) {
+    if (Math.abs(wx) <= 4 && Math.abs(wy) <= 4) return null;
+
+    let hash = Math.sin(wx * 12.9898 + wy * 78.233) * 43758.5453;
+    hash = hash - Math.floor(hash);
+
+    let obstacleThreshold = gameRound > 1 ? 0.992 : 0.985;
+
+    if (hash > obstacleThreshold) {
+        if (terrainName.includes('林') || terrainName.includes('森')) return 'tree';
+        if (terrainName.includes('山') || terrainName.includes('岩') || terrainName.includes('丘')) return 'rock';
+        if (terrainName.includes('冰') || terrainName.includes('晶')) return 'ice_pillar';
+        return 'rock';
     }
+    return null;
+}
 
-    const SCENES = {
-        intro: {
-            enter: () => {
-                print("【序章：风雨欲来】", "system");
-                print("明末乱世，江湖暗流涌动。日月神教虎视眈眈，一卷《辟邪剑谱》将福建福威镖局推向灭顶之灾。");
-                print("你行至福州城外破庙避雨，听见外面传来兵刃交击声。青城派正围攻一名身负重伤的福威镖局镖头。");
-            },
-            options: [
-                { text: "1. 拔剑相助，击退青城派", cmd: "1", action: () => {
-                    state.karma += 10; state.fame += 5;
-                    print("你大喝一声破门而出，虽武艺尚浅却逼退了青城派。镖头临终前将《辟邪剑法(残篇)》托付于你！", "story");
-                    learnSkill("辟邪剑法(残篇)"); goScene("choose_sect");
-                }},
-                { text: "2. 暗中观察，坐收渔利", cmd: "2", action: () => {
-                    state.karma -= 10; state.gold += 20;
-                    print("镖头与青城弟子同归于尽。你搜刮了残缺剑谱与二十两银子。", "story");
-                    learnSkill("辟邪剑法(残篇)"); goScene("choose_sect");
-                }},
-                { text: "3. 悄然离开，事不关己", cmd: "3", action: () => {
-                    print("你趁着夜色离开破庙，一路北上。", "story");
-                    state.agi += 3; goScene("choose_sect");
-                }}
-            ]
-        },
-        choose_sect: {
-            enter: () => {
-                print("【第一章：拜入山门】", "system");
-                print("你来到中原，决定寻找安身立命之所：");
-            },
-            options: [
-                { text: "1. 拜入华山派（气宗正统）", cmd: "1", action: () => {
-                    state.sect = "华山派"; state.maxMp += 40; state.mp += 40; state.karma += 5;
-                    learnSkill("华山基础剑法"); goScene("huashan_hub");
-                }},
-                { text: "2. 投奔衡山派（快剑音律）", cmd: "2", action: () => {
-                    state.sect = "衡山派"; state.agi += 8; state.atk += 4;
-                    learnSkill("百变千幻云雾十三式"); goScene("huashan_hub");
-                }},
-                { text: "3. 潜入日月神教（魔教秘法）", cmd: "3", action: () => {
-                    state.sect = "日月神教"; state.atk += 8; state.karma -= 10;
-                    learnSkill("黑血神针"); goScene("huashan_hub");
-                }}
-            ]
-        },
-        huashan_hub: {
-            enter: () => {
-                print(`【江湖日常 · 第 ${state.day} 天】（当前侠客：${currentUser} | 门派：${state.sect}）`, "system");
-                print("嵩山派正密谋五岳并派，思过崖藏有秘密。你可以自由进行修炼或下山：");
-            },
-            options: [
-                { text: "1. 演武场练剑（提升攻击）", cmd: "练剑", action: () => doTrain("sword") },
-                { text: "2. 静室打坐（提升内力）", cmd: "打坐", action: () => doTrain("meditate") },
-                { text: "3. 探索华山思过崖", cmd: "思过崖", action: () => goScene("siguoya") },
-                { text: "4. 下山历练与战斗", cmd: "下山", action: () => goScene("jianghu_event") },
-                { text: "5. 前往金盆洗手大会（需剑法+身法>=35）", cmd: "金盆洗手", action: () => {
-                    if (state.atk + state.agi < 35) {
-                        print("【提示】武功尚浅，贸然前往恐有危险，建议先修炼几日！", "combat");
-                        renderActions(SCENES.huashan_hub.options);
-                    } else { goScene("liuzhengfeng"); }
-                }}
-            ]
-        },
-        siguoya: {
-            enter: () => {
-                print("【奇遇：思过崖石壁】", "system");
-                if (state.flags.siguoyaDone) { print("思过崖石壁你已参悟透彻。"); }
-                else { print("你在洞内发现了破招石壁，风清扬前辈向你走来……"); }
-            },
-            options: [
-                { text: "1. 请教风清扬前辈", cmd: "1", action: () => {
-                    if (state.flags.siguoyaDone) { goScene("huashan_hub"); return; }
-                    if (state.karma >= 0) {
-                        print("风清扬大笑：“传你独孤九剑真谛！”", "dialogue");
-                        learnSkill("独孤九剑(总诀式)"); state.atk += 18; state.agi += 12; state.flags.siguoyaDone = true;
-                    } else { print("风清扬冷哼：“戾气太重，滚吧！”", "combat"); state.hp = Math.max(10, state.hp - 20); }
-                    updateUI(); goScene("huashan_hub");
-                }},
-                { text: "2. 强记魔教破招之法", cmd: "2", action: () => {
-                    if (!state.flags.siguoyaDone) {
-                        state.atk += 15; state.hp = Math.max(10, state.hp - 30); state.karma -= 5; state.flags.siguoyaDone = true;
-                        print("你强行记住诡异招式，走火入魔吐血，但攻击大增！", "story"); updateUI();
-                    }
-                    goScene("huashan_hub");
-                }},
-                { text: "3. 返回驻地", cmd: "3", action: () => goScene("huashan_hub") }
-            ]
-        },
-        jianghu_event: {
-            enter: () => {
-                print("【江湖历练】", "system");
-                let roll = Math.random();
-                if (roll < 0.45) {
-                    startCombat({ name: "万里独行·田伯光", hp: 90, maxHp: 90, atk: 16, agi: 18, rewardGold: 30, rewardFame: 15, desc: "田伯光正纠缠恒山派小尼姑仪琳！" });
-                } else if (roll < 0.8) {
-                    startCombat({ name: "嵩山十三太保·费彬", hp: 120, maxHp: 120, atk: 20, agi: 14, rewardGold: 50, rewardFame: 25, desc: "费彬带人截住你，狞笑逼问秘密！" });
-                } else {
-                    print("你偶遇琴师谈论音律，获赠【九花玉露丸】与二十两银子。", "reward");
-                    state.gold += 20; state.items.push("九花玉露丸"); state.day++;
-                    updateUI(); renderActions([{ text: "返回门派", cmd: "返回", action: () => goScene("huashan_hub") }]);
+function isTileBlocked(gx, gy) {
+    let terrain = getTerrain(gx, gy);
+    if (terrain.solid) return true;
+    let obj = getObjectAt(gx, gy, terrain.name);
+    if (obj === 'tree' || obj === 'rock' || obj === 'ice_pillar') {
+        return true;
+    }
+    return false;
+}
+
+function checkEntityCollision(nx, ny, radius = 0.32) {
+    let minGx = Math.floor(nx - radius);
+    let maxGx = Math.floor(nx + radius);
+    let minGy = Math.floor(ny - radius);
+    let maxGy = Math.floor(ny + radius);
+
+    for (let gx = minGx; gx <= maxGx; gx++) {
+        for (let gy = minGy; gy <= maxGy; gy++) {
+            if (isTileBlocked(gx, gy)) {
+                let closestX = Math.max(gx, Math.min(nx, gx + 1));
+                let closestY = Math.max(gy, Math.min(ny, gy + 1));
+                let distSq = (nx - closestX) ** 2 + (ny - closestY) ** 2;
+                if (distSq < radius * radius) {
+                    return true;
                 }
-            },
-            options: []
-        },
-        liuzhengfeng: {
-            enter: () => {
-                print("【第二章：衡山城·金盆洗手】", "system");
-                print("嵩山派费彬逼迫刘正风与魔教曲洋自相残杀。局势一触即发！");
-            },
-            options: [
-                { text: "1. 拔剑突围，护送刘曲二人", cmd: "1", action: () => {
-                    state.karma += 20; state.fame += 30; state.maxMp += 60; state.mp = state.maxMp; state.flags.gotMusic = true;
-                    print("你挡在身前，刘曲二人将《笑傲江湖曲》托付给你，内力大增。", "reward"); goScene("chapter3_xixing");
-                }},
-                { text: "2. 助嵩山派灭魔教妖人", cmd: "2", action: () => {
-                    state.karma -= 20; state.fame += 20; learnSkill("寒冰真气"); state.atk += 20;
-                    print("左冷禅大喜，赐你《寒冰真气》残卷！", "reward"); goScene("chapter3_xixing");
-                }},
-                { text: "3. 潜入后院搜刮秘宝", cmd: "3", action: () => {
-                    state.karma -= 10; state.gold += 100; state.items.push("九花玉露丸");
-                    print("你趁乱洗劫了书房百两黄金与灵丹妙药。", "reward"); goScene("chapter3_xixing");
-                }}
-            ]
-        },
-        chapter3_xixing: {
-            enter: () => {
-                print("【第三章：梅庄地牢】", "system");
-                print("西湖梅庄地牢深处，你遭遇任我行。脚下刻着《吸星大法》，怀中辟邪剑谱发烫……");
-            },
-            options: [
-                { text: "1. 逆转经脉，强修吸星大法", cmd: "1", action: () => {
-                    learnSkill("吸星大法"); state.maxMp += 150; state.mp = state.maxMp; state.atk += 25; state.karma -= 15;
-                    print("你与任我行内力对流，吸得数十年精纯内力！", "reward"); goScene("finale_prelude");
-                }},
-                { text: "2. 斩断铁链，助任我行脱困", cmd: "2", action: () => {
-                    state.fame += 40; state.atk += 20;
-                    print("任我行脱困狂笑：“黑木崖少教主之位给你留着！”", "dialogue"); goScene("finale_prelude");
-                }},
-                { text: "3. 挥剑自宫，修炼完整《辟邪剑法》", cmd: "自宫", action: () => {
-                    if (!state.skills.includes("辟邪剑法(残篇)")) {
-                        print("你没有辟邪剑谱残篇，无法修炼！", "combat");
-                        renderActions(SCENES.chapter3_xixing.options); return;
-                    }
-                    learnSkill("辟邪剑法(大成)"); state.atk += 55; state.agi += 60; state.karma -= 30; state.flags.bixieMax = true;
-                    print("‘欲练此功，必先自宫！’身法剑速暴增至鬼魅之境！", "combat"); updateUI(); goScene("finale_prelude");
-                }}
-            ]
-        },
-        finale_prelude: {
-            enter: () => {
-                print("【终章：黑木崖决战】", "system");
-                print("成德殿内，东方不败一袭红衣，绣花针逼绝群雄。她冷冷看向你：“你也想来送死么？”");
-            },
-            options: [
-                { text: "1. 决战东方不败！", cmd: "1", action: () => {
-                    startCombat({ name: "天下第一·东方不败", hp: 260, maxHp: 260, atk: 42, agi: 45, isFinalBoss: true, desc: "东方不败身形化作红影，绣花针直刺眉心！" });
-                }}
-            ]
+            }
         }
+    }
+    return false;
+}
+
+function moveEntityWithCollision(entity, dx, dy, radius) {
+    let nextX = entity.x + dx;
+    if (!checkEntityCollision(nextX, entity.y, radius)) {
+        entity.x = nextX;
+    }
+    let nextY = entity.y + dy;
+    if (!checkEntityCollision(entity.x, nextY, radius)) {
+        entity.y = nextY;
+    }
+}
+
+function moveEntitySmart(entity, desiredAngle, stepDist, radius) {
+    if (stepDist <= 0) return false;
+
+    let dx = Math.cos(desiredAngle) * stepDist;
+    let dy = Math.sin(desiredAngle) * stepDist;
+
+    let oldX = entity.x;
+    let oldY = entity.y;
+
+    if (!checkEntityCollision(entity.x + dx, entity.y + dy, radius)) {
+        entity.x += dx;
+        entity.y += dy;
+        entity.avoidDir = 0;
+        return true;
+    }
+
+    let prefSign = entity.avoidDir || 1;
+    let angleOffsets = [
+        prefSign * 0.45, -prefSign * 0.45,
+        prefSign * 0.85, -prefSign * 0.85,
+        prefSign * 1.25, -prefSign * 1.25,
+        prefSign * 1.65, -prefSign * 1.65,
+        prefSign * 2.10, -prefSign * 2.10
+    ];
+
+    let lookAhead = Math.max(stepDist * 2.5, 0.35);
+    for (let offset of angleOffsets) {
+        let testAngle = desiredAngle + offset;
+        let testX = entity.x + Math.cos(testAngle) * lookAhead;
+        let testY = entity.y + Math.sin(testAngle) * lookAhead;
+        if (!checkEntityCollision(testX, testY, radius)) {
+            let moveX = Math.cos(testAngle) * stepDist;
+            let moveY = Math.sin(testAngle) * stepDist;
+            if (!checkEntityCollision(entity.x + moveX, entity.y + moveY, radius)) {
+                entity.x += moveX;
+                entity.y += moveY;
+                entity.avoidDir = offset >= 0 ? 1 : -1;
+                return true;
+            }
+        }
+    }
+
+    moveEntityWithCollision(entity, dx, dy, radius);
+    return (Math.hypot(entity.x - oldX, entity.y - oldY) > stepDist * 0.1);
+}
+
+function addFloatingText(text, x, y, color = '#fff') {
+    floatingTexts.push({ text, x, y, color, life: 1.1, vy: -0.85 });
+}
+
+const MONSTER_TYPES = [
+    { name: '西河怪鱼', shape: 'ghost', hp: 1, speed: 1.85, size: 16, color: '#00e5ff', exp: 15, sound: 'ghost' },
+    { name: '北宁咖啡怪', shape: 'spike', hp: 2, speed: 1.55, size: 17, color: '#ff7043', exp: 18, sound: 'spike' },
+    { name: '华山大喵喵', shape: 'blob', hp: 3, speed: 1.25, size: 18, color: '#ab47bc', exp: 20, sound: 'slime' },
+    { name: '东宫刺猬怪', shape: 'shadow', hp: 4, speed: 1.10, size: 20, color: '#5c6bc0', exp: 26, sound: 'shadow' },
+    { name: '陈塘老祖儿', shape: 'zombie', hp: 8, speed: 0.78, size: 23, color: '#26a69a', exp: 38, sound: 'zombie' },
+    { name: '华阴怪老汉', shape: 'beast', hp: 14, speed: 0.58, size: 28, color: '#e65100', exp: 55, sound: 'roar' }
+];
+
+function playMonsterRoar(type) {
+    if (!audioCtx) return;
+    try {
+        let now = audioCtx.currentTime;
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        
+        if (type === 'roar') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(140, now);
+            osc.frequency.exponentialRampToValueAtTime(55, now + 0.35);
+            gain.gain.setValueAtTime(0.12, now);
+            gain.gain.linearRampToValueAtTime(0.001, now + 0.35);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.35);
+        } else if (type === 'boss') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(90, now);
+            osc.frequency.exponentialRampToValueAtTime(35, now + 0.5);
+            gain.gain.setValueAtTime(0.18, now);
+            gain.gain.linearRampToValueAtTime(0.001, now + 0.5);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.5);
+        } else if (type === 'ghost') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(450, now);
+            osc.frequency.linearRampToValueAtTime(850, now + 0.2);
+            gain.gain.setValueAtTime(0.08, now);
+            gain.gain.linearRampToValueAtTime(0.001, now + 0.25);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.25);
+        }
+    } catch(e) {}
+}
+
+const BOSS_CONFIGS = [
+    { name: '南宁巨鳄王', shape: 'boss_croc', color: '#004d40', accent: '#00e676' },
+    { name: '北宁雪山巨魔', shape: 'boss_yeti', color: '#37474f', accent: '#90caf9' },
+    { name: '华山熔岩魔君', shape: 'boss_demon', color: '#b71c1c', accent: '#ff9100' },
+    { name: '东宫九头妖王', shape: 'boss_hydra', color: '#4a148c', accent: '#e040fb' },
+    { name: '虚空毁灭霸主', shape: 'boss_void', color: '#212121', accent: '#00e5ff' }
+];
+
+function spawnMonster(isBoss = false) {
+    if (isBoss && monsters.some(m => m.isBoss)) {
+        return;
+    }
+
+    let spawnX = player.x;
+    let spawnY = player.y;
+    let foundValidSpot = false;
+
+    for (let attempt = 0; attempt < 15; attempt++) {
+        let angle = Math.random() * Math.PI * 2;
+        let distance = 11 + Math.random() * 5;
+        let tx = player.x + Math.cos(angle) * distance;
+        let ty = player.y + Math.sin(angle) * distance;
+        if (!checkEntityCollision(tx, ty, isBoss ? 0.55 : 0.35)) {
+            spawnX = tx;
+            spawnY = ty;
+            foundValidSpot = true;
+            break;
+        }
+    }
+    if (!foundValidSpot) return;
+
+    let levelFactor = 1 + (player.level - 1) * 0.12;
+    let timeFactor = 1 + (survivalTime / 60) * 0.15;
+    let roundMultiplier = Math.pow(1.85, gameRound - 1);
+    let globalScaling = levelFactor * timeFactor * roundMultiplier;
+
+    if (isBoss) {
+        bossCount++;
+        let bossConfig = BOSS_CONFIGS[(bossCount - 1) % BOSS_CONFIGS.length];
+        let baseBossHp = 60 + (bossCount - 1) * 45;
+        let bossMaxHp = Math.round(baseBossHp * (1 + (player.level - 1) * 0.1) * roundMultiplier);
+        let bossSpeed = Math.min(2.1, (0.9 + (bossCount - 1) * 0.08) * (1 + (gameRound - 1) * 0.2));
+        let bossSize = Math.min(74, 48 + bossCount * 3);
+        let bossName = `[第${gameRound}回] 狂暴` + bossConfig.name + ` (第${bossCount}波)`;
+
+        monsters.push({
+            id: Math.random().toString(36).substr(2, 9),
+            x: spawnX,
+            y: spawnY,
+            isBoss: true,
+            bossRank: bossCount,
+            name: bossName,
+            hp: bossMaxHp,
+            maxHp: bossMaxHp,
+            speed: bossSpeed,
+            size: bossSize,
+            color: bossConfig.color,
+            accent: bossConfig.accent,
+            shape: bossConfig.shape,
+            exp: 180 + bossCount * 60,
+            avoidDir: 0
+        });
+        playSoundLevelUp();
+        playMonsterRoar('boss');
+        showNotification(`🚨 [第${gameRound}回] 究极增强BOSS降临！HP:${bossMaxHp}`);
+        addFloatingText(`🚨 BOSS狂暴降临！HP:${bossMaxHp}`, player.x, player.y - 1.5, "#ff1744");
+        updateUI();
+    } else {
+        let template = MONSTER_TYPES[Math.floor(Math.random() * MONSTER_TYPES.length)];
+        let hpMultiplier = (1 + Math.floor((player.level - 1) / 3) * 0.35 + bossCount * 0.15) * roundMultiplier;
+        let scaledHp = Math.max(1, Math.round(template.hp * hpMultiplier));
+
+        monsters.push({
+            id: Math.random().toString(36).substr(2, 9),
+            x: spawnX,
+            y: spawnY,
+            isBoss: false,
+            name: template.name,
+            hp: scaledHp,
+            maxHp: scaledHp,
+            speed: template.speed * Math.min(2.5, globalScaling),
+            size: template.size,
+            color: template.color,
+            shape: template.shape,
+            exp: Math.round(template.exp * (1 + bossCount * 0.1) * roundMultiplier),
+            avoidDir: 0
+        });
+        if (template.sound && Math.random() < 0.3) {
+            playMonsterRoar(template.sound);
+        }
+    }
+}
+
+function spawnItem() {
+    for (let attempt = 0; attempt < 15; attempt++) {
+        let angle = Math.random() * Math.PI * 2;
+        let distance = 3.5 + Math.random() * 6;
+        let ix = player.x + Math.cos(angle) * distance;
+        let iy = player.y + Math.sin(angle) * distance;
+        if (!isTileBlocked(Math.floor(ix), Math.floor(iy))) {
+            let template = ITEM_TYPES[Math.floor(Math.random() * ITEM_TYPES.length)];
+            items.push({
+                ...template,
+                x: ix,
+                y: iy,
+                life: 28.0
+            });
+            addFloatingText(`🌟 出现道具 [${template.name}]!`, player.x, player.y - 1, template.color);
+            break;
+        }
+    }
+}
+
+function spawnWeaponCapsule(bx, by) {
+    let capTemplate = WEAPON_CAPSULES[Math.floor(Math.random() * WEAPON_CAPSULES.length)];
+    items.push({
+        ...capTemplate,
+        x: bx,
+        y: by,
+        life: 45.0
+    });
+    showNotification(`🔥 BOSS掉落【双截龙 ${capTemplate.letter} 秘籍胶囊】！`);
+    addFloatingText(`🎁 掉落秘籍胶囊 [${capTemplate.letter}]!`, bx, by - 1, capTemplate.color);
+}
+
+function activateDecoy() {
+    let bestX = player.x;
+    let bestY = player.y;
+    let maxDist = 0;
+
+    for (let i = 0; i < 25; i++) {
+        let angle = Math.random() * Math.PI * 2;
+        let dist = 8 + Math.random() * 8;
+        let tx = player.x + Math.cos(angle) * dist;
+        let ty = player.y + Math.sin(angle) * dist;
+        if (!checkEntityCollision(tx, ty, 0.4)) {
+            let d = Math.hypot(tx - player.x, ty - player.y);
+            if (d > maxDist) {
+                maxDist = d;
+                bestX = tx;
+                bestY = ty;
+            }
+        }
+    }
+
+    decoy = {
+        x: bestX,
+        y: bestY,
+        timeLeft: 5.0
     };
 
-    function doTrain(type) {
-        state.day++;
-        if (type === "sword") {
-            if (state.hp <= 20) { print("气血不足，请先休整！", "combat"); }
-            else {
-                let gain = 4 + Math.floor(Math.random() * 4);
-                state.atk += gain; state.hp -= 15;
-                print(`刻苦练剑，【剑法】+${gain} （气血 -15）`, "reward");
-            }
-        } else if (type === "meditate") {
-            let mpGain = 10 + Math.floor(Math.random() * 6);
-            state.maxMp += mpGain; state.mp = state.maxMp;
-            state.hp = Math.min(state.maxHp, state.hp + 35);
-            print(`打坐吐纳，【内力上限】+${mpGain}，气血恢复。`, "reward");
+    playSoundPowerup();
+    showNotification("🪆【替身草人】已在最远安全处生成，吸引全场仇恨5秒！");
+    addFloatingText("🪆 替身吸引全场火力！", player.x, player.y - 1.5, "#ff4081");
+}
+
+function activateFullSupport() {
+    supportAllies = [];
+    supportTimer = 5.0;
+
+    let currentForm = getCurrentLifeForm();
+    let otherFormNums = [1, 2, 3].filter(n => n !== currentForm.lifeNum);
+
+    let offsets = [
+        { dx: -2.2, dy: -1.4 },
+        { dx: 2.2, dy: -1.4 },
+        { dx: 0, dy: 2.0 }
+    ];
+
+    otherFormNums.forEach((formNum, idx) => {
+        let f = LIFE_FORMS[formNum];
+        let sx = player.x + offsets[idx].dx;
+        let sy = player.y + offsets[idx].dy;
+        if (checkEntityCollision(sx, sy, 0.3)) {
+            sx = player.x;
+            sy = player.y;
         }
-        updateUI(); renderActions(SCENES.huashan_hub.options);
-    }
+        supportAllies.push({
+            kind: 'hero',
+            form: f,
+            name: f.shortName,
+            x: sx,
+            y: sy,
+            facingX: 0,
+            facingY: 1,
+            isMoving: false,
+            runCycle: 0,
+            lastAttackTime: 0,
+            attackCooldown: 240,
+            avoidDir: 0
+        });
+    });
 
-    function learnSkill(name) {
-        if (!state.skills.includes(name)) { state.skills.push(name); print(`【习得绝学】《${name}》！`, "reward"); }
+    let tx = player.x + offsets[2].dx;
+    let ty = player.y + offsets[2].dy;
+    if (checkEntityCollision(tx, ty, 0.35)) {
+        tx = player.x;
+        ty = player.y;
     }
+    supportAllies.push({
+        kind: 'tank',
+        name: '重装坦克车',
+        x: tx,
+        y: ty,
+        bodyAngle: 0,
+        turretAngle: 0,
+        lastAttackTime: 0,
+        attackCooldown: 300,
+        avoidDir: 0
+    });
 
-    function startCombat(enemy) {
-        state.enemy = enemy;
-        print(`⚔️ 【遭遇强敌：${enemy.name}】`, "combat");
-        print(enemy.desc, "story");
-        renderCombatActions();
-    }
+    playSoundLevelUp();
+    showNotification("🚀【天降神兵】启动！三名无敌援军降临全屏轰炸 5 秒！");
+    addFloatingText("🚀 天降神兵！三英雄无敌集结！", player.x, player.y - 1.5, "#ff1744");
+}
 
-    function renderCombatActions() {
-        let opts = [
-            { text: "1. 普通剑招攻击", cmd: "攻击", action: () => combatTurn("normal") },
-            { text: "2. 绝学暴击（消耗20内力）", cmd: "绝学", action: () => combatTurn("skill") },
-            { text: "3. 服用丹药", cmd: "吃药", action: () => combatTurn("heal") }
-        ];
-        if (!state.enemy.isFinalBoss) opts.push({ text: "4. 轻功撤退", cmd: "逃跑", action: () => combatTurn("flee") });
-        renderActions(opts);
-    }
+function addExp(amount) {
+    player.exp += amount;
+    
+    let needed = player.maxExp;
+    while (player.exp >= needed) {
+        player.exp -= needed;
+        player.level++;
+        player.bulletDamage += 1;
+        player.maxExp = Math.floor(player.maxExp * 1.32);
+        playSoundLevelUp();
 
-    function combatTurn(move) {
-        let e = state.enemy;
-        if (!e) return;
-        if (move === "heal") {
-            if (state.items.length > 0) {
-                state.items.pop(); state.hp = Math.min(state.maxHp, state.hp + 100);
-                print("服下丹药，气血大涨！", "reward");
-            } else { print("行囊中没有丹药了！", "combat"); }
-        } else if (move === "flee") {
-            if (state.agi >= e.agi || Math.random() > 0.4) {
-                print("你成功施展轻功逃脱！", "story");
-                state.enemy = null; updateUI(); goScene("huashan_hub"); return;
-            } else { print("退路被封，无法逃跑！", "combat"); }
+        if (player.level === 99) {
+            gameRound++;
+            showNotification(`🎉 恭喜大侠满99级通关！开启【第 ${gameRound} 回】世界！地图风格与敌人全面升级！`);
+            addFloatingText(`🌟 开启【第 ${gameRound} 回】轮回！`, player.x, player.y - 2, "#00e5ff");
+            monsters = [];
+            livesLeft = Math.min(3, livesLeft + 1);
         } else {
-            let dmg = Math.max(5, state.atk + Math.floor(Math.random() * 8) - Math.floor(e.agi / 3));
-            if (move === "skill") {
-                if (state.mp >= 20) { state.mp -= 20; dmg = Math.floor(dmg * 2.1); print(`绝学爆发！造成 ${dmg} 点暴击伤害！`, "combat"); }
-                else { print("内力不足！", "combat"); }
-            } else { print(`一剑刺中，造成 ${dmg} 点伤害。`, "combat"); }
-            e.hp -= dmg;
+            addFloatingText(`⭐ 升级！Lv.${player.level}！攻击力提升至 ${player.bulletDamage}`, player.x, player.y - 1.5, "#00e5ff");
+        }
+    }
+    updateUI();
+}
+
+function shootBullet() {
+    if (isGameOver || isPaused || isRespawning) return;
+    let now = performance.now();
+    let form = getCurrentLifeForm();
+    let weaponType = form.weapon;
+    let mod = player.weaponMod || 'normal';
+
+    let baseCooldown = Math.max(160, 920 - (player.level - 1) * 12);
+    if (mod === 'machine') {
+        if (form.lifeNum === 1) baseCooldown *= 0.35;
+        else if (form.lifeNum === 2) baseCooldown *= 0.30;
+        else if (form.lifeNum === 3) baseCooldown *= 0.40;
+    }
+    let cooldown = player.buffs.rapid.active ? baseCooldown * 0.4 : baseCooldown;
+
+    if (now - lastShootTime < cooldown) return;
+    lastShootTime = now;
+
+    let soundMod = (mod === 'laser' ? 'laser' : (mod === 'flame' ? 'flame' : 'normal'));
+    playSoundShoot(weaponType, soundMod);
+
+    function createProjectileAt(startX, startY) {
+        let target = getClosestMonster(startX, startY);
+        let baseVx = player.facingX || 0;
+        let baseVy = player.facingY || -1;
+
+        if (target) {
+            let dx = target.x - startX;
+            let dy = target.y - startY;
+            let dist = Math.hypot(dx, dy);
+            if (dist > 0) {
+                baseVx = dx / dist;
+                baseVy = dy / dist;
+            }
         }
 
-        if (e.hp <= 0) {
-            print(`🎉 击败【${e.name}】！`, "reward");
-            if (e.isFinalBoss) { triggerEnding(); return; }
-            state.gold += e.rewardGold || 20; state.fame += e.rewardFame || 10; state.day++;
-            state.enemy = null; updateUI();
-            renderActions([{ text: "返回门派休整", cmd: "返回", action: () => goScene("huashan_hub") }]); return;
+        let angles = [0];
+        let dmg = player.bulletDamage;
+
+        if (mod === 'spread') {
+            if (form.lifeNum === 1) angles = [-0.35, -0.17, 0, 0.17, 0.35];
+            else if (form.lifeNum === 2) angles = [-0.42, -0.28, -0.14, 0, 0.14, 0.28, 0.42];
+            else angles = [-Math.PI/2, 0, Math.PI/2, Math.PI];
+        } else if (mod === 'machine') {
+            angles = [0];
+            if (form.lifeNum === 3) angles = [-0.08, 0.08];
+        } else if (mod === 'laser') {
+            angles = [0];
+            if (form.lifeNum === 1) dmg = Math.ceil(dmg * 1.6);
+            else if (form.lifeNum === 2) dmg = Math.ceil(dmg * 1.7);
+            else dmg = Math.ceil(dmg * 1.5);
+        } else if (mod === 'flame') {
+            angles = [0];
+            if (player.buffs.multishot.active) angles = [-0.2, 0, 0.2];
+        } else {
+            if (player.buffs.multishot.active) angles = [-0.25, 0, 0.25];
         }
 
-        let eDmg = Math.max(4, e.atk + Math.floor(Math.random() * 6) - Math.floor(state.agi / 3));
-        state.hp -= eDmg;
-        print(`${e.name} 反击，你气血 -${eDmg} （敌血：${e.hp}）`, "combat");
+        angles.forEach(ang => {
+            let cos = Math.cos(ang), sin = Math.sin(ang);
+            let vx = baseVx * cos - baseVy * sin;
+            let vy = baseVx * sin + baseVy * cos;
 
-        if (state.hp <= 0) {
-            state.hp = 0; updateUI();
-            print("【胜败兵家常事】你重伤倒地，江湖路尽……", "system");
-            renderActions([{ text: "重新开始", cmd: "重开", action: () => resetGame() }]); return;
-        }
-        updateUI(); renderCombatActions();
-    }
-
-    function triggerEnding() {
-        print("====================================", "system");
-        print("【大结局：笑傲江湖】", "system");
-        if (state.flags.bixieMax) print("【隐藏结局：东方再世·孤独魔神】");
-        else if (state.flags.gotMusic && state.karma >= 25) print("【真结局：琴箫合奏·笑傲江湖】");
-        else print("【武林盟主/一代枭雄结局】");
-        renderActions([{ text: "再入江湖", cmd: "重开", action: () => resetGame() }]);
-    }
-
-    function goScene(key) {
-        state.scene = key; updateUI();
-        const sc = SCENES[key];
-        if (sc) { sc.enter(); if (sc.options) renderActions(sc.options); }
-    }
-
-    let currentOptions = [];
-    function renderActions(opts) {
-        currentOptions = opts;
-        actionsEl.innerHTML = '';
-        opts.forEach(opt => {
-            const btn = document.createElement('button');
-            btn.className = 'action-chip';
-            btn.innerText = opt.text;
-            btn.onclick = (e) => {
-                if(e) e.preventDefault();
-                print(`> ${opt.text}`, 'user');
-                opt.action();
-            };
-            actionsEl.appendChild(btn);
+            if (weaponType === 'arrow') {
+                let speedMultiplier = (mod === 'machine' ? 4.2 : (mod === 'laser' ? 3.8 : 3.4));
+                bullets.push({
+                    type: 'arrow',
+                    mod: mod,
+                    x: startX,
+                    y: startY,
+                    vx, vy,
+                    speed: player.baseSpeed * speedMultiplier,
+                    damage: dmg,
+                    targetId: target ? target.id : null,
+                    life: 4.5
+                });
+            } else if (weaponType === 'boomerang') {
+                let sizeScale = (mod === 'laser' ? 2.2 : 1.0);
+                let speedMultiplier = (mod === 'machine' ? 3.2 : 2.5);
+                bullets.push({
+                    type: 'boomerang',
+                    mod: mod,
+                    x: startX,
+                    y: startY,
+                    vx, vy,
+                    speed: player.baseSpeed * speedMultiplier,
+                    damage: dmg,
+                    sizeScale: sizeScale,
+                    elapsed: 0,
+                    maxOutTime: mod === 'machine' ? 0.7 : 0.55,
+                    returning: false,
+                    spinAngle: 0,
+                    hitHistory: {},
+                    life: 5.5
+                });
+            } else {
+                let speedMultiplier = (mod === 'machine' ? 3.5 : (mod === 'laser' ? 3.2 : 2.7));
+                bullets.push({
+                    type: 'bullet',
+                    mod: mod,
+                    x: startX,
+                    y: startY,
+                    vx, vy,
+                    speed: player.baseSpeed * speedMultiplier,
+                    damage: dmg,
+                    targetId: target ? target.id : null,
+                    life: 4.5
+                });
+            }
         });
     }
 
-    function handleInput() {
-        const raw = inputEl.value.trim();
-        if (!raw) return;
-        inputEl.value = '';
-        print(`> ${raw}`, 'user');
+    createProjectileAt(player.x, player.y);
 
-        if (raw.includes("状态") || raw.includes("档案")) { showStatus(); return; }
-        if (raw.includes("存档")) { manualSave(); return; }
-        if (raw.includes("重开")) { resetGame(); return; }
-
-        let matched = currentOptions.find((opt, idx) => raw === String(idx + 1) || (opt.cmd && raw.includes(opt.cmd)) || opt.text.includes(raw));
-        if (matched) matched.action();
-        else print("【提示】无效指令，请点击选项或输入数字。", "system");
+    if (player.buffs.clone.active) {
+        let angleTime = performance.now() * 0.008;
+        let clone1X = player.x + Math.cos(angleTime) * 1.2;
+        let clone1Y = player.y + Math.sin(angleTime) * 1.2;
+        let clone2X = player.x + Math.cos(angleTime + Math.PI) * 1.2;
+        let clone2Y = player.y + Math.sin(angleTime + Math.PI) * 1.2;
+        createProjectileAt(clone1X, clone1Y);
+        createProjectileAt(clone2X, clone2Y);
     }
+}
 
-    function showStatus() {
-        const modal = document.getElementById('modal');
-        document.getElementById('modal-body').innerHTML = `
-            <h3>📜 侠客江湖档案</h3>
-            <p><strong>当前侠客：</strong>${currentUser}</p>
-            <p><strong>门派：</strong>${state.sect}</p>
-            <p><strong>天数：</strong>第 ${state.day} 天</p>
-            <p><strong>善恶：</strong>${state.karma}</p>
-            <p><strong>武学：</strong>${state.skills.join("、")}</p>
-            <p><strong>行囊：</strong>${state.items.join("、") || "空"}</p>
-            <button class="close-modal" onclick="document.getElementById('modal').style.display='none'">关闭</button>
+function getClosestMonster(x, y) {
+    let closest = null;
+    let minDist = Infinity;
+    monsters.forEach(m => {
+        let dist = Math.hypot(m.x - x, m.y - y);
+        if (dist < minDist) { minDist = dist; closest = m; }
+    });
+    return closest;
+}
+
+function getScreenMonsters() {
+    let halfW = VIEW_WIDTH / 2 + 1.5;
+    let halfH = VIEW_HEIGHT / 2 + 1.5;
+    return monsters.filter(m =>
+        Math.abs(m.x - player.x) <= halfW &&
+        Math.abs(m.y - player.y) <= halfH
+    );
+}
+
+function checkBossSpawnMilestone() {
+    let activeBossCount = monsters.filter(m => m.isBoss).length;
+    let nextMilestone = getNextBossMilestone(bossCount);
+    if (killCount >= nextMilestone && activeBossCount === 0) {
+        spawnMonster(true);
+    }
+}
+
+function resetGame() {
+    livesLeft = 3;
+    gameRound = 1;
+    isRespawning = false;
+    respawnTimer = 0;
+    decoy = null;
+    wolf = null;
+
+    player = {
+        x: 0.5, y: 0.5,
+        level: 1,
+        exp: 0,
+        maxExp: 45,
+        baseSpeed: 5.8,
+        bulletDamage: 1,
+        weaponMod: 'normal',
+        facingX: 0, facingY: 1,
+        isMoving: false,
+        runCycle: 0,
+        stealthTimer: 0,
+        buffs: {
+            speed: { active: false, timeLeft: 0 },
+            multishot: { active: false, timeLeft: 0 },
+            rapid: { active: false, timeLeft: 0 },
+            shield: { active: false, timeLeft: 0 },
+            invincible: { active: false, timeLeft: 0 },
+            clone: { active: false, timeLeft: 0 }
+        }
+    };
+    supportAllies = [];
+    supportTimer = 0;
+    monsters = [];
+    bullets = [];
+    items = [];
+    floatingTexts = [];
+    blastEffects = [];
+    survivalTime = 0;
+    killCount = 0;
+    bossCount = 0;
+    isGameOver = false;
+    isPaused = false;
+    lastShootTime = 0;
+    lastItemSpawnTime = 0;
+
+    for (let i = 0; i < 7; i++) spawnMonster(false);
+    spawnItem();
+
+    document.getElementById('game-over-overlay').classList.remove('active');
+    document.getElementById('pause-overlay').classList.remove('active');
+    document.getElementById('ad-overlay').classList.remove('active');
+    updateUI();
+    updateLeaderboardUI();
+}
+
+function addRecord(time, kills, level, round) {
+    records.unshift({ time: time.toFixed(1), kills, level, round });
+    if (records.length > 10) records.pop();
+
+    let allRecords = JSON.parse(localStorage.getItem('xz_evolution_mob_all_records') || '{}');
+    allRecords[currentUserName] = records;
+    localStorage.setItem('xz_evolution_mob_all_records', JSON.stringify(allRecords));
+
+    updateLeaderboardUI();
+}
+
+function updateLeaderboardUI() {
+    const listEl = document.getElementById('scoreList');
+    listEl.innerHTML = '';
+    if (records.length === 0) {
+        listEl.innerHTML = '<li class="no-records">⚠️ 暂无战绩记录</li>';
+        return;
+    }
+    records.forEach((rec, idx) => {
+        let li = document.createElement('li');
+        li.className = 'score-item';
+        li.innerHTML = `
+            <div class="score-row-top">
+                <span class="index">#${idx + 1}</span>
+                <span class="time">⏱️ ${rec.time}秒</span>
+                <span class="kills">🥊 ${rec.kills}击杀</span>
+            </div>
+            <div class="score-row-bottom">
+                <span>等级: Lv.${rec.level} | 轮回: 第${rec.round || 1}回</span>
+            </div>
         `;
-        modal.style.display = 'flex';
+        listEl.appendChild(li);
+    });
+}
+
+function updateUI() {
+    let hearts = '❤️'.repeat(Math.max(0, livesLeft)) + '🖤'.repeat(Math.max(0, 3 - livesLeft));
+    document.getElementById('livesDisplay').textContent = `${hearts} (${livesLeft})`;
+
+    let form = getCurrentLifeForm();
+    let formEl = document.getElementById('weaponFormDisplay');
+    if (isRespawning) {
+        formEl.textContent = `复活倒计时 ${Math.ceil(respawnTimer)}s...`;
+        formEl.style.color = '#ffca28';
+    } else {
+        formEl.textContent = form.title;
+        formEl.style.color = form.uiColor;
     }
 
-    function resetGame() {
-        state = getDefaultState();
-        logEl.innerHTML = '';
-        goScene("intro");
+    let wInfo = getCurrentWeaponDisplayInfo();
+    document.getElementById('currentWeaponDisplay').textContent = wInfo.name;
+    document.getElementById('currentWeaponDisplay').style.color = wInfo.color;
+
+    document.getElementById('roundDisplay').textContent = `第 ${gameRound} 回 ${gameRound > 1 ? '(虚空异世)' : '(经典论剑)'}`;
+    document.getElementById('playerLevel').textContent = `Lv.${player.level}`;
+    document.getElementById('atkDisplay').textContent = player.bulletDamage;
+    document.getElementById('survivalTime').textContent = survivalTime.toFixed(1);
+    document.getElementById('killCount').textContent = killCount;
+
+    let nextMilestone = getNextBossMilestone(bossCount);
+    document.getElementById('nextBossKills').textContent = nextMilestone;
+    document.getElementById('bossWaveCount').textContent = bossCount;
+
+    let expPercent = Math.min(100, (player.exp / player.maxExp) * 100);
+    document.getElementById('expBarFill').style.width = `${expPercent}%`;
+
+    const buffContainer = document.getElementById('buffContainer');
+    let activeBuffs = [];
+
+    if (decoy) {
+        activeBuffs.push(`<span class="buff-tag" style="border-color:#ff4081; color:#ff80ab; background:rgba(255,64,129,0.25);">🪆 替身草人 (${decoy.timeLeft.toFixed(1)}s)</span>`);
     }
+
+    if (supportTimer > 0 && supportAllies.length > 0) {
+        activeBuffs.push(`<span class="buff-tag" style="border-color:#ff1744; color:#ff8a80; background:rgba(255,23,68,0.25);">🚀 天降神兵 (${supportTimer.toFixed(1)}s)</span>`);
+    }
+
+    if (!isRespawning && player.stealthTimer > 0) {
+        activeBuffs.push(`<span class="buff-tag" style="border-color:#00e5ff; color:#84ffff;">👻 复活隐身 (${player.stealthTimer.toFixed(1)}s)</span>`);
+    }
+    
+    for (let key in player.buffs) {
+        let b = player.buffs[key];
+        if (b.active) {
+            let nameMap = { speed: '👟 疾风跑鞋', multishot: '🥊 散弹拳套', rapid: '⚡ 连环快速', shield: '🛡️ 金钟护体', invincible: '⭐ 无敌金身', clone: '👥 影分身' };
+            activeBuffs.push(`<span class="buff-tag">${nameMap[key]} (${b.timeLeft.toFixed(1)}s)</span>`);
+        }
+    }
+    if (wolf) {
+        activeBuffs.push(`<span class="buff-tag" style="border-color:#ff5722; color:#ff7043;">🐺 护卫战狼</span>`);
+    }
+
+    buffContainer.innerHTML = activeBuffs.length === 0 ? '<span style="color:#aaa;">临时道具: 无 (武器胶囊永久有效至阵亡)</span>' : activeBuffs.join('');
+}
+
+function handlePlayerDeath() {
+    livesLeft--;
+    player.weaponMod = 'normal';
+    wolf = null;
+
+    if (livesLeft > 0) {
+        isRespawning = true;
+        respawnTimer = 5.0;
+        lastIntSecond = 5;
+        bullets = [];
+        playSoundGameOver();
+        playSoundTick();
+        updateUI();
+    } else {
+        livesLeft = 0;
+        updateUI();
+        triggerGameOver();
+    }
+}
+
+function updateSupportAllies(deltaSec, deltaTime) {
+    if (supportTimer <= 0 || supportAllies.length === 0) return;
+
+    supportTimer -= deltaSec;
+    if (supportTimer <= 0) {
+        supportTimer = 0;
+        supportAllies = [];
+        addFloatingText("🚀 天降神兵结束，援军撤离！", player.x, player.y - 1.2, "#ffca28");
+        return;
+    }
+
+    let now = performance.now();
+    let screenTargets = getScreenMonsters();
+
+    supportAllies.forEach((ally, idx) => {
+        let target = null;
+        if (screenTargets.length > 0) {
+            target = screenTargets[idx % screenTargets.length];
+            let bestDist = Infinity;
+            screenTargets.forEach((m, mIdx) => {
+                let d = Math.hypot(m.x - ally.x, m.y - ally.y);
+                if (mIdx % supportAllies.length === idx && d < bestDist) {
+                    bestDist = d;
+                    target = m;
+                }
+            });
+        } else {
+            target = getClosestMonster(ally.x, ally.y);
+        }
+
+        let moveSpeed = (ally.kind === 'tank' ? 5.2 : 6.4) * deltaSec;
+
+        if (target) {
+            let dx = target.x - ally.x;
+            let dy = target.y - ally.y;
+            let dist = Math.hypot(dx, dy);
+            let angleToTarget = Math.atan2(dy, dx);
+
+            if (ally.kind === 'tank') {
+                ally.turretAngle = angleToTarget;
+            } else {
+                ally.facingX = Math.cos(angleToTarget);
+                ally.facingY = Math.sin(angleToTarget);
+            }
+
+            if (dist > 4.5) {
+                moveEntitySmart(ally, angleToTarget, moveSpeed, 0.30);
+                if (ally.kind === 'tank') ally.bodyAngle = angleToTarget;
+                ally.isMoving = true;
+                ally.runCycle = (ally.runCycle || 0) + deltaTime * 0.018;
+            } else {
+                let strafeAngle = angleToTarget + (idx % 2 === 0 ? Math.PI / 2 : -Math.PI / 2);
+                moveEntitySmart(ally, strafeAngle, moveSpeed * 0.65, 0.30);
+                if (ally.kind === 'tank') ally.bodyAngle = strafeAngle;
+                ally.isMoving = true;
+                ally.runCycle = (ally.runCycle || 0) + deltaTime * 0.015;
+            }
+
+            if (now - ally.lastAttackTime >= ally.attackCooldown) {
+                ally.lastAttackTime = now;
+                let vx = Math.cos(angleToTarget);
+                let vy = Math.sin(angleToTarget);
+                let dmg = Math.max(2, Math.ceil(player.bulletDamage * 1.5));
+
+                if (ally.kind === 'tank') {
+                    playSoundShoot('tank_shell');
+                    bullets.push({
+                        type: 'tank_shell',
+                        x: ally.x + vx * 0.5,
+                        y: ally.y + vy * 0.5,
+                        vx, vy,
+                        speed: player.baseSpeed * 3.6,
+                        damage: dmg * 2,
+                        targetId: target.id,
+                        life: 3.5
+                    });
+                } else {
+                    let wType = ally.form.weapon;
+                    playSoundShoot(wType);
+                    [-0.14, 0.14].forEach(spread => {
+                        let svx = vx * Math.cos(spread) - vy * Math.sin(spread);
+                        let svy = vx * Math.sin(spread) + vy * Math.cos(spread);
+                        if (wType === 'boomerang') {
+                            bullets.push({
+                                type: 'boomerang',
+                                ownerEntity: ally,
+                                x: ally.x,
+                                y: ally.y,
+                                vx: svx,
+                                vy: svy,
+                                speed: player.baseSpeed * 2.8,
+                                damage: dmg,
+                                sizeScale: 1.0,
+                                elapsed: 0,
+                                maxOutTime: 0.5,
+                                returning: false,
+                                spinAngle: 0,
+                                hitHistory: {},
+                                life: 4.0
+                            });
+                        } else {
+                            bullets.push({
+                                type: wType,
+                                x: ally.x,
+                                y: ally.y,
+                                vx: svx,
+                                vy: svy,
+                                speed: player.baseSpeed * 3.5,
+                                damage: dmg,
+                                targetId: target.id,
+                                life: 3.5
+                            });
+                        }
+                    });
+                }
+            }
+        } else {
+            let orbitAngle = performance.now() * 0.003 + (idx * Math.PI * 2 / 3);
+            let targetX = player.x + Math.cos(orbitAngle) * 2.2;
+            let targetY = player.y + Math.sin(orbitAngle) * 2.2;
+            let dx = targetX - ally.x;
+            let dy = targetY - ally.y;
+            let dist = Math.hypot(dx, dy);
+            if (dist > 0.3) {
+                let ang = Math.atan2(dy, dx);
+                moveEntitySmart(ally, ang, moveSpeed, 0.30);
+                if (ally.kind === 'tank') {
+                    ally.bodyAngle = ang;
+                    ally.turretAngle = ang;
+                }
+                ally.isMoving = true;
+                ally.runCycle = (ally.runCycle || 0) + deltaTime * 0.015;
+            } else {
+                ally.isMoving = false;
+            }
+        }
+    });
+}
+
+function updateGame(deltaTime) {
+    if (isGameOver || isPaused) return;
+
+    let deltaSec = Math.min(0.1, deltaTime / 1000);
+
+    if (isRespawning) {
+        respawnTimer -= deltaSec;
+        let currentCeil = Math.ceil(respawnTimer);
+        if (currentCeil !== lastIntSecond && currentCeil > 0 && currentCeil <= 5) {
+            lastIntSecond = currentCeil;
+            playSoundTick();
+        }
+
+        for (let i = floatingTexts.length - 1; i >= 0; i--) {
+            let ft = floatingTexts[i];
+            ft.life -= deltaSec * 1.2;
+            ft.y += ft.vy * deltaSec;
+            if (ft.life <= 0) floatingTexts.splice(i, 1);
+        }
+
+        if (respawnTimer <= 0) {
+            isRespawning = false;
+            respawnTimer = 0;
+            player.stealthTimer = 5.0;
+            playSoundPowerup();
+            addFloatingText(`👻 5秒隐身开启！`, player.x, player.y - 1.2, "#84ffff");
+        }
+        updateUI();
+        return;
+    }
+
+    survivalTime += deltaSec;
+
+    if (decoy) {
+        decoy.timeLeft -= deltaSec;
+        if (decoy.timeLeft <= 0) {
+            decoy = null;
+            addFloatingText("🪆 替身草人能量耗尽消失！", player.x, player.y - 1, "#ff80ab");
+        }
+    }
+
+    if (player.stealthTimer > 0) {
+        player.stealthTimer -= deltaSec;
+        if (player.stealthTimer <= 0) {
+            player.stealthTimer = 0;
+            addFloatingText(`👁️ 隐身保护结束`, player.x, player.y - 1, '#bbb');
+        }
+    }
+
+    for (let key in player.buffs) {
+        let b = player.buffs[key];
+        if (b.active) {
+            b.timeLeft -= deltaSec;
+            if (b.timeLeft <= 0) {
+                b.active = false;
+                addFloatingText(`⌛ [${key}] 道具效果已失效`, player.x, player.y - 1, '#aaa');
+            }
+        }
+    }
+
+    if (survivalTime - lastItemSpawnTime > 12) {
+        lastItemSpawnTime = survivalTime;
+        spawnItem();
+    }
+
+    if (keys[' ']) shootBullet();
+
+    let hasBossOnField = monsters.some(m => m.isBoss);
+    let maxMonsters = hasBossOnField ? 22 : Math.min(45, 10 + Math.floor(player.level * 1.3) + Math.floor(survivalTime / 12));
+    
+    if (monsters.length < maxMonsters) {
+        spawnMonster(false);
+        if (monsters.length < maxMonsters && Math.random() < 0.45) {
+            spawnMonster(false);
+        }
+    }
+
+    let currentGridX = Math.floor(player.x);
+    let currentGridY = Math.floor(player.y);
+    let currentTerrain = getTerrain(currentGridX, currentGridY);
+    let terrainMult = currentTerrain.speedMultiplier > 0 ? currentTerrain.speedMultiplier : 0.8;
+
+    let speedBuffMultiplier = player.buffs.speed.active ? 1.35 : 1.0;
+    let levelSpeedBonus = 1 + (player.level - 1) * 0.02;
+    let currentSpeed = player.baseSpeed * levelSpeedBonus * speedBuffMultiplier * terrainMult * deltaSec;
+
+    let moveX = 0, moveY = 0;
+
+    if (keys['ArrowUp'] || keys['w'] || keys['W']) moveY -= 1;
+    if (keys['ArrowDown'] || keys['s'] || keys['S']) moveY += 1;
+    if (keys['ArrowLeft'] || keys['a'] || keys['A']) moveX -= 1;
+    if (keys['ArrowRight'] || keys['d'] || keys['D']) moveX += 1;
+
+    if (joystickState.active && (joystickState.vectorX !== 0 || joystickState.vectorY !== 0)) {
+        moveX = joystickState.vectorX;
+        moveY = joystickState.vectorY;
+    }
+
+    let mag = Math.hypot(moveX, moveY);
+    if (mag > 1) {
+        moveX /= mag;
+        moveY /= mag;
+    }
+
+    if (moveX !== 0 || moveY !== 0) {
+        player.isMoving = true;
+        player.facingX = moveX;
+        player.facingY = moveY;
+        player.runCycle += deltaTime * 0.015;
+        moveEntityWithCollision(player, moveX * currentSpeed, moveY * currentSpeed, 0.30);
+    } else {
+        player.isMoving = false;
+        player.runCycle = 0;
+    }
+
+    updateSupportAllies(deltaSec, deltaTime);
+
+    if (wolf) {
+        wolf.level = player.level;
+        let wolfSpeed = 6.2 * deltaSec;
+
+        let nearbyMonster = null;
+        let minMonsterDist = 3.0;
+
+        monsters.forEach(m => {
+            let distToPlayer = Math.hypot(m.x - player.x, m.y - player.y);
+            if (distToPlayer <= 3.0) {
+                let distToWolf = Math.hypot(m.x - wolf.x, m.y - wolf.y);
+                if (distToWolf < minMonsterDist) {
+                    minMonsterDist = distToWolf;
+                    nearbyMonster = m;
+                }
+            }
+        });
+
+        if (nearbyMonster) {
+            let wdx = nearbyMonster.x - wolf.x;
+            let wdy = nearbyMonster.y - wolf.y;
+            let wdist = Math.hypot(wdx, wdy);
+            if (wdist > 0) {
+                moveEntitySmart(wolf, Math.atan2(wdy, wdx), wolfSpeed, 0.25);
+            }
+
+            if (wdist < 1.2 && performance.now() - wolf.lastAttackTime > 450) {
+                wolf.lastAttackTime = performance.now();
+                let isCrit = Math.random() < 0.4;
+                let dmg = isCrit ? player.bulletDamage * 6 : player.bulletDamage * 3.0;
+                nearbyMonster.hp -= dmg;
+
+                blastEffects.push({ x: nearbyMonster.x, y: nearbyMonster.y, radius: 1.1, life: 0.25, color: '#ff5722' });
+
+                if (isCrit) {
+                    addFloatingText(`🐺 战狼【烈火狂牙暴击】! -${Math.round(dmg)}`, nearbyMonster.x, nearbyMonster.y - 1, "#ff9100");
+                } else {
+                    addFloatingText(`🐺 战狼撕咬 -${Math.round(dmg)}`, nearbyMonster.x, nearbyMonster.y, "#ff7043");
+                }
+
+                if (nearbyMonster.hp <= 0) {
+                    playSoundHit();
+                    addFloatingText(nearbyMonster.isBoss ? "👑 战狼神威秒杀BOSS!" : "K.O.!", nearbyMonster.x, nearbyMonster.y, "#ffca28");
+                    if (nearbyMonster.isBoss) {
+                        spawnWeaponCapsule(nearbyMonster.x, nearbyMonster.y);
+                    }
+                    let mIndex = monsters.findIndex(m => m.id === nearbyMonster.id);
+                    if (mIndex !== -1) monsters.splice(mIndex, 1);
+                    killCount++;
+                    addExp(nearbyMonster.exp);
+                    checkBossSpawnMilestone();
+                    updateUI();
+                }
+            }
+        } else {
+            let orbitAngle = performance.now() * 0.0025;
+            let targetX = player.x + Math.cos(orbitAngle) * 2.0;
+            let targetY = player.y + Math.sin(orbitAngle) * 2.0;
+            let dx = targetX - wolf.x;
+            let dy = targetY - wolf.y;
+            let dist = Math.hypot(dx, dy);
+            if (dist > 0.25) {
+                moveEntitySmart(wolf, Math.atan2(dy, dx), wolfSpeed * 0.85, 0.25);
+            }
+        }
+    }
+
+    for (let i = items.length - 1; i >= 0; i--) {
+        let it = items[i];
+        it.life -= deltaSec;
+        if (it.life <= 0) { items.splice(i, 1); continue; }
+        if (Math.hypot(it.x - player.x, it.y - player.y) < 0.95) {
+            if (it.isWeapon) {
+                player.weaponMod = it.weaponMod;
+                let f = getCurrentLifeForm();
+                playSoundPowerup();
+                showNotification(`🔥 获得秘籍【${it.heroNames[f.lifeNum]}】！永久有效直到阵亡！`);
+                addFloatingText(`✨ 获得秘籍 [${it.letter}]!`, player.x, player.y - 1, it.color);
+            } else if (it.type === 'wolf') {
+                wolf = {
+                    x: player.x,
+                    y: player.y,
+                    level: player.level,
+                    lastAttackTime: 0,
+                    avoidDir: 0
+                };
+                playSoundPowerup();
+                showNotification("🐺 召唤【护卫战狼】成功！环绕主角身侧，自动护卫！");
+                addFloatingText(`🐺 召唤护卫战狼！`, player.x, player.y - 1, "#ff5722");
+            } else if (it.type === 'full_support') {
+                activateFullSupport();
+            } else if (it.type === 'decoy') {
+                activateDecoy();
+            } else {
+                player.buffs[it.type].active = true;
+                let duration = 30.0;
+                if (it.type === 'invincible') duration = 10.0;
+                if (it.type === 'clone') duration = 15.0;
+                player.buffs[it.type].timeLeft = duration;
+                playSoundPowerup();
+                addFloatingText(`✨ 获得 ${duration} 秒强力buff: ${it.name}!`, player.x, player.y - 1, it.color);
+            }
+            items.splice(i, 1);
+            updateUI();
+        }
+    }
+
+    for (let mIdx = 0; mIdx < monsters.length; mIdx++) {
+        let m = monsters[mIdx];
+        
+        let targetX = player.x;
+        let targetY = player.y;
+        if (decoy) {
+            targetX = decoy.x;
+            targetY = decoy.y;
+        }
+
+        let dx = targetX - m.x, dy = targetY - m.y;
+        let dist = Math.hypot(dx, dy);
+
+        if (player.stealthTimer > 0 && !decoy) {
+            let wanderAngle = (parseInt(m.id.slice(0, 4), 36) || 1) + survivalTime * 0.8;
+            let mSpeed = m.speed * 0.4 * deltaSec;
+            let mRadius = m.isBoss ? 0.48 : 0.28;
+            moveEntitySmart(m, wanderAngle, mSpeed, mRadius);
+        } else if (dist > 0) {
+            let mTerrain = getTerrain(Math.floor(m.x), Math.floor(m.y));
+            let mTerrainMult = mTerrain.speedMultiplier > 0 ? mTerrain.speedMultiplier : 0.8;
+            let mSpeed = m.speed * mTerrainMult * deltaSec;
+            let mRadius = m.isBoss ? 0.48 : 0.28;
+            let targetAngle = Math.atan2(dy, dx);
+            moveEntitySmart(m, targetAngle, mSpeed, mRadius);
+        }
+
+        if (decoy && Math.hypot(decoy.x - m.x, decoy.y - m.y) < (m.isBoss ? 1.0 : 0.7)) {
+            if (Math.random() < 0.2) {
+                addFloatingText("💥 吸引", decoy.x + (Math.random()-0.5), decoy.y + (Math.random()-0.5), "#ff4081");
+            }
+        }
+
+        let playerDist = Math.hypot(player.x - m.x, player.y - m.y);
+        let hitDist = m.isBoss ? 0.95 : 0.72;
+        if (playerDist < hitDist && !decoy) {
+            if (player.stealthTimer > 0) {
+                continue;
+            }
+            if (player.buffs.invincible.active) {
+                let odx = m.x - player.x;
+                let ody = m.y - player.y;
+                let odist = Math.hypot(odx, ody);
+                if (odist > 0) {
+                    moveEntityWithCollision(m, (odx / odist) * 2.5, (ody / odist) * 2.5, 0.28);
+                }
+            } else if (player.buffs.shield.active) {
+                player.buffs.shield.active = false;
+                playSoundPowerup();
+                addFloatingText("🛡️ 金钟护体抵挡了一次致命攻击！", player.x, player.y - 1, "#ffd700");
+                monsters.forEach(otherM => {
+                    let odx = otherM.x - player.x;
+                    let ody = otherM.y - player.y;
+                    let odist = Math.hypot(odx, ody);
+                    if (odist < 4 && odist > 0) {
+                        moveEntityWithCollision(otherM, (odx / odist) * 3.5, (ody / odist) * 3.5, 0.28);
+                    }
+                });
+                updateUI();
+            } else {
+                handlePlayerDeath();
+                break;
+            }
+        }
+    }
+
+    for (let i = blastEffects.length - 1; i >= 0; i--) {
+        let bl = blastEffects[i];
+        bl.life -= deltaSec;
+        bl.radius += deltaSec * 12;
+        if (bl.life <= 0) blastEffects.splice(i, 1);
+    }
+
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        let b = bullets[i];
+        b.life -= deltaSec;
+        if (b.life <= 0) { bullets.splice(i, 1); continue; }
+
+        if (b.type === 'boomerang') {
+            b.elapsed += deltaSec;
+            b.spinAngle += deltaSec * 22;
+
+            if (!b.returning) {
+                b.x += b.vx * b.speed * deltaSec;
+                b.y += b.vy * b.speed * deltaSec;
+                let bGx = Math.floor(b.x);
+                let bGy = Math.floor(b.y);
+                let bTerrain = getTerrain(bGx, bGy);
+                let bObj = getObjectAt(bGx, bGy, bTerrain.name);
+                if (b.elapsed >= b.maxOutTime || bObj === 'tree' || bObj === 'rock' || bObj === 'ice_pillar') {
+                    b.returning = true;
+                }
+            } else {
+                let returnTarget = b.ownerEntity && supportAllies.includes(b.ownerEntity) ? b.ownerEntity : player;
+                let rdx = returnTarget.x - b.x;
+                let rdy = returnTarget.y - b.y;
+                let rDist = Math.hypot(rdx, rdy);
+                if (rDist < 0.65) {
+                    bullets.splice(i, 1);
+                    continue;
+                }
+                b.vx = rdx / rDist;
+                b.vy = rdy / rDist;
+                b.x += b.vx * (b.speed * 1.15) * deltaSec;
+                b.y += b.vy * (b.speed * 1.15) * deltaSec;
+            }
+
+            let nowMs = performance.now();
+            for (let j = monsters.length - 1; j >= 0; j--) {
+                let m = monsters[j];
+                let hitRadius = (m.isBoss ? 1.05 : 0.78) * (b.sizeScale || 1.0);
+                if (Math.hypot(m.x - b.x, m.y - b.y) < hitRadius) {
+                    if (!b.hitHistory[m.id] || nowMs - b.hitHistory[m.id] > 250) {
+                        b.hitHistory[m.id] = nowMs;
+                        m.hp -= b.damage;
+
+                        if (b.mod === 'flame') {
+                            blastEffects.push({ x: b.x, y: b.y, radius: 0.6, life: 0.35, color: '#ff9100' });
+                        }
+
+                        if (m.hp <= 0) {
+                            playSoundHit();
+                            addFloatingText(m.isBoss ? `👑 ${m.name} 击破!` : "K.O.!", m.x, m.y, m.isBoss ? "#ffca28" : "#ff1744");
+                            if (m.isBoss) {
+                                spawnWeaponCapsule(m.x, m.y);
+                            }
+                            monsters.splice(j, 1);
+                            killCount++;
+                            addExp(m.exp);
+                            checkBossSpawnMilestone();
+                            updateUI();
+                        } else {
+                            addFloatingText(`-${b.damage}`, m.x, m.y, "#ff8a80");
+                        }
+                    }
+                }
+            }
+            continue;
+        }
+
+        let target = monsters.find(m => m.id === b.targetId);
+        if (!target) { target = getClosestMonster(b.x, b.y); if (target) b.targetId = target.id; }
+
+        if (target && b.mod !== 'laser') {
+            let tdx = target.x - b.x, tdy = target.y - b.y;
+            let tDist = Math.hypot(tdx, tdy);
+            if (tDist > 0) {
+                let turnRate = b.type === 'arrow' ? 0.12 : 0.18;
+                b.vx = b.vx * (1 - turnRate) + (tdx / tDist) * turnRate;
+                b.vy = b.vy * (1 - turnRate) + (tdy / tDist) * turnRate;
+                let vLen = Math.hypot(b.vx, b.vy);
+                b.vx /= vLen; b.vy /= vLen;
+            }
+        }
+
+        b.x += b.vx * b.speed * deltaSec;
+        b.y += b.vy * b.speed * deltaSec;
+
+        let bGx = Math.floor(b.x);
+        let bGy = Math.floor(b.y);
+        let bTerrain = getTerrain(bGx, bGy);
+        let bObj = getObjectAt(bGx, bGy, bTerrain.name);
+        
+        if (b.mod !== 'laser' && (bObj === 'tree' || bObj === 'rock' || bObj === 'ice_pillar')) {
+            if (b.mod === 'flame') {
+                blastEffects.push({ x: b.x, y: b.y, radius: 1.8, life: 0.4, color: '#ff3d00' });
+            }
+            bullets.splice(i, 1);
+            continue;
+        }
+
+        let hitIndex = -1;
+        for (let j = 0; j < monsters.length; j++) {
+            let hitRadius = monsters[j].isBoss ? 0.95 : 0.68;
+            if (Math.hypot(monsters[j].x - b.x, monsters[j].y - b.y) < hitRadius) { hitIndex = j; break; }
+        }
+
+        if (hitIndex !== -1) {
+            let hitX = b.x;
+            let hitY = b.y;
+            let isTankShell = b.type === 'tank_shell';
+            let isLaser = b.mod === 'laser';
+            let isFlame = b.mod === 'flame';
+
+            if (!isLaser) {
+                bullets.splice(i, 1);
+            }
+
+            if (isTankShell || isFlame) {
+                let radius = isFlame ? 2.4 : 2.2;
+                blastEffects.push({ x: hitX, y: hitY, radius: radius, life: 0.45, color: isFlame ? '#ff9100' : '#ff3d00' });
+                addFloatingText(isFlame ? `🔥 烈焰爆裂!` : `💥 坦克重炮轰击!`, hitX, hitY - 0.8, "#ff9100");
+                for (let j = monsters.length - 1; j >= 0; j--) {
+                    let m = monsters[j];
+                    let distToBlast = Math.hypot(m.x - hitX, m.y - hitY);
+                    if (distToBlast <= radius) {
+                        let actualDmg = j === hitIndex ? b.damage : Math.max(1, Math.floor(b.damage * 0.7));
+                        m.hp -= actualDmg;
+                        if (m.hp <= 0) {
+                            playSoundHit();
+                            addFloatingText(m.isBoss ? `👑 击破 ${m.name}!` : "💥 轰杀!", m.x, m.y, "#ffca28");
+                            if (m.isBoss) {
+                                spawnWeaponCapsule(m.x, m.y);
+                            }
+                            monsters.splice(j, 1);
+                            killCount++;
+                            addExp(m.exp);
+                            checkBossSpawnMilestone();
+                        } else {
+                            addFloatingText(`-${actualDmg}`, m.x, m.y, "#ffab40");
+                        }
+                    }
+                }
+                updateUI();
+            } else {
+                let m = monsters[hitIndex];
+                m.hp -= b.damage;
+                if (m.hp <= 0) {
+                    playSoundHit();
+                    addFloatingText(m.isBoss ? `👑 ${m.name} 击破!` : "K.O.!", m.x, m.y, m.isBoss ? "#ffca28" : "#ff1744");
+                    if (m.isBoss) {
+                        spawnWeaponCapsule(m.x, m.y);
+                    }
+                    monsters.splice(hitIndex, 1);
+                    killCount++;
+                    addExp(m.exp);
+                    checkBossSpawnMilestone();
+                    updateUI();
+                } else {
+                    addFloatingText(`-${b.damage}`, m.x, m.y, "#fff");
+                }
+            }
+        }
+    }
+
+    for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        let ft = floatingTexts[i];
+        ft.life -= deltaSec * 1.2;
+        ft.y += ft.vy * deltaSec;
+        if (ft.life <= 0) floatingTexts.splice(i, 1);
+    }
+
+    updateUI();
+}
+
+function triggerGameOver() {
+    isGameOver = true;
+    playSoundGameOver();
+    document.getElementById('finalLevel').textContent = `Lv.${player.level}`;
+    document.getElementById('finalTime').textContent = survivalTime.toFixed(1);
+    document.getElementById('finalKills').textContent = killCount;
+    document.getElementById('game-over-overlay').classList.add('active');
+    addRecord(survivalTime, killCount, player.level, gameRound);
+}
+
+// ==================== 【广告代码替换区域 - JS逻辑 START】 ====================
+let adTimerInterval = null;
+
+/**
+ * 点击“看广告，继续挑战”触发的函数
+ * 说明：如果你有真实的激励广告SDK（如 Google AdSense / IMA / Telegram Ads / 穿山甲 / 优量汇等），
+ * 可在此函数内调用你的真实广告展示API，并在广告播放完成（onReward / onComplete）的回调里调用 reviveFromAd() 即可。
+ */
+function watchAdToContinue() {
+    // 隐藏结算弹窗，打开广告弹窗
+    document.getElementById('game-over-overlay').classList.remove('active');
+    document.getElementById('ad-overlay').classList.add('active');
+
+    let claimBtn = document.getElementById('adClaimBtn');
+    let countdownEl = document.getElementById('adCountdown');
+    claimBtn.style.display = 'none';
+
+    let secondsLeft = 5; // 模拟广告倒计时（秒）
+    countdownEl.textContent = secondsLeft;
+
+    if (adTimerInterval) clearInterval(adTimerInterval);
+    adTimerInterval = setInterval(() => {
+        secondsLeft--;
+        countdownEl.textContent = Math.max(0, secondsLeft);
+        if (secondsLeft <= 0) {
+            clearInterval(adTimerInterval);
+            adTimerInterval = null;
+            // 广告播放完毕，显示领取按钮（也可以直接自动调用 reviveFromAd()）
+            claimBtn.style.display = 'block';
+        }
+    }, 1000);
+}
+
+/**
+ * 广告观看完成后的奖励发放函数：在当前进度恢复 3 条命并继续游戏
+ */
+function reviveFromAd() {
+    if (adTimerInterval) {
+        clearInterval(adTimerInterval);
+        adTimerInterval = null;
+    }
+
+    document.getElementById('ad-overlay').classList.remove('active');
+    document.getElementById('game-over-overlay').classList.remove('active');
+
+    // 恢复 3 条命并保留当前所有游戏进度（等级、击杀数、时间、轮回、位置）
+    livesLeft = 3;
+    isGameOver = false;
+    isRespawning = false;
+    respawnTimer = 0;
+    bullets = [];
+
+    // 给予 5 秒隐身无敌保护，防止复活瞬间被周围怪物秒杀
+    player.stealthTimer = 5.0;
+
+    playSoundPowerup();
+    showNotification("🎉 观看广告成功！已满血恢复 3 条命，继续当前进度战斗！");
+    addFloatingText("❤️ 满血复活 (3命) + 5秒隐身！", player.x, player.y - 1.5, "#00e676");
+    updateUI();
+}
+// ==================== 【广告代码替换区域 - JS逻辑 END】 ====================
+
+function drawBoxerHero(cx, cy, p, overrideForm = null, isInvincibleAlly = false) {
+    let form = overrideForm || getCurrentLifeForm();
+    let runAngle = p.isMoving ? Math.sin(p.runCycle) * 0.6 : 0;
+    let bounce = p.isMoving ? Math.abs(Math.sin(p.runCycle * 2)) * 3 : Math.sin(performance.now() * 0.003) * 1.5;
+
+    ctx.save();
+    ctx.translate(cx, cy - bounce);
+
+    if (!overrideForm && p.stealthTimer > 0) {
+        let pulseAlpha = 0.35 + Math.abs(Math.sin(performance.now() * 0.012)) * 0.3;
+        ctx.globalAlpha = pulseAlpha;
+
+        ctx.save();
+        ctx.strokeStyle = '#84ffff';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 4]);
+        ctx.beginPath();
+        ctx.arc(0, -12, 30, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(0, 24 + bounce, 16, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (!overrideForm && p.buffs && p.buffs.shield.active) {
+        ctx.strokeStyle = 'rgba(255, 215, 0, 0.75)';
+        ctx.lineWidth = 3.5;
+        ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 15;
+        ctx.beginPath(); ctx.arc(0, -10, 28, 0, Math.PI * 2); ctx.stroke();
+        ctx.shadowBlur = 0;
+    }
+    if ((!overrideForm && p.buffs && p.buffs.invincible.active) || isInvincibleAlly) {
+        ctx.strokeStyle = 'rgba(255, 235, 59, 0.95)';
+        ctx.lineWidth = 4.5;
+        ctx.shadowColor = '#ffeb3b'; ctx.shadowBlur = 22;
+        ctx.beginPath(); ctx.arc(0, -10, 34, 0, Math.PI * 2); ctx.stroke();
+        ctx.shadowBlur = 0;
+    }
+
+    if (form.lifeNum === 2) {
+        ctx.save();
+        ctx.strokeStyle = '#8d6e63';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(-6, -14, 15, Math.PI * 0.65, Math.PI * 1.45);
+        ctx.stroke();
+        ctx.strokeStyle = '#e0e0e0';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-13, -27);
+        ctx.lineTo(-13, -1);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    ctx.fillStyle = '#c68642';
+    ctx.save(); ctx.translate(-5, 8); ctx.rotate(-runAngle);
+    ctx.beginPath(); ctx.roundRect(-3.5, 0, 7, 16, 3); ctx.fill(); ctx.restore();
+
+    ctx.save(); ctx.translate(5, 8); ctx.rotate(runAngle);
+    ctx.beginPath(); ctx.roundRect(-3.5, 0, 7, 16, 3); ctx.fill(); ctx.restore();
+
+    ctx.fillStyle = form.shortsColor;
+    ctx.beginPath(); ctx.roundRect(-12, -2, 24, 12, [2, 2, 4, 4]); ctx.fill();
+    ctx.fillStyle = '#111'; ctx.fillRect(-12, -2, 24, 4);
+
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(-9, 3); ctx.lineTo(-6, 7); ctx.lineTo(-8, 7); ctx.lineTo(-5, 10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(9, 3); ctx.lineTo(6, 7); ctx.lineTo(8, 7); ctx.lineTo(5, 10); ctx.stroke();
+
+    ctx.fillStyle = '#d89351';
+    ctx.beginPath(); ctx.roundRect(-13, -22, 26, 21, [6, 6, 2, 2]); ctx.fill();
+
+    if (form.lifeNum === 3) {
+        ctx.strokeStyle = '#ff1744';
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.moveTo(-11, -21);
+        ctx.lineTo(11, -3);
+        ctx.stroke();
+    }
+
+    ctx.save(); ctx.translate(-14, -18); ctx.rotate(runAngle * 1.2);
+    ctx.fillStyle = '#c68642'; ctx.beginPath(); ctx.roundRect(-3, 0, 6, 13, 3); ctx.fill();
+    ctx.fillStyle = form.gloveColor; ctx.shadowColor = form.glowColor; ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.arc(0, 13, 6, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; ctx.restore();
+
+    ctx.save(); ctx.translate(14, -18); ctx.rotate(-runAngle * 1.2);
+    ctx.fillStyle = '#c68642'; ctx.beginPath(); ctx.roundRect(-3, 0, 6, 13, 3); ctx.fill();
+    ctx.fillStyle = form.gloveColor; ctx.shadowColor = form.glowColor; ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.arc(0, 13, 6, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; ctx.restore();
+
+    ctx.fillStyle = '#d89351';
+    ctx.beginPath(); ctx.arc(0, -30, 11, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = form.hairColor;
+    ctx.beginPath(); ctx.moveTo(-6, -37); ctx.quadraticCurveTo(0, -44, 6, -37); ctx.lineTo(4, -30); ctx.lineTo(-4, -30); ctx.closePath(); ctx.fill();
+
+    if (form.headbandColor) {
+        ctx.fillStyle = form.headbandColor;
+        ctx.fillRect(-10.5, -34, 21, 3.5);
+    }
+
+    if (isInvincibleAlly) {
+        ctx.fillStyle = '#ffeb3b';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#000';
+        ctx.shadowBlur = 4;
+        ctx.fillText(`⭐援军·${form.shortName}`, 0, -48);
+    }
+
+    ctx.restore();
+}
+
+function drawDecoy(d, offsetX, offsetY) {
+    let dx = d.x * TILE_SIZE + offsetX;
+    let dy = d.y * TILE_SIZE + offsetY;
+
+    ctx.save();
+    ctx.translate(dx, dy);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.beginPath(); ctx.ellipse(0, 15, 16, 6, 0, 0, Math.PI * 2); ctx.fill();
+
+    ctx.strokeStyle = '#ff4081';
+    ctx.lineWidth = 3;
+    ctx.shadowColor = '#ff4081';
+    ctx.shadowBlur = 15;
+    ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI * 2); ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = '#ffb74d';
+    ctx.beginPath(); ctx.roundRect(-10, -18, 20, 24, 4); ctx.fill();
+
+    ctx.fillStyle = '#ff4081';
+    ctx.beginPath(); ctx.arc(0, -26, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('🪆替身', 0, -40);
+
+    ctx.restore();
+}
+
+function drawSupportTank(cx, cy, tank) {
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.beginPath();
+    ctx.ellipse(0, 14, 24, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255, 235, 59, 0.95)';
+    ctx.lineWidth = 4;
+    ctx.shadowColor = '#ffeb3b';
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.arc(0, 0, 32, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    ctx.save();
+    ctx.rotate(tank.bodyAngle);
+    ctx.fillStyle = '#263238';
+    ctx.beginPath();
+    ctx.roundRect(-20, -16, 40, 6, 2);
+    ctx.roundRect(-20, 10, 40, 6, 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#388e3c';
+    ctx.strokeStyle = '#a5d6a7';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(-17, -12, 34, 24, 4);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.save();
+    ctx.rotate(tank.turretAngle);
+    ctx.fillStyle = '#1b5e20';
+    ctx.fillRect(4, -3.5, 22, 7);
+    ctx.fillStyle = '#ff9100';
+    ctx.fillRect(22, -4.5, 5, 9);
+
+    ctx.fillStyle = '#4caf50';
+    ctx.beginPath();
+    ctx.arc(0, 0, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffeb3b';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.fillStyle = '#ffeb3b';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#000';
+    ctx.shadowBlur = 4;
+    ctx.fillText('🚜无敌重装坦克', 0, -36);
+
+    ctx.restore();
+}
+
+function drawWolf(w, offsetX, offsetY) {
+    let wx = w.x * TILE_SIZE + offsetX;
+    let wy = w.y * TILE_SIZE + offsetY;
+
+    ctx.save();
+    ctx.translate(wx, wy);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.beginPath(); ctx.ellipse(0, 14, 16, 6, 0, 0, Math.PI * 2); ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255, 145, 0, 0.9)';
+    ctx.lineWidth = 3.5;
+    ctx.shadowColor = '#ff5722';
+    ctx.shadowBlur = 16;
+    ctx.beginPath(); ctx.arc(0, 0, 28, 0, Math.PI * 2); ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = '#b0bec5';
+    ctx.beginPath(); ctx.ellipse(0, 2, 18, 10, 0, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = '#90a4ae';
+    ctx.beginPath(); ctx.arc(12, -4, 10, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = '#78909c';
+    ctx.beginPath();
+    ctx.moveTo(8, -12); ctx.lineTo(12, -18); ctx.lineTo(15, -11); ctx.closePath();
+    ctx.moveTo(14, -11); ctx.lineTo(18, -16); ctx.lineTo(20, -9); ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#ffea00';
+    ctx.beginPath(); ctx.arc(15, -6, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#000';
+    ctx.beginPath(); ctx.arc(15.5, -6, 1, 0, Math.PI * 2); ctx.fill();
+
+    ctx.strokeStyle = '#cfd8dc';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-16, 0);
+    ctx.quadraticCurveTo(-24, -6, -22, -14);
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffca28';
+    ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
+    ctx.shadowColor = '#000'; ctx.shadowBlur = 4;
+    ctx.fillText(`🐺护卫战狼`, 0, -36);
+
+    ctx.restore();
+}
+
+function renderGame() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    let offsetX = (canvas.width / 2) - (player.x * TILE_SIZE);
+    let offsetY = (canvas.height / 2) - (player.y * TILE_SIZE);
+
+    let startX = Math.floor(player.x - VIEW_WIDTH / 2) - 1;
+    let endX = Math.ceil(player.x + VIEW_WIDTH / 2) + 1;
+    let startY = Math.floor(player.y - VIEW_HEIGHT / 2) - 1;
+    let endY = Math.ceil(player.y + VIEW_HEIGHT / 2) + 1;
+
+    for (let x = startX; x < endX; x++) {
+        for (let y = startY; y < endY; y++) {
+            let terrain = getTerrain(x, y);
+            let drawX = Math.floor(x * TILE_SIZE + offsetX);
+            let drawY = Math.floor(y * TILE_SIZE + offsetY);
+
+            ctx.fillStyle = terrain.color;
+            ctx.fillRect(drawX, drawY, TILE_SIZE + 1, TILE_SIZE + 1);
+
+            ctx.strokeStyle = gameRound > 1 ? 'rgba(255, 0, 255, 0.04)' : 'rgba(0, 0, 0, 0.06)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(drawX, drawY, TILE_SIZE, TILE_SIZE);
+
+            if (terrain.name.includes('海') || terrain.name.includes('虚空')) {
+                ctx.strokeStyle = gameRound > 1 ? 'rgba(0, 229, 255, 0.22)' : 'rgba(255, 255, 255, 0.14)';
+                ctx.lineWidth = 1.5;
+                let waveShift = Math.sin(performance.now() * 0.003 + x + y) * 3;
+                ctx.beginPath();
+                ctx.moveTo(drawX + 6, drawY + 14 + waveShift);
+                ctx.quadraticCurveTo(drawX + 16, drawY + 10 + waveShift, drawX + 26, drawY + 14 + waveShift);
+                ctx.stroke();
+            }
+
+            let obj = getObjectAt(x, y, terrain.name);
+            let cx = drawX + TILE_SIZE / 2;
+            let cy = drawY + TILE_SIZE / 2;
+
+            if (obj === 'tree') {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+                ctx.beginPath(); ctx.ellipse(cx + 2, cy + 10, 13, 6, 0, 0, Math.PI * 2); ctx.fill();
+
+                ctx.fillStyle = gameRound > 1 ? '#3a1c57' : '#5d4037';
+                ctx.fillRect(cx - 3, cy + 2, 6, 10);
+
+                ctx.fillStyle = gameRound > 1 ? '#7b1fa2' : '#0d3b14';
+                ctx.beginPath(); ctx.arc(cx, cy - 2, 14, 0, Math.PI * 2); ctx.fill();
+
+                ctx.fillStyle = gameRound > 1 ? '#ba68c8' : '#1b5e20';
+                ctx.beginPath(); ctx.arc(cx - 2, cy - 4, 10, 0, Math.PI * 2); ctx.fill();
+            } else if (obj === 'rock') {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.38)';
+                ctx.beginPath(); ctx.ellipse(cx + 2, cy + 9, 13, 6, 0, 0, Math.PI * 2); ctx.fill();
+
+                ctx.fillStyle = gameRound > 1 ? '#212121' : '#495057';
+                ctx.beginPath();
+                ctx.moveTo(cx - 12, cy + 8);
+                ctx.lineTo(cx - 10, cy - 6);
+                ctx.lineTo(cx, cy - 12);
+                ctx.lineTo(cx + 11, cy - 5);
+                ctx.lineTo(cx + 13, cy + 8);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = gameRound > 1 ? '#00e5ff' : '#6c757d';
+                ctx.beginPath();
+                ctx.moveTo(cx - 8, cy - 4);
+                ctx.lineTo(cx, cy - 10);
+                ctx.lineTo(cx + 7, cy - 4);
+                ctx.lineTo(cx, cy);
+                ctx.closePath();
+                ctx.fill();
+            } else if (obj === 'ice_pillar') {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+                ctx.beginPath(); ctx.ellipse(cx, cy + 10, 11, 5, 0, 0, Math.PI * 2); ctx.fill();
+
+                ctx.fillStyle = '#ff007f';
+                ctx.beginPath();
+                ctx.moveTo(cx - 9, cy + 8);
+                ctx.lineTo(cx - 4, cy - 13);
+                ctx.lineTo(cx + 4, cy - 13);
+                ctx.lineTo(cx + 9, cy + 8);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+    }
+
+    items.forEach(it => {
+        let itDrawX = it.x * TILE_SIZE + offsetX;
+        let itDrawY = it.y * TILE_SIZE + offsetY;
+        let pulse = Math.sin(performance.now() * 0.006) * 4;
+
+        ctx.save();
+        if (it.isWeapon) {
+            ctx.shadowColor = it.color;
+            ctx.shadowBlur = 15;
+            ctx.fillStyle = it.color;
+            ctx.beginPath();
+            ctx.roundRect(itDrawX - 16, itDrawY - 16, 32, 32, 6);
+            ctx.fill();
+
+            ctx.strokeStyle = it.borderColor;
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 18px Segoe UI, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(it.letter, itDrawX, itDrawY);
+        } else {
+            ctx.fillStyle = it.color; ctx.globalAlpha = 0.3;
+            ctx.beginPath(); ctx.arc(itDrawX, itDrawY, 14 + pulse, 0, Math.PI * 2); ctx.fill();
+            ctx.globalAlpha = 1.0;
+
+            ctx.beginPath(); ctx.arc(itDrawX, itDrawY, 10, 0, Math.PI * 2); ctx.fill();
+            ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(it.icon, itDrawX, itDrawY);
+        }
+        ctx.restore();
+    });
+
+    blastEffects.forEach(bl => {
+        let bDrawX = bl.x * TILE_SIZE + offsetX;
+        let bDrawY = bl.y * TILE_SIZE + offsetY;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, bl.life * 2);
+        ctx.strokeStyle = bl.color;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(bDrawX, bDrawY, bl.radius * TILE_SIZE, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = bl.color;
+        ctx.globalAlpha *= 0.25;
+        ctx.fill();
+        ctx.restore();
+    });
+
+    bullets.forEach(b => {
+        let bDrawX = b.x * TILE_SIZE + offsetX;
+        let bDrawY = b.y * TILE_SIZE + offsetY;
+
+        if (b.type === 'arrow') {
+            let angle = Math.atan2(b.vy, b.vx);
+            ctx.save();
+            ctx.translate(bDrawX, bDrawY);
+            ctx.rotate(angle);
+
+            ctx.shadowColor = b.mod === 'laser' ? '#d500f9' : '#69f0ae';
+            ctx.shadowBlur = b.mod === 'laser' ? 14 : 8;
+            ctx.strokeStyle = b.mod === 'laser' ? '#ea80fc' : '#d7ccc8';
+            ctx.lineWidth = b.mod === 'laser' ? 4 : 2.5;
+            ctx.beginPath();
+            ctx.moveTo(-16, 0);
+            ctx.lineTo(b.mod === 'laser' ? 22 : 10, 0);
+            ctx.stroke();
+
+            ctx.fillStyle = b.mod === 'laser' ? '#ffeb3b' : '#00e676';
+            ctx.beginPath();
+            ctx.moveTo(18, 0);
+            ctx.lineTo(8, -5);
+            ctx.lineTo(8, 5);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.restore();
+        } else if (b.type === 'boomerang') {
+            ctx.save();
+            ctx.translate(bDrawX, bDrawY);
+            ctx.rotate(b.spinAngle);
+
+            let sScale = b.sizeScale || 1.0;
+            ctx.shadowColor = b.mod === 'flame' ? '#ff3d00' : '#ff9100';
+            ctx.shadowBlur = 12;
+            ctx.strokeStyle = b.mod === 'flame' ? '#ffea00' : '#ff9100';
+            ctx.lineWidth = 4.5 * sScale;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(-12 * sScale, -10 * sScale);
+            ctx.lineTo(3 * sScale, 0);
+            ctx.lineTo(-12 * sScale, 10 * sScale);
+            ctx.stroke();
+
+            ctx.restore();
+        } else if (b.type === 'tank_shell') {
+            let angle = Math.atan2(b.vy, b.vx);
+            ctx.save();
+            ctx.translate(bDrawX, bDrawY);
+            ctx.rotate(angle);
+            ctx.shadowColor = '#ff3d00';
+            ctx.shadowBlur = 14;
+            ctx.fillStyle = '#ff9100';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 10, 4.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#fff59d';
+            ctx.beginPath();
+            ctx.arc(4, 0, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        } else {
+            ctx.shadowColor = b.mod === 'laser' ? '#d500f9' : '#00e5ff';
+            ctx.shadowBlur = b.mod === 'laser' ? 16 : 10;
+            ctx.fillStyle = b.mod === 'laser' ? '#ea80fc' : '#e0f7fa';
+            ctx.beginPath();
+            ctx.arc(bDrawX, bDrawY, (b.mod === 'laser' ? 7 : 5) + Math.min(3, b.damage * 0.4), 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+    });
+
+    monsters.forEach(m => {
+        let mDrawX = m.x * TILE_SIZE + offsetX;
+        let mDrawY = m.y * TILE_SIZE + offsetY;
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.beginPath(); ctx.ellipse(mDrawX, mDrawY + 8, m.size * 0.5, m.size * 0.25, 0, 0, Math.PI * 2); ctx.fill();
+
+        if (m.shape && m.shape.startsWith('boss_')) {
+            ctx.save();
+            ctx.translate(mDrawX, mDrawY);
+
+            ctx.strokeStyle = m.accent || '#ff5252';
+            ctx.lineWidth = 4.5;
+            ctx.setLineDash([6, 4]);
+            ctx.beginPath(); ctx.arc(0, 0, m.size / 2 + 8, 0, Math.PI * 2); ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = m.color;
+            ctx.beginPath(); ctx.arc(0, 0, m.size / 2, 0, Math.PI * 2); ctx.fill();
+
+            ctx.fillStyle = '#ffeb3b';
+            ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fill();
+
+            ctx.restore();
+
+            ctx.fillStyle = '#ff9100';
+            ctx.font = 'bold 12px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(`👑 ${m.name}`, mDrawX, mDrawY - m.size/2 - 20);
+
+            let barW = 64;
+            let hpPercent = Math.max(0, m.hp / m.maxHp);
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(mDrawX - barW/2, mDrawY - m.size/2 - 12, barW, 6);
+            ctx.fillStyle = '#ff1744';
+            ctx.fillRect(mDrawX - barW/2, mDrawY - m.size/2 - 12, barW * hpPercent, 6);
+        } else {
+            ctx.fillStyle = m.color;
+            ctx.beginPath(); ctx.arc(mDrawX, mDrawY, m.size / 2, 0, Math.PI * 2); ctx.fill();
+
+            let barW = 28;
+            let hpPercent = Math.max(0, m.hp / m.maxHp);
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillRect(mDrawX - barW/2, mDrawY - m.size/2 - 8, barW, 4);
+            ctx.fillStyle = '#4caf50';
+            ctx.fillRect(mDrawX - barW/2, mDrawY - m.size/2 - 8, barW * hpPercent, 4);
+        }
+    });
+
+    if (decoy) {
+        drawDecoy(decoy, offsetX, offsetY);
+    }
+
+    if (wolf) {
+        drawWolf(wolf, offsetX, offsetY);
+    }
+
+    if (supportTimer > 0 && supportAllies.length > 0) {
+        supportAllies.forEach(ally => {
+            let ax = ally.x * TILE_SIZE + offsetX;
+            let ay = ally.y * TILE_SIZE + offsetY;
+            if (ally.kind === 'tank') {
+                drawSupportTank(ax, ay, ally);
+            } else {
+                drawBoxerHero(ax, ay, ally, ally.form, true);
+            }
+        });
+    }
+
+    if (!isRespawning) {
+        if (player.buffs.clone.active) {
+            let angleTime = performance.now() * 0.008;
+            let c1OffsetX = Math.cos(angleTime) * 1.2 * TILE_SIZE;
+            let c1OffsetY = Math.sin(angleTime) * 1.2 * TILE_SIZE;
+            let c2OffsetX = Math.cos(angleTime + Math.PI) * 1.2 * TILE_SIZE;
+            let c2OffsetY = Math.sin(angleTime + Math.PI) * 1.2 * TILE_SIZE;
+
+            ctx.save();
+            ctx.globalAlpha = 0.55;
+            drawBoxerHero((canvas.width / 2) + c1OffsetX, (canvas.height / 2) + c1OffsetY, player);
+            drawBoxerHero((canvas.width / 2) + c2OffsetX, (canvas.height / 2) + c2OffsetY, player);
+            ctx.restore();
+        }
+
+        drawBoxerHero(canvas.width / 2, canvas.height / 2, player);
+    }
+
+    let grad = ctx.createRadialGradient(
+        canvas.width / 2, canvas.height / 2, canvas.width * 0.32,
+        canvas.width / 2, canvas.height / 2, canvas.width * 0.65
+    );
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, gameRound > 1 ? 'rgba(30,10,40,0.5)' : 'rgba(0,0,0,0.42)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (isRespawning) {
+        let nextForm = getCurrentLifeForm();
+        let currentSec = Math.ceil(respawnTimer);
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#ffca28';
+        ctx.font = 'bold 22px Segoe UI, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`新英雄【${nextForm.title}】即将登场`, canvas.width / 2, canvas.height / 2 - 35);
+
+        ctx.fillStyle = '#ff5252';
+        ctx.font = 'bold 64px Segoe UI, sans-serif';
+        ctx.fillText(`${currentSec}`, canvas.width / 2, canvas.height / 2 + 35);
+        ctx.restore();
+    }
+
+    floatingTexts.forEach(ft => {
+        let ftDrawX = ft.x * TILE_SIZE + offsetX;
+        let ftDrawY = ft.y * TILE_SIZE + offsetY;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, ft.life);
+        ctx.fillStyle = ft.color;
+        ctx.font = 'bold 14px Segoe UI, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#000'; ctx.shadowBlur = 4;
+        ctx.fillText(ft.text, ftDrawX, ftDrawY);
+        ctx.restore();
+    });
+}
+
+function startGameLoop() {
+    resetGame();
+    let lastTime = performance.now();
+    function loop(now) {
+        let deltaTime = now - lastTime;
+        lastTime = now;
+        updateGame(deltaTime);
+        renderGame();
+        requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+}
 </script>
+
 </body>
 </html>
