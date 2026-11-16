@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
-    <title>华山论剑 - 三英雄进化与多武器版 (通关轮回增强版)</title>
+    <title>华山论剑 - 双截龙神兵版</title>
+    <!-- Google AdSense 主脚本放在 head 中提前异步加载 -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1805477885216561"
+         crossorigin="anonymous"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -97,7 +100,7 @@
             transform: scale(1.02);
         }
 
-        /* 游戏整体布局 - 手机横屏全屏防变形优化 */
+        /* 游戏整体布局 */
         #game-wrapper {
             display: none;
             width: 100vw;
@@ -144,7 +147,7 @@
             backdrop-filter: blur(4px);
             border: 1px solid rgba(255,255,255,0.15);
             font-size: 12px;
-            min-width: 220px;
+            min-width: 240px;
             z-index: 5;
         }
         .ui-panel h1 {
@@ -165,6 +168,7 @@
         .boss-highlight { color: #ff9100; font-weight: bold; }
         .lives-highlight { color: #ff4081; font-weight: bold; letter-spacing: 1px; }
         .round-highlight { color: #00e676; font-weight: bold; }
+        .weapon-highlight { color: #ffeb3b; font-weight: bold; }
 
         /* 经验条 */
         .exp-bar-box {
@@ -322,6 +326,8 @@
             pointer-events: none;
             transition: opacity 0.3s ease;
             z-index: 10;
+            text-align: center;
+            padding: 0 20px;
         }
         .overlay-screen.active {
             opacity: 1;
@@ -336,22 +342,99 @@
             margin-bottom: 6px;
             color: #eee;
         }
+        .overlay-btn-group {
+            display: flex;
+            flex-direction: row;
+            gap: 15px;
+            margin-top: 18px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
         .overlay-btn {
             background: #2196F3;
             color: white;
             border: none;
             padding: 10px 24px;
             font-size: 15px;
+            font-weight: bold;
             border-radius: 20px;
             cursor: pointer;
-            margin-top: 15px;
-            transition: background 0.2s;
+            transition: background 0.2s, transform 0.1s;
         }
-        .overlay-btn:hover { background: #1e88e5; }
+        .overlay-btn:hover { background: #1e88e5; transform: scale(1.03); }
+        .overlay-btn.ad-btn {
+            background: linear-gradient(135deg, #ff9100, #ff3d00);
+            box-shadow: 0 4px 15px rgba(255, 145, 0, 0.45);
+        }
+        .overlay-btn.ad-btn:hover {
+            background: linear-gradient(135deg, #ffa726, #ff5722);
+        }
+
+        /* 广告弹窗容器样式 */
+        #ad-overlay {
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.94);
+        }
+        .ad-box {
+            background: #1e1e1e;
+            border: 2px solid #ff9100;
+            border-radius: 12px;
+            padding: 20px 25px;
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+            position: relative;
+        }
+        .ad-close-btn {
+            position: absolute;
+            top: 12px;
+            right: 15px;
+            background: transparent;
+            border: none;
+            color: #888;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        .ad-close-btn:hover {
+            color: #fff;
+        }
+        .ad-placeholder-area {
+            background: #2b2b2b;
+            border: 1px dashed #666;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            color: #ffca28;
+            font-size: 14px;
+        }
 
         /* 右侧战绩排行榜 */
         #leaderboard {
             display: none;
+        }
+        .score-list {
+            list-style: none;
+            margin-top: 10px;
+            overflow-y: auto;
+        }
+        .score-item {
+            background: #1e1e1e;
+            padding: 8px 10px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-size: 12px;
+            border-left: 3px solid #2196F3;
+        }
+        .score-row-top {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+            font-weight: bold;
+        }
+        .score-row-bottom {
+            color: #999;
+            font-size: 11px;
         }
 
         @media (min-width: 901px) {
@@ -395,7 +478,7 @@
 <!-- 用户登录浮层 -->
 <div id="login-overlay">
     <div class="login-card">
-        <h1 id="registerTitle">华山论剑 · 进化版</h1>
+        <h1 id="registerTitle">华山论剑 · 双截龙神兵版</h1>
         <p>剑在手，问天下谁是英雄</p>
         <input type="text" id="usernameInput" class="login-input" placeholder="输入您的昵称 (例如: 大头辉)" maxlength="16">
         <button class="register-btn" onclick="registerUser()">发起挑战</button>
@@ -416,6 +499,7 @@
             <p>玩家: <span id="userNameDisplay" style="color:#00e5ff; font-weight:bold;">玩家</span></p>
             <p>生命: <span id="livesDisplay" class="lives-highlight">❤️❤️❤️ (3)</span></p>
             <p>形态: <span id="weaponFormDisplay" style="color:#4fc3f7; font-weight:bold;">第1命 · 南宁老登</span></p>
+            <p>武器: <span id="currentWeaponDisplay" class="weapon-highlight">初始·气功弹</span></p>
             <p>轮回: <span id="roundDisplay" class="round-highlight">第 1 回 (经典论剑)</span></p>
 
             <p>等级: <span id="playerLevel" class="level-highlight">Lv.1</span> (攻击: <span id="atkDisplay" style="color:#ff8a80;">1</span>)</p>
@@ -423,9 +507,9 @@
                 <div class="exp-bar-fill" id="expBarFill"></div>
             </div>
             <p>生存: <span id="survivalTime" class="timer-highlight">0.0</span>s | 击杀: <span id="killCount" class="kills-highlight">0</span></p>
-            <p>下个小BOSS: 击杀 <span id="nextBossKills" class="boss-highlight">20</span> 只 (已出 <span id="bossWaveCount">0</span> 波)</p>
+            <p>下个BOSS: 击杀 <span id="nextBossKills" class="boss-highlight">50</span> 只 (已出 <span id="bossWaveCount">0</span> 波)</p>
             <div class="buff-container" id="buffContainer">
-                <span style="color:#aaa;">道具状态: 无 (有效30秒)</span>
+                <span style="color:#aaa;">临时道具: 无 (武器胶囊永久有效至阵亡)</span>
             </div>
         </div>
 
@@ -455,13 +539,39 @@
             <p>最终等级: <span id="finalLevel" class="level-highlight">Lv.1</span></p>
             <p>生存时间: <span id="finalTime" class="timer-highlight">0.0</span> 秒</p>
             <p>击杀妖怪: <span id="finalKills" class="kills-highlight">0</span> 只</p>
-            <button class="overlay-btn" onclick="resetGame()">再次挑战</button>
+            <div class="overlay-btn-group">
+                <button class="overlay-btn" onclick="resetGame()">再次挑战</button>
+                <button class="overlay-btn ad-btn" onclick="watchAdToContinue()">📺 看广告，继续挑战</button>
+            </div>
         </div>
+
+        <!-- ==================== 【广告代码替换区域 - HTML弹窗结构 START】 ==================== -->
+        <div id="ad-overlay" class="overlay-screen">
+            <div class="ad-box">
+                <button class="ad-close-btn" onclick="attemptCloseAd()" title="关闭广告">✕</button>
+                <h3 style="color: #ff9100; margin-bottom: 6px; font-size: 15px;">📺 赞助商广告</h3>
+                
+                <!-- 赋予明确尺寸的广告容器，防止因隐藏或 flex 坍缩为 0 -->
+                <div id="adsense-wrapper" style="width: 300px; min-height: 250px; margin: 0 auto; background: #262626; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 6px;">
+                    <ins class="adsbygoogle"
+                         style="display:inline-block;width:300px;height:250px"
+                         data-ad-client="ca-pub-1805477885216561"
+                         data-ad-slot="2172920426"></ins>
+                </div>
+                
+                <div id="ad-slot-container" class="ad-placeholder-area">
+                    <p style="font-size: 13px; color: #ddd;">广告播放中... 剩余时间: <span id="adCountdown" style="color: #00e676; font-weight: bold; font-size: 18px;">15</span> 秒</p>
+                </div>
+
+                <button id="adClaimBtn" class="overlay-btn ad-btn" style="display: none; width: 100%; margin-top: 8px;" onclick="reviveFromAd()">✅ 领取 3 条命继续挑战</button>
+            </div>
+        </div>
+        <!-- ==================== 【广告代码替换区域 - HTML弹窗结构 END】 ==================== -->
     </div>
 
     <!-- 战绩表 -->
     <div id="leaderboard">
-        <h2>最近10次战绩表</h2>
+        <h2>血战排行榜</h2>
         <ul class="score-list" id="scoreList">
             <li class="no-records">⚠️ 暂无战绩记录</li>
         </ul>
@@ -469,7 +579,7 @@
 </div>
 
 <script>
-// --- Web Audio API 8bit 复古音效 & 背景音乐 ---
+// --- Web Audio API 8bit 复古音效 & 双截龙二代第二关 BGM ---
 let audioCtx = null;
 let bgmInterval = null;
 
@@ -485,27 +595,33 @@ function initAudio() {
 
 function startBGM() {
     if (bgmInterval) return;
-    let notes = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63];
+    let melodyNotes = [
+        329.63, 329.63, 392.00, 329.63, 293.66, 261.63, 293.66, 329.63,
+        440.00, 440.00, 523.25, 440.00, 392.00, 349.23, 392.00, 440.00,
+        349.23, 349.23, 440.00, 349.23, 329.63, 293.66, 261.63, 246.94,
+        220.00, 246.94, 293.66, 329.63, 349.23, 392.00, 440.00, 523.25
+    ];
     let step = 0;
     bgmInterval = setInterval(() => {
         if (!audioCtx || audioCtx.state !== 'running' || isPaused || isGameOver) return;
         try {
             let osc = audioCtx.createOscillator();
             let gain = audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(notes[step % notes.length], audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(melodyNotes[step % melodyNotes.length], audioCtx.currentTime);
+            
+            gain.gain.setValueAtTime(0.028, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.16);
+            
             osc.connect(gain);
             gain.connect(audioCtx.destination);
             osc.start();
-            osc.stop(audioCtx.currentTime + 0.25);
+            osc.stop(audioCtx.currentTime + 0.16);
             step++;
         } catch(e) {}
-    }, 320);
+    }, 170);
 }
 
-// 倒计时嘀嗒音效
 function playSoundTick() {
     if (!audioCtx) return;
     try {
@@ -522,12 +638,20 @@ function playSoundTick() {
     } catch(e) {}
 }
 
-function playSoundShoot(weaponType) {
+function playSoundShoot(weaponType, mod = 'normal') {
     if (!audioCtx) return;
     try {
         let osc = audioCtx.createOscillator();
         let gain = audioCtx.createGain();
-        if (weaponType === 'arrow') {
+        if (mod === 'laser') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(980, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(180, audioCtx.currentTime + 0.14);
+        } else if (mod === 'flame') {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(240, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(85, audioCtx.currentTime + 0.15);
+        } else if (weaponType === 'arrow') {
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(650, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(220, audioCtx.currentTime + 0.09);
@@ -535,17 +659,21 @@ function playSoundShoot(weaponType) {
             osc.type = 'sine';
             osc.frequency.setValueAtTime(420, audioCtx.currentTime);
             osc.frequency.linearRampToValueAtTime(780, audioCtx.currentTime + 0.12);
+        } else if (weaponType === 'tank_shell') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(55, audioCtx.currentTime + 0.18);
         } else {
             osc.type = 'square';
             osc.frequency.setValueAtTime(300, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.08);
         }
-        gain.gain.setValueAtTime(0.09, audioCtx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        gain.gain.setValueAtTime(weaponType === 'tank_shell' ? 0.13 : 0.09, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.start();
-        osc.stop(audioCtx.currentTime + 0.1);
+        osc.stop(audioCtx.currentTime + 0.15);
     } catch(e) {}
 }
 
@@ -627,15 +755,13 @@ function playSoundGameOver() {
     } catch(e) {}
 }
 
-let activeUsersCount = 1;
-
 function showNotification(msg) {
     let toast = document.getElementById('notification-toast');
     toast.textContent = msg;
     toast.classList.add('show');
     setTimeout(() => {
         toast.classList.remove('show');
-    }, 2800);
+    }, 3000);
 }
 
 let currentUserName = "";
@@ -716,7 +842,6 @@ const TILE_SIZE = 32;
 const VIEW_WIDTH = canvas.width / TILE_SIZE;
 const VIEW_HEIGHT = canvas.height / TILE_SIZE;
 
-// 第1回的经典地形风格
 const TERRAINS_ROUND1 = [
     { name: '深海', color: '#153b6b', speedMultiplier: 0.0, solid: true },
     { name: '浅水', color: '#0077b6', speedMultiplier: 0.72, solid: false },
@@ -727,7 +852,6 @@ const TERRAINS_ROUND1 = [
     { name: '雪山', color: '#dce4ec', speedMultiplier: 0.65, solid: false }
 ];
 
-// 第2回及之后的赛博魔幻/虚空异世全新地图风格
 const TERRAINS_ROUND2 = [
     { name: '虚空死海', color: '#0b091a', speedMultiplier: 0.0, solid: true },
     { name: '暗影沼泽', color: '#1f1135', speedMultiplier: 0.75, solid: false },
@@ -742,22 +866,76 @@ function getTerrainList() {
     return gameRound > 1 ? TERRAINS_ROUND2 : TERRAINS_ROUND1;
 }
 
-const ITEM_TYPES = [
-    { type: 'speed', name: '疾风跑鞋', color: '#00e676', icon: '👟', desc: '移动速度+35%' },
-    { type: 'multishot', name: '散弹拳套', color: '#ff9100', icon: '🥊', desc: '一次发射3连发攻击' },
-    { type: 'rapid', name: '连环快速拳', color: '#29b6f6', icon: '⚡', desc: '射速大幅提升' },
-    { type: 'shield', name: '金钟护体', color: '#ffd700', icon: '🛡️', desc: '免疫1次攻击' },
-    { type: 'wolf', name: '忠诚战狼护卫', color: '#ff5722', icon: '🐺', desc: '召唤永久战狼护卫帮你打怪！' },
-    { type: 'invincible', name: '无敌金身', color: '#ffeb3b', icon: '⭐', desc: '10秒绝对无敌免疫伤害' },
-    { type: 'clone', name: '影分身符', color: '#ab47bc', icon: '👥', desc: '召唤2个分身影子跟随并同步射击15秒' }
+const WEAPON_CAPSULES = [
+    {
+        isWeapon: true,
+        weaponMod: 'spread',
+        letter: 'S',
+        color: '#ff3d00',
+        borderColor: '#ffd740',
+        heroNames: {
+            1: '【S】五向气功散弹',
+            2: '【S】七星连珠箭阵',
+            3: '【S】四方旋风回旋镖'
+        }
+    },
+    {
+        isWeapon: true,
+        weaponMod: 'machine',
+        letter: 'M',
+        color: '#00e5ff',
+        borderColor: '#ffffff',
+        heroNames: {
+            1: '【M】机关连发气功炮',
+            2: '【M】疾风连珠神箭',
+            3: '【M】双旋高速风火镖'
+        }
+    },
+    {
+        isWeapon: true,
+        weaponMod: 'laser',
+        letter: 'L',
+        color: '#d500f9',
+        borderColor: '#ea80fc',
+        heroNames: {
+            1: '【L】离子贯穿激光波',
+            2: '【L】破甲贯日长虹箭',
+            3: '【L】超巨型光刃旋镖'
+        }
+    },
+    {
+        isWeapon: true,
+        weaponMod: 'flame',
+        letter: 'F',
+        color: '#ff9100',
+        borderColor: '#ffea00',
+        heroNames: {
+            1: '【F】烈焰爆裂气功弹',
+            2: '【F】火凤燎原爆裂箭',
+            3: '【F】烈火焚天风火轮'
+        }
+    }
 ];
 
-// 三条命对应角色形态配置
+const ITEM_TYPES = [
+    { type: 'speed', name: '疾风跑鞋', color: '#00e676', icon: '👟', desc: '移动速度+35%' },
+    { type: 'multishot', name: '散弹拳套', color: '#ff9100', icon: '🥊', desc: '临时额外增加散射数量' },
+    { type: 'rapid', name: '连环快速拳', color: '#29b6f6', icon: '⚡', desc: '临时攻速大幅提升' },
+    { type: 'shield', name: '金钟护体', color: '#ffd700', icon: '🛡️', desc: '免疫1次攻击' },
+    { type: 'wolf', name: '护卫战狼', color: '#ff5722', icon: '🐺', desc: '护卫战狼' },
+    { type: 'invincible', name: '无敌金身', color: '#ffeb3b', icon: '⭐', desc: '10秒绝对无敌免疫伤害' },
+    { type: 'clone', name: '影分身符', color: '#ab47bc', icon: '👥', desc: '召唤2个分身影子跟随并同步射击15秒' },
+    { type: 'full_support', name: '天降神兵', color: '#ff1744', icon: '🚀', desc: '召唤3名无敌援军全屏无差别轰炸5秒' },
+    { type: 'decoy', name: '替身草人', color: '#ff4081', icon: '🪆', desc: '在最远地方生成替身吸引全场仇恨5秒' }
+];
+
 const LIFE_FORMS = {
     1: {
         lifeNum: 1,
         title: '第1命 · 南宁老登',
+        shortName: '南宁老登',
         weapon: 'bullet',
+        baseWeaponName: '初始·气功弹',
         shortsColor: '#0277bd',
         gloveColor: '#00bcd4',
         glowColor: '#00e5ff',
@@ -768,7 +946,9 @@ const LIFE_FORMS = {
     2: {
         lifeNum: 2,
         title: '第2命 · 北宁小后裔',
+        shortName: '北宁小后裔',
         weapon: 'arrow',
+        baseWeaponName: '初始·追魂箭',
         shortsColor: '#2e7d32',
         gloveColor: '#76ff03',
         glowColor: '#69f0ae',
@@ -779,7 +959,9 @@ const LIFE_FORMS = {
     3: {
         lifeNum: 3,
         title: '第3命 · 章大头',
+        shortName: '章大头',
         weapon: 'boomerang',
+        baseWeaponName: '初始·回旋镖',
         shortsColor: '#c62828',
         gloveColor: '#ff9100',
         glowColor: '#ff3d00',
@@ -791,16 +973,19 @@ const LIFE_FORMS = {
 
 let player = {};
 let wolf = null;
+let decoy = null;
+let supportAllies = [];
+let supportTimer = 0;
 let monsters = [];
 let bullets = [];
 let items = [];
 let floatingTexts = [];
+let blastEffects = [];
 
 let survivalTime = 0;
 let killCount = 0;
 let bossCount = 0;
-let lastBossKillMilestone = 0;
-let gameRound = 1; // 轮回数，99级通关进入下一回
+let gameRound = 1;
 
 let isGameOver = false;
 let isPaused = false;
@@ -813,9 +998,31 @@ let lastIntSecond = 5;
 let lastShootTime = 0;
 let lastItemSpawnTime = 0;
 
+function getNextBossMilestone(currentBossCount) {
+    let milestones = [50, 100, 200, 400, 800, 1200];
+    if (currentBossCount < milestones.length) {
+        return milestones[currentBossCount];
+    }
+    return 1200 + (currentBossCount - milestones.length + 1) * 600;
+}
+
 function getCurrentLifeForm() {
     let lifeIndex = Math.min(3, Math.max(1, 4 - livesLeft));
     return LIFE_FORMS[lifeIndex];
+}
+
+function getCurrentWeaponDisplayInfo() {
+    let form = getCurrentLifeForm();
+    let mod = player.weaponMod || 'normal';
+    if (mod === 'normal') {
+        return { name: form.baseWeaponName, color: form.uiColor };
+    }
+    let cap = WEAPON_CAPSULES.find(c => c.weaponMod === mod);
+    if (!cap) return { name: form.baseWeaponName, color: form.uiColor };
+    return {
+        name: cap.heroNames[form.lifeNum],
+        color: cap.borderColor
+    };
 }
 
 const joystickState = {
@@ -940,7 +1147,6 @@ function getObjectAt(wx, wy, terrainName) {
     let hash = Math.sin(wx * 12.9898 + wy * 78.233) * 43758.5453;
     hash = hash - Math.floor(hash);
 
-    // 障碍物数量减少约 4/5 (原判定门槛大幅拉高，仅保留极少数障碍)
     let obstacleThreshold = gameRound > 1 ? 0.992 : 0.985;
 
     if (hash > obstacleThreshold) {
@@ -981,6 +1187,63 @@ function checkEntityCollision(nx, ny, radius = 0.32) {
         }
     }
     return false;
+}
+
+function moveEntityWithCollision(entity, dx, dy, radius) {
+    let nextX = entity.x + dx;
+    if (!checkEntityCollision(nextX, entity.y, radius)) {
+        entity.x = nextX;
+    }
+    let nextY = entity.y + dy;
+    if (!checkEntityCollision(entity.x, nextY, radius)) {
+        entity.y = nextY;
+    }
+}
+
+function moveEntitySmart(entity, desiredAngle, stepDist, radius) {
+    if (stepDist <= 0) return false;
+
+    let dx = Math.cos(desiredAngle) * stepDist;
+    let dy = Math.sin(desiredAngle) * stepDist;
+
+    let oldX = entity.x;
+    let oldY = entity.y;
+
+    if (!checkEntityCollision(entity.x + dx, entity.y + dy, radius)) {
+        entity.x += dx;
+        entity.y += dy;
+        entity.avoidDir = 0;
+        return true;
+    }
+
+    let prefSign = entity.avoidDir || 1;
+    let angleOffsets = [
+        prefSign * 0.45, -prefSign * 0.45,
+        prefSign * 0.85, -prefSign * 0.85,
+        prefSign * 1.25, -prefSign * 1.25,
+        prefSign * 1.65, -prefSign * 1.65,
+        prefSign * 2.10, -prefSign * 2.10
+    ];
+
+    let lookAhead = Math.max(stepDist * 2.5, 0.35);
+    for (let offset of angleOffsets) {
+        let testAngle = desiredAngle + offset;
+        let testX = entity.x + Math.cos(testAngle) * lookAhead;
+        let testY = entity.y + Math.sin(testAngle) * lookAhead;
+        if (!checkEntityCollision(testX, testY, radius)) {
+            let moveX = Math.cos(testAngle) * stepDist;
+            let moveY = Math.sin(testAngle) * stepDist;
+            if (!checkEntityCollision(entity.x + moveX, entity.y + moveY, radius)) {
+                entity.x += moveX;
+                entity.y += moveY;
+                entity.avoidDir = offset >= 0 ? 1 : -1;
+                return true;
+            }
+        }
+    }
+
+    moveEntityWithCollision(entity, dx, dy, radius);
+    return (Math.hypot(entity.x - oldX, entity.y - oldY) > stepDist * 0.1);
 }
 
 function addFloatingText(text, x, y, color = '#fff') {
@@ -1046,6 +1309,10 @@ const BOSS_CONFIGS = [
 ];
 
 function spawnMonster(isBoss = false) {
+    if (isBoss && monsters.some(m => m.isBoss)) {
+        return;
+    }
+
     let spawnX = player.x;
     let spawnY = player.y;
     let foundValidSpot = false;
@@ -1066,13 +1333,12 @@ function spawnMonster(isBoss = false) {
 
     let levelFactor = 1 + (player.level - 1) * 0.12;
     let timeFactor = 1 + (survivalTime / 60) * 0.15;
-    let roundMultiplier = Math.pow(1.85, gameRound - 1); // 每进一回，小怪和BOSS全面大幅增强
+    let roundMultiplier = Math.pow(1.85, gameRound - 1);
     let globalScaling = levelFactor * timeFactor * roundMultiplier;
 
     if (isBoss) {
         bossCount++;
         let bossConfig = BOSS_CONFIGS[(bossCount - 1) % BOSS_CONFIGS.length];
-        // BOSS 强化：血量和体型大幅提升
         let baseBossHp = 60 + (bossCount - 1) * 45;
         let bossMaxHp = Math.round(baseBossHp * (1 + (player.level - 1) * 0.1) * roundMultiplier);
         let bossSpeed = Math.min(2.1, (0.9 + (bossCount - 1) * 0.08) * (1 + (gameRound - 1) * 0.2));
@@ -1093,7 +1359,8 @@ function spawnMonster(isBoss = false) {
             color: bossConfig.color,
             accent: bossConfig.accent,
             shape: bossConfig.shape,
-            exp: 180 + bossCount * 60
+            exp: 180 + bossCount * 60,
+            avoidDir: 0
         });
         playSoundLevelUp();
         playMonsterRoar('boss');
@@ -1117,7 +1384,8 @@ function spawnMonster(isBoss = false) {
             size: template.size,
             color: template.color,
             shape: template.shape,
-            exp: Math.round(template.exp * (1 + bossCount * 0.1) * roundMultiplier)
+            exp: Math.round(template.exp * (1 + bossCount * 0.1) * roundMultiplier),
+            avoidDir: 0
         });
         if (template.sound && Math.random() < 0.3) {
             playMonsterRoar(template.sound);
@@ -1145,6 +1413,109 @@ function spawnItem() {
     }
 }
 
+function spawnWeaponCapsule(bx, by) {
+    let capTemplate = WEAPON_CAPSULES[Math.floor(Math.random() * WEAPON_CAPSULES.length)];
+    items.push({
+        ...capTemplate,
+        x: bx,
+        y: by,
+        life: 45.0
+    });
+    showNotification(`🔥 BOSS掉落【双截龙 ${capTemplate.letter} 秘籍胶囊】！`);
+    addFloatingText(`🎁 掉落秘籍胶囊 [${capTemplate.letter}]!`, bx, by - 1, capTemplate.color);
+}
+
+function activateDecoy() {
+    let bestX = player.x;
+    let bestY = player.y;
+    let maxDist = 0;
+
+    for (let i = 0; i < 25; i++) {
+        let angle = Math.random() * Math.PI * 2;
+        let dist = 8 + Math.random() * 8;
+        let tx = player.x + Math.cos(angle) * dist;
+        let ty = player.y + Math.sin(angle) * dist;
+        if (!checkEntityCollision(tx, ty, 0.4)) {
+            let d = Math.hypot(tx - player.x, ty - player.y);
+            if (d > maxDist) {
+                maxDist = d;
+                bestX = tx;
+                bestY = ty;
+            }
+        }
+    }
+
+    decoy = {
+        x: bestX,
+        y: bestY,
+        timeLeft: 5.0
+    };
+
+    playSoundPowerup();
+    showNotification("🪆【替身草人】已在最远安全处生成，吸引全场仇恨5秒！");
+    addFloatingText("🪆 替身吸引全场火力！", player.x, player.y - 1.5, "#ff4081");
+}
+
+function activateFullSupport() {
+    supportAllies = [];
+    supportTimer = 5.0;
+
+    let currentForm = getCurrentLifeForm();
+    let otherFormNums = [1, 2, 3].filter(n => n !== currentForm.lifeNum);
+
+    let offsets = [
+        { dx: -2.2, dy: -1.4 },
+        { dx: 2.2, dy: -1.4 },
+        { dx: 0, dy: 2.0 }
+    ];
+
+    otherFormNums.forEach((formNum, idx) => {
+        let f = LIFE_FORMS[formNum];
+        let sx = player.x + offsets[idx].dx;
+        let sy = player.y + offsets[idx].dy;
+        if (checkEntityCollision(sx, sy, 0.3)) {
+            sx = player.x;
+            sy = player.y;
+        }
+        supportAllies.push({
+            kind: 'hero',
+            form: f,
+            name: f.shortName,
+            x: sx,
+            y: sy,
+            facingX: 0,
+            facingY: 1,
+            isMoving: false,
+            runCycle: 0,
+            lastAttackTime: 0,
+            attackCooldown: 240,
+            avoidDir: 0
+        });
+    });
+
+    let tx = player.x + offsets[2].dx;
+    let ty = player.y + offsets[2].dy;
+    if (checkEntityCollision(tx, ty, 0.35)) {
+        tx = player.x;
+        ty = player.y;
+    }
+    supportAllies.push({
+        kind: 'tank',
+        name: '重装坦克车',
+        x: tx,
+        y: ty,
+        bodyAngle: 0,
+        turretAngle: 0,
+        lastAttackTime: 0,
+        attackCooldown: 300,
+        avoidDir: 0
+    });
+
+    playSoundLevelUp();
+    showNotification("🚀【天降神兵】启动！三名无敌援军降临全屏轰炸 5 秒！");
+    addFloatingText("🚀 天降神兵！三英雄无敌集结！", player.x, player.y - 1.5, "#ff1744");
+}
+
 function addExp(amount) {
     player.exp += amount;
     
@@ -1156,12 +1527,10 @@ function addExp(amount) {
         player.maxExp = Math.floor(player.maxExp * 1.32);
         playSoundLevelUp();
 
-        // 达到99级通关并进入下一回 (轮回)
         if (player.level === 99) {
             gameRound++;
             showNotification(`🎉 恭喜大侠满99级通关！开启【第 ${gameRound} 回】世界！地图风格与敌人全面升级！`);
             addFloatingText(`🌟 开启【第 ${gameRound} 回】轮回！`, player.x, player.y - 2, "#00e5ff");
-            // 奖励大回血并清空当前场上怪物
             monsters = [];
             livesLeft = Math.min(3, livesLeft + 1);
         } else {
@@ -1174,15 +1543,23 @@ function addExp(amount) {
 function shootBullet() {
     if (isGameOver || isPaused || isRespawning) return;
     let now = performance.now();
-    let baseCooldown = Math.max(180, 920 - (player.level - 1) * 12);
+    let form = getCurrentLifeForm();
+    let weaponType = form.weapon;
+    let mod = player.weaponMod || 'normal';
+
+    let baseCooldown = Math.max(160, 920 - (player.level - 1) * 12);
+    if (mod === 'machine') {
+        if (form.lifeNum === 1) baseCooldown *= 0.35;
+        else if (form.lifeNum === 2) baseCooldown *= 0.30;
+        else if (form.lifeNum === 3) baseCooldown *= 0.40;
+    }
     let cooldown = player.buffs.rapid.active ? baseCooldown * 0.4 : baseCooldown;
 
     if (now - lastShootTime < cooldown) return;
     lastShootTime = now;
 
-    let form = getCurrentLifeForm();
-    let weaponType = form.weapon;
-    playSoundShoot(weaponType);
+    let soundMod = (mod === 'laser' ? 'laser' : (mod === 'flame' ? 'flame' : 'normal'));
+    playSoundShoot(weaponType, soundMod);
 
     function createProjectileAt(startX, startY) {
         let target = getClosestMonster(startX, startY);
@@ -1200,7 +1577,26 @@ function shootBullet() {
         }
 
         let angles = [0];
-        if (player.buffs.multishot.active) angles = [-0.25, 0, 0.25];
+        let dmg = player.bulletDamage;
+
+        if (mod === 'spread') {
+            if (form.lifeNum === 1) angles = [-0.35, -0.17, 0, 0.17, 0.35];
+            else if (form.lifeNum === 2) angles = [-0.42, -0.28, -0.14, 0, 0.14, 0.28, 0.42];
+            else angles = [-Math.PI/2, 0, Math.PI/2, Math.PI];
+        } else if (mod === 'machine') {
+            angles = [0];
+            if (form.lifeNum === 3) angles = [-0.08, 0.08];
+        } else if (mod === 'laser') {
+            angles = [0];
+            if (form.lifeNum === 1) dmg = Math.ceil(dmg * 1.6);
+            else if (form.lifeNum === 2) dmg = Math.ceil(dmg * 1.7);
+            else dmg = Math.ceil(dmg * 1.5);
+        } else if (mod === 'flame') {
+            angles = [0];
+            if (player.buffs.multishot.active) angles = [-0.2, 0, 0.2];
+        } else {
+            if (player.buffs.multishot.active) angles = [-0.25, 0, 0.25];
+        }
 
         angles.forEach(ang => {
             let cos = Math.cos(ang), sin = Math.sin(ang);
@@ -1208,39 +1604,47 @@ function shootBullet() {
             let vy = baseVx * sin + baseVy * cos;
 
             if (weaponType === 'arrow') {
+                let speedMultiplier = (mod === 'machine' ? 4.2 : (mod === 'laser' ? 3.8 : 3.4));
                 bullets.push({
                     type: 'arrow',
+                    mod: mod,
                     x: startX,
                     y: startY,
                     vx, vy,
-                    speed: player.baseSpeed * 3.4,
-                    damage: player.bulletDamage,
+                    speed: player.baseSpeed * speedMultiplier,
+                    damage: dmg,
                     targetId: target ? target.id : null,
-                    life: 4.0
+                    life: 4.5
                 });
             } else if (weaponType === 'boomerang') {
+                let sizeScale = (mod === 'laser' ? 2.2 : 1.0);
+                let speedMultiplier = (mod === 'machine' ? 3.2 : 2.5);
                 bullets.push({
                     type: 'boomerang',
+                    mod: mod,
                     x: startX,
                     y: startY,
                     vx, vy,
-                    speed: player.baseSpeed * 2.5,
-                    damage: player.bulletDamage,
+                    speed: player.baseSpeed * speedMultiplier,
+                    damage: dmg,
+                    sizeScale: sizeScale,
                     elapsed: 0,
-                    maxOutTime: 0.55,
+                    maxOutTime: mod === 'machine' ? 0.7 : 0.55,
                     returning: false,
                     spinAngle: 0,
                     hitHistory: {},
-                    life: 5.0
+                    life: 5.5
                 });
             } else {
+                let speedMultiplier = (mod === 'machine' ? 3.5 : (mod === 'laser' ? 3.2 : 2.7));
                 bullets.push({
                     type: 'bullet',
+                    mod: mod,
                     x: startX,
                     y: startY,
                     vx, vy,
-                    speed: player.baseSpeed * 2.7,
-                    damage: player.bulletDamage,
+                    speed: player.baseSpeed * speedMultiplier,
+                    damage: dmg,
                     targetId: target ? target.id : null,
                     life: 4.5
                 });
@@ -1271,9 +1675,19 @@ function getClosestMonster(x, y) {
     return closest;
 }
 
+function getScreenMonsters() {
+    let halfW = VIEW_WIDTH / 2 + 1.5;
+    let halfH = VIEW_HEIGHT / 2 + 1.5;
+    return monsters.filter(m =>
+        Math.abs(m.x - player.x) <= halfW &&
+        Math.abs(m.y - player.y) <= halfH
+    );
+}
+
 function checkBossSpawnMilestone() {
-    if (killCount > 0 && killCount % 20 === 0 && killCount !== lastBossKillMilestone) {
-        lastBossKillMilestone = killCount;
+    let activeBossCount = monsters.filter(m => m.isBoss).length;
+    let nextMilestone = getNextBossMilestone(bossCount);
+    if (killCount >= nextMilestone && activeBossCount === 0) {
         spawnMonster(true);
     }
 }
@@ -1283,6 +1697,8 @@ function resetGame() {
     gameRound = 1;
     isRespawning = false;
     respawnTimer = 0;
+    decoy = null;
+    wolf = null;
 
     player = {
         x: 0.5, y: 0.5,
@@ -1291,6 +1707,7 @@ function resetGame() {
         maxExp: 45,
         baseSpeed: 5.8,
         bulletDamage: 1,
+        weaponMod: 'normal',
         facingX: 0, facingY: 1,
         isMoving: false,
         runCycle: 0,
@@ -1304,15 +1721,16 @@ function resetGame() {
             clone: { active: false, timeLeft: 0 }
         }
     };
-    wolf = null;
+    supportAllies = [];
+    supportTimer = 0;
     monsters = [];
     bullets = [];
     items = [];
     floatingTexts = [];
+    blastEffects = [];
     survivalTime = 0;
     killCount = 0;
     bossCount = 0;
-    lastBossKillMilestone = 0;
     isGameOver = false;
     isPaused = false;
     lastShootTime = 0;
@@ -1323,6 +1741,7 @@ function resetGame() {
 
     document.getElementById('game-over-overlay').classList.remove('active');
     document.getElementById('pause-overlay').classList.remove('active');
+    document.getElementById('ad-overlay').classList.remove('active');
     updateUI();
     updateLeaderboardUI();
 }
@@ -1376,13 +1795,17 @@ function updateUI() {
         formEl.style.color = form.uiColor;
     }
 
+    let wInfo = getCurrentWeaponDisplayInfo();
+    document.getElementById('currentWeaponDisplay').textContent = wInfo.name;
+    document.getElementById('currentWeaponDisplay').style.color = wInfo.color;
+
     document.getElementById('roundDisplay').textContent = `第 ${gameRound} 回 ${gameRound > 1 ? '(虚空异世)' : '(经典论剑)'}`;
     document.getElementById('playerLevel').textContent = `Lv.${player.level}`;
     document.getElementById('atkDisplay').textContent = player.bulletDamage;
     document.getElementById('survivalTime').textContent = survivalTime.toFixed(1);
     document.getElementById('killCount').textContent = killCount;
 
-    let nextMilestone = (Math.floor(killCount / 20) + 1) * 20;
+    let nextMilestone = getNextBossMilestone(bossCount);
     document.getElementById('nextBossKills').textContent = nextMilestone;
     document.getElementById('bossWaveCount').textContent = bossCount;
 
@@ -1392,8 +1815,16 @@ function updateUI() {
     const buffContainer = document.getElementById('buffContainer');
     let activeBuffs = [];
 
+    if (decoy) {
+        activeBuffs.push(`<span class="buff-tag" style="border-color:#ff4081; color:#ff80ab; background:rgba(255,64,129,0.25);">🪆 替身草人 (${decoy.timeLeft.toFixed(1)}s)</span>`);
+    }
+
+    if (supportTimer > 0 && supportAllies.length > 0) {
+        activeBuffs.push(`<span class="buff-tag" style="border-color:#ff1744; color:#ff8a80; background:rgba(255,23,68,0.25);">🚀 天降神兵 (${supportTimer.toFixed(1)}s)</span>`);
+    }
+
     if (!isRespawning && player.stealthTimer > 0) {
-        activeBuffs.push(`<span class="buff-tag" style="border-color:#00e5ff; color:#84ffff;">👻 复活隐身保护 (${player.stealthTimer.toFixed(1)}s)</span>`);
+        activeBuffs.push(`<span class="buff-tag" style="border-color:#00e5ff; color:#84ffff;">👻 复活隐身 (${player.stealthTimer.toFixed(1)}s)</span>`);
     }
     
     for (let key in player.buffs) {
@@ -1404,25 +1835,17 @@ function updateUI() {
         }
     }
     if (wolf) {
-        activeBuffs.push(`<span class="buff-tag" style="border-color:#ff5722; color:#ff7043;">🐺 战狼护卫 (Lv.${wolf.level})</span>`);
+        activeBuffs.push(`<span class="buff-tag" style="border-color:#ff5722; color:#ff7043;">🐺 护卫战狼</span>`);
     }
 
-    buffContainer.innerHTML = activeBuffs.length === 0 ? '<span style="color:#aaa;">道具状态: 无 (有效30秒)</span>' : activeBuffs.join('');
-}
-
-function moveEntityWithCollision(entity, dx, dy, radius) {
-    let nextX = entity.x + dx;
-    if (!checkEntityCollision(nextX, entity.y, radius)) {
-        entity.x = nextX;
-    }
-    let nextY = entity.y + dy;
-    if (!checkEntityCollision(entity.x, nextY, radius)) {
-        entity.y = nextY;
-    }
+    buffContainer.innerHTML = activeBuffs.length === 0 ? '<span style="color:#aaa;">临时道具: 无 (武器胶囊永久有效至阵亡)</span>' : activeBuffs.join('');
 }
 
 function handlePlayerDeath() {
     livesLeft--;
+    player.weaponMod = 'normal';
+    wolf = null;
+
     if (livesLeft > 0) {
         isRespawning = true;
         respawnTimer = 5.0;
@@ -1436,6 +1859,145 @@ function handlePlayerDeath() {
         updateUI();
         triggerGameOver();
     }
+}
+
+function updateSupportAllies(deltaSec, deltaTime) {
+    if (supportTimer <= 0 || supportAllies.length === 0) return;
+
+    supportTimer -= deltaSec;
+    if (supportTimer <= 0) {
+        supportTimer = 0;
+        supportAllies = [];
+        addFloatingText("🚀 天降神兵结束，援军撤离！", player.x, player.y - 1.2, "#ffca28");
+        return;
+    }
+
+    let now = performance.now();
+    let screenTargets = getScreenMonsters();
+
+    supportAllies.forEach((ally, idx) => {
+        let target = null;
+        if (screenTargets.length > 0) {
+            target = screenTargets[idx % screenTargets.length];
+            let bestDist = Infinity;
+            screenTargets.forEach((m, mIdx) => {
+                let d = Math.hypot(m.x - ally.x, m.y - ally.y);
+                if (mIdx % supportAllies.length === idx && d < bestDist) {
+                    bestDist = d;
+                    target = m;
+                }
+            });
+        } else {
+            target = getClosestMonster(ally.x, ally.y);
+        }
+
+        let moveSpeed = (ally.kind === 'tank' ? 5.2 : 6.4) * deltaSec;
+
+        if (target) {
+            let dx = target.x - ally.x;
+            let dy = target.y - ally.y;
+            let dist = Math.hypot(dx, dy);
+            let angleToTarget = Math.atan2(dy, dx);
+
+            if (ally.kind === 'tank') {
+                ally.turretAngle = angleToTarget;
+            } else {
+                ally.facingX = Math.cos(angleToTarget);
+                ally.facingY = Math.sin(angleToTarget);
+            }
+
+            if (dist > 4.5) {
+                moveEntitySmart(ally, angleToTarget, moveSpeed, 0.30);
+                if (ally.kind === 'tank') ally.bodyAngle = angleToTarget;
+                ally.isMoving = true;
+                ally.runCycle = (ally.runCycle || 0) + deltaTime * 0.018;
+            } else {
+                let strafeAngle = angleToTarget + (idx % 2 === 0 ? Math.PI / 2 : -Math.PI / 2);
+                moveEntitySmart(ally, strafeAngle, moveSpeed * 0.65, 0.30);
+                if (ally.kind === 'tank') ally.bodyAngle = strafeAngle;
+                ally.isMoving = true;
+                ally.runCycle = (ally.runCycle || 0) + deltaTime * 0.015;
+            }
+
+            if (now - ally.lastAttackTime >= ally.attackCooldown) {
+                ally.lastAttackTime = now;
+                let vx = Math.cos(angleToTarget);
+                let vy = Math.sin(angleToTarget);
+                let dmg = Math.max(2, Math.ceil(player.bulletDamage * 1.5));
+
+                if (ally.kind === 'tank') {
+                    playSoundShoot('tank_shell');
+                    bullets.push({
+                        type: 'tank_shell',
+                        x: ally.x + vx * 0.5,
+                        y: ally.y + vy * 0.5,
+                        vx, vy,
+                        speed: player.baseSpeed * 3.6,
+                        damage: dmg * 2,
+                        targetId: target.id,
+                        life: 3.5
+                    });
+                } else {
+                    let wType = ally.form.weapon;
+                    playSoundShoot(wType);
+                    [-0.14, 0.14].forEach(spread => {
+                        let svx = vx * Math.cos(spread) - vy * Math.sin(spread);
+                        let svy = vx * Math.sin(spread) + vy * Math.cos(spread);
+                        if (wType === 'boomerang') {
+                            bullets.push({
+                                type: 'boomerang',
+                                ownerEntity: ally,
+                                x: ally.x,
+                                y: ally.y,
+                                vx: svx,
+                                vy: svy,
+                                speed: player.baseSpeed * 2.8,
+                                damage: dmg,
+                                sizeScale: 1.0,
+                                elapsed: 0,
+                                maxOutTime: 0.5,
+                                returning: false,
+                                spinAngle: 0,
+                                hitHistory: {},
+                                life: 4.0
+                            });
+                        } else {
+                            bullets.push({
+                                type: wType,
+                                x: ally.x,
+                                y: ally.y,
+                                vx: svx,
+                                vy: svy,
+                                speed: player.baseSpeed * 3.5,
+                                damage: dmg,
+                                targetId: target.id,
+                                life: 3.5
+                            });
+                        }
+                    });
+                }
+            }
+        } else {
+            let orbitAngle = performance.now() * 0.003 + (idx * Math.PI * 2 / 3);
+            let targetX = player.x + Math.cos(orbitAngle) * 2.2;
+            let targetY = player.y + Math.sin(orbitAngle) * 2.2;
+            let dx = targetX - ally.x;
+            let dy = targetY - ally.y;
+            let dist = Math.hypot(dx, dy);
+            if (dist > 0.3) {
+                let ang = Math.atan2(dy, dx);
+                moveEntitySmart(ally, ang, moveSpeed, 0.30);
+                if (ally.kind === 'tank') {
+                    ally.bodyAngle = ang;
+                    ally.turretAngle = ang;
+                }
+                ally.isMoving = true;
+                ally.runCycle = (ally.runCycle || 0) + deltaTime * 0.015;
+            } else {
+                ally.isMoving = false;
+            }
+        }
+    });
 }
 
 function updateGame(deltaTime) {
@@ -1471,6 +2033,14 @@ function updateGame(deltaTime) {
 
     survivalTime += deltaSec;
 
+    if (decoy) {
+        decoy.timeLeft -= deltaSec;
+        if (decoy.timeLeft <= 0) {
+            decoy = null;
+            addFloatingText("🪆 替身草人能量耗尽消失！", player.x, player.y - 1, "#ff80ab");
+        }
+    }
+
     if (player.stealthTimer > 0) {
         player.stealthTimer -= deltaSec;
         if (player.stealthTimer <= 0) {
@@ -1497,7 +2067,9 @@ function updateGame(deltaTime) {
 
     if (keys[' ']) shootBullet();
 
-    let maxMonsters = Math.min(45, 10 + Math.floor(player.level * 1.3) + Math.floor(survivalTime / 12));
+    let hasBossOnField = monsters.some(m => m.isBoss);
+    let maxMonsters = hasBossOnField ? 22 : Math.min(45, 10 + Math.floor(player.level * 1.3) + Math.floor(survivalTime / 12));
+    
     if (monsters.length < maxMonsters) {
         spawnMonster(false);
         if (monsters.length < maxMonsters && Math.random() < 0.45) {
@@ -1543,57 +2115,72 @@ function updateGame(deltaTime) {
         player.runCycle = 0;
     }
 
+    updateSupportAllies(deltaSec, deltaTime);
+
     if (wolf) {
         wolf.level = player.level;
-        let targetMonster = getClosestMonster(wolf.x, wolf.y);
-        let wolfSpeed = 4.6 * deltaSec;
+        let wolfSpeed = 6.2 * deltaSec;
 
-        if (targetMonster && Math.hypot(targetMonster.x - wolf.x, targetMonster.y - wolf.y) < 7.5) {
-            let wdx = targetMonster.x - wolf.x;
-            let wdy = targetMonster.y - wolf.y;
+        let nearbyMonster = null;
+        let minMonsterDist = 3.0;
+
+        monsters.forEach(m => {
+            let distToPlayer = Math.hypot(m.x - player.x, m.y - player.y);
+            if (distToPlayer <= 3.0) {
+                let distToWolf = Math.hypot(m.x - wolf.x, m.y - wolf.y);
+                if (distToWolf < minMonsterDist) {
+                    minMonsterDist = distToWolf;
+                    nearbyMonster = m;
+                }
+            }
+        });
+
+        if (nearbyMonster) {
+            let wdx = nearbyMonster.x - wolf.x;
+            let wdy = nearbyMonster.y - wolf.y;
             let wdist = Math.hypot(wdx, wdy);
             if (wdist > 0) {
-                moveEntityWithCollision(wolf, (wdx / wdist) * wolfSpeed, (wdy / wdist) * wolfSpeed, 0.25);
+                moveEntitySmart(wolf, Math.atan2(wdy, wdx), wolfSpeed, 0.25);
             }
 
-            if (wdist < 1.0 && performance.now() - wolf.lastAttackTime > 750) {
+            if (wdist < 1.2 && performance.now() - wolf.lastAttackTime > 450) {
                 wolf.lastAttackTime = performance.now();
-                let isUlt = Math.random() < 0.25;
-                let dmg = isUlt ? player.bulletDamage * 3 : player.bulletDamage;
-                targetMonster.hp -= dmg;
+                let isCrit = Math.random() < 0.4;
+                let dmg = isCrit ? player.bulletDamage * 6 : player.bulletDamage * 3.0;
+                nearbyMonster.hp -= dmg;
 
-                if (isUlt) {
-                    addFloatingText(`🐺 战狼【狂野绝息斩】! -${dmg}`, targetMonster.x, targetMonster.y - 1, "#ff9100");
+                blastEffects.push({ x: nearbyMonster.x, y: nearbyMonster.y, radius: 1.1, life: 0.25, color: '#ff5722' });
+
+                if (isCrit) {
+                    addFloatingText(`🐺 战狼【烈火狂牙暴击】! -${Math.round(dmg)}`, nearbyMonster.x, nearbyMonster.y - 1, "#ff9100");
                 } else {
-                    addFloatingText(`🐺 战狼扑击 -${dmg}`, targetMonster.x, targetMonster.y, "#ff7043");
+                    addFloatingText(`🐺 战狼撕咬 -${Math.round(dmg)}`, nearbyMonster.x, nearbyMonster.y, "#ff7043");
                 }
 
-                if (targetMonster.hp <= 0) {
+                if (nearbyMonster.hp <= 0) {
                     playSoundHit();
-                    addFloatingText(targetMonster.isBoss ? "👑 战狼助攻BOSS击破!" : "K.O.!", targetMonster.x, targetMonster.y, "#ffca28");
-                    let mIndex = monsters.findIndex(m => m.id === targetMonster.id);
+                    addFloatingText(nearbyMonster.isBoss ? "👑 战狼神威秒杀BOSS!" : "K.O.!", nearbyMonster.x, nearbyMonster.y, "#ffca28");
+                    if (nearbyMonster.isBoss) {
+                        spawnWeaponCapsule(nearbyMonster.x, nearbyMonster.y);
+                    }
+                    let mIndex = monsters.findIndex(m => m.id === nearbyMonster.id);
                     if (mIndex !== -1) monsters.splice(mIndex, 1);
                     killCount++;
-                    addExp(targetMonster.exp);
+                    addExp(nearbyMonster.exp);
                     checkBossSpawnMilestone();
                     updateUI();
                 }
             }
         } else {
-            let pdist = Math.hypot(player.x - wolf.x, player.y - wolf.y);
-            if (pdist > 1.8) {
-                let pdx = player.x - wolf.x;
-                let pdy = player.y - wolf.y;
-                moveEntityWithCollision(wolf, (pdx / pdist) * wolfSpeed, (pdy / pdist) * wolfSpeed, 0.25);
+            let orbitAngle = performance.now() * 0.0025;
+            let targetX = player.x + Math.cos(orbitAngle) * 2.0;
+            let targetY = player.y + Math.sin(orbitAngle) * 2.0;
+            let dx = targetX - wolf.x;
+            let dy = targetY - wolf.y;
+            let dist = Math.hypot(dx, dy);
+            if (dist > 0.25) {
+                moveEntitySmart(wolf, Math.atan2(dy, dx), wolfSpeed * 0.85, 0.25);
             }
-        }
-
-        let attackersCount = monsters.filter(m => Math.hypot(m.x - wolf.x, m.y - wolf.y) < 0.95).length;
-        if (attackersCount >= 3) {
-            showNotification("💀 警告：战狼护卫遭到多只怪物围攻牺牲了！");
-            playSoundGameOver();
-            wolf = null;
-            updateUI();
         }
     }
 
@@ -1602,16 +2189,27 @@ function updateGame(deltaTime) {
         it.life -= deltaSec;
         if (it.life <= 0) { items.splice(i, 1); continue; }
         if (Math.hypot(it.x - player.x, it.y - player.y) < 0.95) {
-            if (it.type === 'wolf') {
+            if (it.isWeapon) {
+                player.weaponMod = it.weaponMod;
+                let f = getCurrentLifeForm();
+                playSoundPowerup();
+                showNotification(`🔥 获得秘籍【${it.heroNames[f.lifeNum]}】！永久有效直到阵亡！`);
+                addFloatingText(`✨ 获得秘籍 [${it.letter}]!`, player.x, player.y - 1, it.color);
+            } else if (it.type === 'wolf') {
                 wolf = {
                     x: player.x,
                     y: player.y,
                     level: player.level,
-                    lastAttackTime: 0
+                    lastAttackTime: 0,
+                    avoidDir: 0
                 };
                 playSoundPowerup();
-                showNotification("🐺 成功召唤【战狼护卫】！永久跟随帮你战斗！");
-                addFloatingText(`🐺 召唤战狼护卫成功！`, player.x, player.y - 1, "#ff5722");
+                showNotification("🐺 召唤【护卫战狼】成功！环绕主角身侧，自动护卫！");
+                addFloatingText(`🐺 召唤护卫战狼！`, player.x, player.y - 1, "#ff5722");
+            } else if (it.type === 'full_support') {
+                activateFullSupport();
+            } else if (it.type === 'decoy') {
+                activateDecoy();
             } else {
                 player.buffs[it.type].active = true;
                 let duration = 30.0;
@@ -1628,24 +2226,40 @@ function updateGame(deltaTime) {
 
     for (let mIdx = 0; mIdx < monsters.length; mIdx++) {
         let m = monsters[mIdx];
-        let dx = player.x - m.x, dy = player.y - m.y;
+        
+        let targetX = player.x;
+        let targetY = player.y;
+        if (decoy) {
+            targetX = decoy.x;
+            targetY = decoy.y;
+        }
+
+        let dx = targetX - m.x, dy = targetY - m.y;
         let dist = Math.hypot(dx, dy);
 
-        if (player.stealthTimer > 0) {
+        if (player.stealthTimer > 0 && !decoy) {
             let wanderAngle = (parseInt(m.id.slice(0, 4), 36) || 1) + survivalTime * 0.8;
             let mSpeed = m.speed * 0.4 * deltaSec;
             let mRadius = m.isBoss ? 0.48 : 0.28;
-            moveEntityWithCollision(m, Math.cos(wanderAngle) * mSpeed, Math.sin(wanderAngle) * mSpeed, mRadius);
+            moveEntitySmart(m, wanderAngle, mSpeed, mRadius);
         } else if (dist > 0) {
             let mTerrain = getTerrain(Math.floor(m.x), Math.floor(m.y));
             let mTerrainMult = mTerrain.speedMultiplier > 0 ? mTerrain.speedMultiplier : 0.8;
             let mSpeed = m.speed * mTerrainMult * deltaSec;
             let mRadius = m.isBoss ? 0.48 : 0.28;
-            moveEntityWithCollision(m, (dx / dist) * mSpeed, (dy / dist) * mSpeed, mRadius);
+            let targetAngle = Math.atan2(dy, dx);
+            moveEntitySmart(m, targetAngle, mSpeed, mRadius);
         }
 
+        if (decoy && Math.hypot(decoy.x - m.x, decoy.y - m.y) < (m.isBoss ? 1.0 : 0.7)) {
+            if (Math.random() < 0.2) {
+                addFloatingText("💥 吸引", decoy.x + (Math.random()-0.5), decoy.y + (Math.random()-0.5), "#ff4081");
+            }
+        }
+
+        let playerDist = Math.hypot(player.x - m.x, player.y - m.y);
         let hitDist = m.isBoss ? 0.95 : 0.72;
-        if (dist < hitDist) {
+        if (playerDist < hitDist && !decoy) {
             if (player.stealthTimer > 0) {
                 continue;
             }
@@ -1676,6 +2290,13 @@ function updateGame(deltaTime) {
         }
     }
 
+    for (let i = blastEffects.length - 1; i >= 0; i--) {
+        let bl = blastEffects[i];
+        bl.life -= deltaSec;
+        bl.radius += deltaSec * 12;
+        if (bl.life <= 0) blastEffects.splice(i, 1);
+    }
+
     for (let i = bullets.length - 1; i >= 0; i--) {
         let b = bullets[i];
         b.life -= deltaSec;
@@ -1696,8 +2317,9 @@ function updateGame(deltaTime) {
                     b.returning = true;
                 }
             } else {
-                let rdx = player.x - b.x;
-                let rdy = player.y - b.y;
+                let returnTarget = b.ownerEntity && supportAllies.includes(b.ownerEntity) ? b.ownerEntity : player;
+                let rdx = returnTarget.x - b.x;
+                let rdy = returnTarget.y - b.y;
                 let rDist = Math.hypot(rdx, rdy);
                 if (rDist < 0.65) {
                     bullets.splice(i, 1);
@@ -1712,14 +2334,22 @@ function updateGame(deltaTime) {
             let nowMs = performance.now();
             for (let j = monsters.length - 1; j >= 0; j--) {
                 let m = monsters[j];
-                let hitRadius = m.isBoss ? 1.05 : 0.78;
+                let hitRadius = (m.isBoss ? 1.05 : 0.78) * (b.sizeScale || 1.0);
                 if (Math.hypot(m.x - b.x, m.y - b.y) < hitRadius) {
-                    if (!b.hitHistory[m.id] || nowMs - b.hitHistory[m.id] > 280) {
+                    if (!b.hitHistory[m.id] || nowMs - b.hitHistory[m.id] > 250) {
                         b.hitHistory[m.id] = nowMs;
                         m.hp -= b.damage;
+
+                        if (b.mod === 'flame') {
+                            blastEffects.push({ x: b.x, y: b.y, radius: 0.6, life: 0.35, color: '#ff9100' });
+                        }
+
                         if (m.hp <= 0) {
                             playSoundHit();
                             addFloatingText(m.isBoss ? `👑 ${m.name} 击破!` : "K.O.!", m.x, m.y, m.isBoss ? "#ffca28" : "#ff1744");
+                            if (m.isBoss) {
+                                spawnWeaponCapsule(m.x, m.y);
+                            }
                             monsters.splice(j, 1);
                             killCount++;
                             addExp(m.exp);
@@ -1737,7 +2367,7 @@ function updateGame(deltaTime) {
         let target = monsters.find(m => m.id === b.targetId);
         if (!target) { target = getClosestMonster(b.x, b.y); if (target) b.targetId = target.id; }
 
-        if (target) {
+        if (target && b.mod !== 'laser') {
             let tdx = target.x - b.x, tdy = target.y - b.y;
             let tDist = Math.hypot(tdx, tdy);
             if (tDist > 0) {
@@ -1756,7 +2386,11 @@ function updateGame(deltaTime) {
         let bGy = Math.floor(b.y);
         let bTerrain = getTerrain(bGx, bGy);
         let bObj = getObjectAt(bGx, bGy, bTerrain.name);
-        if (bObj === 'tree' || bObj === 'rock' || bObj === 'ice_pillar') {
+        
+        if (b.mod !== 'laser' && (bObj === 'tree' || bObj === 'rock' || bObj === 'ice_pillar')) {
+            if (b.mod === 'flame') {
+                blastEffects.push({ x: b.x, y: b.y, radius: 1.8, life: 0.4, color: '#ff3d00' });
+            }
             bullets.splice(i, 1);
             continue;
         }
@@ -1768,20 +2402,59 @@ function updateGame(deltaTime) {
         }
 
         if (hitIndex !== -1) {
-            let m = monsters[hitIndex];
-            m.hp -= b.damage;
-            bullets.splice(i, 1);
+            let hitX = b.x;
+            let hitY = b.y;
+            let isTankShell = b.type === 'tank_shell';
+            let isLaser = b.mod === 'laser';
+            let isFlame = b.mod === 'flame';
 
-            if (m.hp <= 0) {
-                playSoundHit();
-                addFloatingText(m.isBoss ? `👑 ${m.name} 击破!` : "K.O.!", m.x, m.y, m.isBoss ? "#ffca28" : "#ff1744");
-                monsters.splice(hitIndex, 1);
-                killCount++;
-                addExp(m.exp);
-                checkBossSpawnMilestone();
+            if (!isLaser) {
+                bullets.splice(i, 1);
+            }
+
+            if (isTankShell || isFlame) {
+                let radius = isFlame ? 2.4 : 2.2;
+                blastEffects.push({ x: hitX, y: hitY, radius: radius, life: 0.45, color: isFlame ? '#ff9100' : '#ff3d00' });
+                addFloatingText(isFlame ? `🔥 烈焰爆裂!` : `💥 坦克重炮轰击!`, hitX, hitY - 0.8, "#ff9100");
+                for (let j = monsters.length - 1; j >= 0; j--) {
+                    let m = monsters[j];
+                    let distToBlast = Math.hypot(m.x - hitX, m.y - hitY);
+                    if (distToBlast <= radius) {
+                        let actualDmg = j === hitIndex ? b.damage : Math.max(1, Math.floor(b.damage * 0.7));
+                        m.hp -= actualDmg;
+                        if (m.hp <= 0) {
+                            playSoundHit();
+                            addFloatingText(m.isBoss ? `👑 击破 ${m.name}!` : "💥 轰杀!", m.x, m.y, "#ffca28");
+                            if (m.isBoss) {
+                                spawnWeaponCapsule(m.x, m.y);
+                            }
+                            monsters.splice(j, 1);
+                            killCount++;
+                            addExp(m.exp);
+                            checkBossSpawnMilestone();
+                        } else {
+                            addFloatingText(`-${actualDmg}`, m.x, m.y, "#ffab40");
+                        }
+                    }
+                }
                 updateUI();
             } else {
-                addFloatingText(`-${b.damage}`, m.x, m.y, "#fff");
+                let m = monsters[hitIndex];
+                m.hp -= b.damage;
+                if (m.hp <= 0) {
+                    playSoundHit();
+                    addFloatingText(m.isBoss ? `👑 ${m.name} 击破!` : "K.O.!", m.x, m.y, m.isBoss ? "#ffca28" : "#ff1744");
+                    if (m.isBoss) {
+                        spawnWeaponCapsule(m.x, m.y);
+                    }
+                    monsters.splice(hitIndex, 1);
+                    killCount++;
+                    addExp(m.exp);
+                    checkBossSpawnMilestone();
+                    updateUI();
+                } else {
+                    addFloatingText(`-${b.damage}`, m.x, m.y, "#fff");
+                }
             }
         }
     }
@@ -1806,15 +2479,111 @@ function triggerGameOver() {
     addRecord(survivalTime, killCount, player.level, gameRound);
 }
 
-function drawBoxerHero(cx, cy, p) {
-    let form = getCurrentLifeForm();
+// ==================== 【广告代码替换区域 - JS逻辑 START】 ====================
+let adTimerInterval = null;
+let adIsCompleted = false; // 记录广告是否完整播放完毕
+
+function watchAdToContinue() {
+    document.getElementById('game-over-overlay').classList.remove('active');
+    document.getElementById('ad-overlay').classList.add('active');
+
+    let claimBtn = document.getElementById('adClaimBtn');
+    let countdownEl = document.getElementById('adCountdown');
+    claimBtn.style.display = 'none';
+    adIsCompleted = false;
+
+    // 动态重新注入广告标签并调用 push，确保在弹窗可见、容器有宽度时才请求
+    let wrapper = document.getElementById('adsense-wrapper');
+    wrapper.innerHTML = `
+        <ins class="adsbygoogle"
+             style="display:inline-block;width:300px;height:250px"
+             data-ad-client="ca-pub-1805477885216561"
+             data-ad-slot="2172920426"></ins>
+    `;
+    setTimeout(() => {
+        try {
+            (adsbygoogle = window.adsbygoogle || []).push({});
+        } catch (e) {
+            console.error('AdSense 加载异常:', e);
+        }
+    }, 150);
+
+    let secondsLeft = 15; // 15秒倒计时
+    countdownEl.textContent = secondsLeft;
+
+    if (adTimerInterval) clearInterval(adTimerInterval);
+    adTimerInterval = setInterval(() => {
+        secondsLeft--;
+        countdownEl.textContent = Math.max(0, secondsLeft);
+        if (secondsLeft <= 0) {
+            clearInterval(adTimerInterval);
+            adTimerInterval = null;
+            adIsCompleted = true;
+            claimBtn.style.display = 'block'; // 倒计时结束，显示领取按钮
+        }
+    }, 1000);
+}
+
+// 用户尝试关闭广告触发的拦截逻辑
+function attemptCloseAd() {
+    if (adIsCompleted) {
+        // 如果广告已经完整播放过，直接关闭广告并复活
+        closeAdAndResume();
+        return;
+    }
+
+    // 广告未播放完，弹窗警告
+    let confirmClose = confirm("⚠️ 关闭广告将无法获得三条命，建议取消继续观看！\n\n点击“确定”将强行关闭并直接结束游戏，点击“取消”继续观看广告。");
+    if (confirmClose) {
+        // 用户强行关闭，直接结束游戏清理广告状态
+        if (adTimerInterval) {
+            clearInterval(adTimerInterval);
+            adTimerInterval = null;
+        }
+        document.getElementById('ad-overlay').classList.remove('active');
+        // 游戏彻底结束，返回结算画面或重置
+        document.getElementById('game-over-overlay').classList.add('active');
+        showNotification("❌ 强行关闭广告，挑战正式结束！");
+    }
+}
+
+function closeAdAndResume() {
+    if (adTimerInterval) {
+        clearInterval(adTimerInterval);
+        adTimerInterval = null;
+    }
+    document.getElementById('ad-overlay').classList.remove('active');
+}
+
+function reviveFromAd() {
+    closeAdAndResume();
+
+    // 恢复 3 条命并保留当前所有游戏进度
+    livesLeft = 3;
+    isGameOver = false;
+    isRespawning = false;
+    respawnTimer = 0;
+    bullets = [];
+
+    // 给予 5 秒隐身无敌保护
+    player.stealthTimer = 5.0;
+
+    playSoundPowerup();
+    showNotification("🎉 观看广告成功！已满血恢复 3 条命，继续当前进度战斗！");
+    addFloatingText("❤️ 满血复活 (3命) + 5秒隐身！", player.x, player.y - 1.5, "#00e676");
+    updateUI();
+}
+// ==================== 【广告代码替换区域 - JS逻辑 END】 ====================
+
+function drawBoxerHero(cx, cy, p, overrideForm = null, isInvincibleAlly = false) {
+    let form = overrideForm || getCurrentLifeForm();
     let runAngle = p.isMoving ? Math.sin(p.runCycle) * 0.6 : 0;
     let bounce = p.isMoving ? Math.abs(Math.sin(p.runCycle * 2)) * 3 : Math.sin(performance.now() * 0.003) * 1.5;
 
     ctx.save();
     ctx.translate(cx, cy - bounce);
 
-    if (p.stealthTimer > 0) {
+    if (!overrideForm && p.stealthTimer > 0) {
         let pulseAlpha = 0.35 + Math.abs(Math.sin(performance.now() * 0.012)) * 0.3;
         ctx.globalAlpha = pulseAlpha;
 
@@ -1833,17 +2602,17 @@ function drawBoxerHero(cx, cy, p) {
     ctx.ellipse(0, 24 + bounce, 16, 6, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    if (p.buffs.shield.active) {
+    if (!overrideForm && p.buffs && p.buffs.shield.active) {
         ctx.strokeStyle = 'rgba(255, 215, 0, 0.75)';
         ctx.lineWidth = 3.5;
         ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 15;
         ctx.beginPath(); ctx.arc(0, -10, 28, 0, Math.PI * 2); ctx.stroke();
         ctx.shadowBlur = 0;
     }
-    if (p.buffs.invincible.active) {
+    if ((!overrideForm && p.buffs && p.buffs.invincible.active) || isInvincibleAlly) {
         ctx.strokeStyle = 'rgba(255, 235, 59, 0.95)';
         ctx.lineWidth = 4.5;
-        ctx.shadowColor = '#ffeb3b'; ctx.shadowBlur = 25;
+        ctx.shadowColor = '#ffeb3b'; ctx.shadowBlur = 22;
         ctx.beginPath(); ctx.arc(0, -10, 34, 0, Math.PI * 2); ctx.stroke();
         ctx.shadowBlur = 0;
     }
@@ -1912,6 +2681,105 @@ function drawBoxerHero(cx, cy, p) {
         ctx.fillRect(-10.5, -34, 21, 3.5);
     }
 
+    if (isInvincibleAlly) {
+        ctx.fillStyle = '#ffeb3b';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#000';
+        ctx.shadowBlur = 4;
+        ctx.fillText(`⭐援军·${form.shortName}`, 0, -48);
+    }
+
+    ctx.restore();
+}
+
+function drawDecoy(d, offsetX, offsetY) {
+    let dx = d.x * TILE_SIZE + offsetX;
+    let dy = d.y * TILE_SIZE + offsetY;
+
+    ctx.save();
+    ctx.translate(dx, dy);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.beginPath(); ctx.ellipse(0, 15, 16, 6, 0, 0, Math.PI * 2); ctx.fill();
+
+    ctx.strokeStyle = '#ff4081';
+    ctx.lineWidth = 3;
+    ctx.shadowColor = '#ff4081';
+    ctx.shadowBlur = 15;
+    ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI * 2); ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = '#ffb74d';
+    ctx.beginPath(); ctx.roundRect(-10, -18, 20, 24, 4); ctx.fill();
+
+    ctx.fillStyle = '#ff4081';
+    ctx.beginPath(); ctx.arc(0, -26, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('🪆替身', 0, -40);
+
+    ctx.restore();
+}
+
+function drawSupportTank(cx, cy, tank) {
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.beginPath();
+    ctx.ellipse(0, 14, 24, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255, 235, 59, 0.95)';
+    ctx.lineWidth = 4;
+    ctx.shadowColor = '#ffeb3b';
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.arc(0, 0, 32, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    ctx.save();
+    ctx.rotate(tank.bodyAngle);
+    ctx.fillStyle = '#263238';
+    ctx.beginPath();
+    ctx.roundRect(-20, -16, 40, 6, 2);
+    ctx.roundRect(-20, 10, 40, 6, 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#388e3c';
+    ctx.strokeStyle = '#a5d6a7';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(-17, -12, 34, 24, 4);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.save();
+    ctx.rotate(tank.turretAngle);
+    ctx.fillStyle = '#1b5e20';
+    ctx.fillRect(4, -3.5, 22, 7);
+    ctx.fillStyle = '#ff9100';
+    ctx.fillRect(22, -4.5, 5, 9);
+
+    ctx.fillStyle = '#4caf50';
+    ctx.beginPath();
+    ctx.arc(0, 0, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ffeb3b';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.fillStyle = '#ffeb3b';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#000';
+    ctx.shadowBlur = 4;
+    ctx.fillText('🚜无敌重装坦克', 0, -36);
+
     ctx.restore();
 }
 
@@ -1921,17 +2789,46 @@ function drawWolf(w, offsetX, offsetY) {
 
     ctx.save();
     ctx.translate(wx, wy);
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.beginPath(); ctx.ellipse(0, 10, 12, 4, 0, 0, Math.PI * 2); ctx.fill();
 
-    ctx.fillStyle = '#ff7043';
-    ctx.beginPath(); ctx.ellipse(0, 0, 14, 8, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(10, -4, 8, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(8, -10); ctx.lineTo(6, -14); ctx.lineTo(10, -11); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.beginPath(); ctx.ellipse(0, 14, 16, 6, 0, 0, Math.PI * 2); ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255, 145, 0, 0.9)';
+    ctx.lineWidth = 3.5;
+    ctx.shadowColor = '#ff5722';
+    ctx.shadowBlur = 16;
+    ctx.beginPath(); ctx.arc(0, 0, 28, 0, Math.PI * 2); ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = '#b0bec5';
+    ctx.beginPath(); ctx.ellipse(0, 2, 18, 10, 0, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = '#90a4ae';
+    ctx.beginPath(); ctx.arc(12, -4, 10, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = '#78909c';
+    ctx.beginPath();
+    ctx.moveTo(8, -12); ctx.lineTo(12, -18); ctx.lineTo(15, -11); ctx.closePath();
+    ctx.moveTo(14, -11); ctx.lineTo(18, -16); ctx.lineTo(20, -9); ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#ffea00';
+    ctx.beginPath(); ctx.arc(15, -6, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#000';
+    ctx.beginPath(); ctx.arc(15.5, -6, 1, 0, Math.PI * 2); ctx.fill();
+
+    ctx.strokeStyle = '#cfd8dc';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-16, 0);
+    ctx.quadraticCurveTo(-24, -6, -22, -14);
+    ctx.stroke();
 
     ctx.fillStyle = '#ffca28';
     ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(`🐺Lv.${w.level}`, 0, -18);
+    ctx.shadowColor = '#000'; ctx.shadowBlur = 4;
+    ctx.fillText(`🐺护卫战狼`, 0, -36);
 
     ctx.restore();
 }
@@ -2027,15 +2924,52 @@ function renderGame() {
     items.forEach(it => {
         let itDrawX = it.x * TILE_SIZE + offsetX;
         let itDrawY = it.y * TILE_SIZE + offsetY;
-        let pulse = Math.sin(performance.now() * 0.005) * 3;
+        let pulse = Math.sin(performance.now() * 0.006) * 4;
 
-        ctx.fillStyle = it.color; ctx.globalAlpha = 0.3;
-        ctx.beginPath(); ctx.arc(itDrawX, itDrawY, 14 + pulse, 0, Math.PI * 2); ctx.fill();
-        ctx.globalAlpha = 1.0;
+        ctx.save();
+        if (it.isWeapon) {
+            ctx.shadowColor = it.color;
+            ctx.shadowBlur = 15;
+            ctx.fillStyle = it.color;
+            ctx.beginPath();
+            ctx.roundRect(itDrawX - 16, itDrawY - 16, 32, 32, 6);
+            ctx.fill();
 
-        ctx.beginPath(); ctx.arc(itDrawX, itDrawY, 10, 0, Math.PI * 2); ctx.fill();
-        ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(it.icon, itDrawX, itDrawY);
+            ctx.strokeStyle = it.borderColor;
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 18px Segoe UI, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(it.letter, itDrawX, itDrawY);
+        } else {
+            ctx.fillStyle = it.color; ctx.globalAlpha = 0.3;
+            ctx.beginPath(); ctx.arc(itDrawX, itDrawY, 14 + pulse, 0, Math.PI * 2); ctx.fill();
+            ctx.globalAlpha = 1.0;
+
+            ctx.beginPath(); ctx.arc(itDrawX, itDrawY, 10, 0, Math.PI * 2); ctx.fill();
+            ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(it.icon, itDrawX, itDrawY);
+        }
+        ctx.restore();
+    });
+
+    blastEffects.forEach(bl => {
+        let bDrawX = bl.x * TILE_SIZE + offsetX;
+        let bDrawY = bl.y * TILE_SIZE + offsetY;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, bl.life * 2);
+        ctx.strokeStyle = bl.color;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(bDrawX, bDrawY, bl.radius * TILE_SIZE, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = bl.color;
+        ctx.globalAlpha *= 0.25;
+        ctx.fill();
+        ctx.restore();
     });
 
     bullets.forEach(b => {
@@ -2048,20 +2982,20 @@ function renderGame() {
             ctx.translate(bDrawX, bDrawY);
             ctx.rotate(angle);
 
-            ctx.shadowColor = '#69f0ae';
-            ctx.shadowBlur = 8;
-            ctx.strokeStyle = '#d7ccc8';
-            ctx.lineWidth = 2.5;
+            ctx.shadowColor = b.mod === 'laser' ? '#d500f9' : '#69f0ae';
+            ctx.shadowBlur = b.mod === 'laser' ? 14 : 8;
+            ctx.strokeStyle = b.mod === 'laser' ? '#ea80fc' : '#d7ccc8';
+            ctx.lineWidth = b.mod === 'laser' ? 4 : 2.5;
             ctx.beginPath();
-            ctx.moveTo(-14, 0);
-            ctx.lineTo(10, 0);
+            ctx.moveTo(-16, 0);
+            ctx.lineTo(b.mod === 'laser' ? 22 : 10, 0);
             ctx.stroke();
 
-            ctx.fillStyle = '#00e676';
+            ctx.fillStyle = b.mod === 'laser' ? '#ffeb3b' : '#00e676';
             ctx.beginPath();
-            ctx.moveTo(15, 0);
-            ctx.lineTo(7, -4.5);
-            ctx.lineTo(7, 4.5);
+            ctx.moveTo(18, 0);
+            ctx.lineTo(8, -5);
+            ctx.lineTo(8, 5);
             ctx.closePath();
             ctx.fill();
 
@@ -2071,22 +3005,42 @@ function renderGame() {
             ctx.translate(bDrawX, bDrawY);
             ctx.rotate(b.spinAngle);
 
-            ctx.shadowColor = '#ff3d00';
-            ctx.shadowBlur = 10;
-            ctx.strokeStyle = '#ff9100';
-            ctx.lineWidth = 4.5;
+            let sScale = b.sizeScale || 1.0;
+            ctx.shadowColor = b.mod === 'flame' ? '#ff3d00' : '#ff9100';
+            ctx.shadowBlur = 12;
+            ctx.strokeStyle = b.mod === 'flame' ? '#ffea00' : '#ff9100';
+            ctx.lineWidth = 4.5 * sScale;
             ctx.lineCap = 'round';
             ctx.beginPath();
-            ctx.moveTo(-10, -8);
-            ctx.lineTo(2, 0);
-            ctx.lineTo(-10, 8);
+            ctx.moveTo(-12 * sScale, -10 * sScale);
+            ctx.lineTo(3 * sScale, 0);
+            ctx.lineTo(-12 * sScale, 10 * sScale);
             ctx.stroke();
 
             ctx.restore();
+        } else if (b.type === 'tank_shell') {
+            let angle = Math.atan2(b.vy, b.vx);
+            ctx.save();
+            ctx.translate(bDrawX, bDrawY);
+            ctx.rotate(angle);
+            ctx.shadowColor = '#ff3d00';
+            ctx.shadowBlur = 14;
+            ctx.fillStyle = '#ff9100';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 10, 4.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#fff59d';
+            ctx.beginPath();
+            ctx.arc(4, 0, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
         } else {
-            ctx.shadowColor = '#00e5ff'; ctx.shadowBlur = 10;
-            ctx.fillStyle = '#e0f7fa';
-            ctx.beginPath(); ctx.arc(bDrawX, bDrawY, 5 + Math.min(3, b.damage * 0.5), 0, Math.PI * 2); ctx.fill();
+            ctx.shadowColor = b.mod === 'laser' ? '#d500f9' : '#00e5ff';
+            ctx.shadowBlur = b.mod === 'laser' ? 16 : 10;
+            ctx.fillStyle = b.mod === 'laser' ? '#ea80fc' : '#e0f7fa';
+            ctx.beginPath();
+            ctx.arc(bDrawX, bDrawY, (b.mod === 'laser' ? 7 : 5) + Math.min(3, b.damage * 0.4), 0, Math.PI * 2);
+            ctx.fill();
             ctx.shadowBlur = 0;
         }
     });
@@ -2140,8 +3094,24 @@ function renderGame() {
         }
     });
 
+    if (decoy) {
+        drawDecoy(decoy, offsetX, offsetY);
+    }
+
     if (wolf) {
         drawWolf(wolf, offsetX, offsetY);
+    }
+
+    if (supportTimer > 0 && supportAllies.length > 0) {
+        supportAllies.forEach(ally => {
+            let ax = ally.x * TILE_SIZE + offsetX;
+            let ay = ally.y * TILE_SIZE + offsetY;
+            if (ally.kind === 'tank') {
+                drawSupportTank(ax, ay, ally);
+            } else {
+                drawBoxerHero(ax, ay, ally, ally.form, true);
+            }
+        });
     }
 
     if (!isRespawning) {
