@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
-    <title>华山论剑 - 天降神兵版</title>
+    <title>华山论剑 - 双截龙神兵版</title>
     <style>
         * {
             box-sizing: border-box;
@@ -145,7 +145,7 @@
             backdrop-filter: blur(4px);
             border: 1px solid rgba(255,255,255,0.15);
             font-size: 12px;
-            min-width: 225px;
+            min-width: 240px;
             z-index: 5;
         }
         .ui-panel h1 {
@@ -166,6 +166,7 @@
         .boss-highlight { color: #ff9100; font-weight: bold; }
         .lives-highlight { color: #ff4081; font-weight: bold; letter-spacing: 1px; }
         .round-highlight { color: #00e676; font-weight: bold; }
+        .weapon-highlight { color: #ffeb3b; font-weight: bold; }
 
         /* 经验条 */
         .exp-bar-box {
@@ -419,7 +420,7 @@
 <!-- 用户登录浮层 -->
 <div id="login-overlay">
     <div class="login-card">
-        <h1 id="registerTitle">华山论剑 · 三英雄版</h1>
+        <h1 id="registerTitle">华山论剑 · 双截龙神兵版</h1>
         <p>剑在手，问天下谁是英雄</p>
         <input type="text" id="usernameInput" class="login-input" placeholder="输入您的昵称 (例如: 大头辉)" maxlength="16">
         <button class="register-btn" onclick="registerUser()">发起挑战</button>
@@ -440,6 +441,7 @@
             <p>玩家: <span id="userNameDisplay" style="color:#00e5ff; font-weight:bold;">玩家</span></p>
             <p>生命: <span id="livesDisplay" class="lives-highlight">❤️❤️❤️ (3)</span></p>
             <p>形态: <span id="weaponFormDisplay" style="color:#4fc3f7; font-weight:bold;">第1命 · 南宁老登</span></p>
+            <p>武器: <span id="currentWeaponDisplay" class="weapon-highlight">初始·气功弹</span></p>
             <p>轮回: <span id="roundDisplay" class="round-highlight">第 1 回 (经典论剑)</span></p>
 
             <p>等级: <span id="playerLevel" class="level-highlight">Lv.1</span> (攻击: <span id="atkDisplay" style="color:#ff8a80;">1</span>)</p>
@@ -447,9 +449,9 @@
                 <div class="exp-bar-fill" id="expBarFill"></div>
             </div>
             <p>生存: <span id="survivalTime" class="timer-highlight">0.0</span>s | 击杀: <span id="killCount" class="kills-highlight">0</span></p>
-            <p>下个小BOSS: 击杀 <span id="nextBossKills" class="boss-highlight">20</span> 只 (已出 <span id="bossWaveCount">0</span> 波)</p>
+            <p>下个BOSS: 击杀 <span id="nextBossKills" class="boss-highlight">50</span> 只 (已出 <span id="bossWaveCount">0</span> 波)</p>
             <div class="buff-container" id="buffContainer">
-                <span style="color:#aaa;">道具状态: 无 (有效30秒)</span>
+                <span style="color:#aaa;">临时道具: 无 (武器胶囊永久有效至阵亡)</span>
             </div>
         </div>
 
@@ -493,7 +495,7 @@
 </div>
 
 <script>
-// --- Web Audio API 8bit 复古音效 & 背景音乐 ---
+// --- Web Audio API 8bit 复古音效 & 双截龙二代第二关 BGM ---
 let audioCtx = null;
 let bgmInterval = null;
 
@@ -509,24 +511,31 @@ function initAudio() {
 
 function startBGM() {
     if (bgmInterval) return;
-    let notes = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63];
+    let melodyNotes = [
+        329.63, 329.63, 392.00, 329.63, 293.66, 261.63, 293.66, 329.63,
+        440.00, 440.00, 523.25, 440.00, 392.00, 349.23, 392.00, 440.00,
+        349.23, 349.23, 440.00, 349.23, 329.63, 293.66, 261.63, 246.94,
+        220.00, 246.94, 293.66, 329.63, 349.23, 392.00, 440.00, 523.25
+    ];
     let step = 0;
     bgmInterval = setInterval(() => {
         if (!audioCtx || audioCtx.state !== 'running' || isPaused || isGameOver) return;
         try {
             let osc = audioCtx.createOscillator();
             let gain = audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(notes[step % notes.length], audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(melodyNotes[step % melodyNotes.length], audioCtx.currentTime);
+            
+            gain.gain.setValueAtTime(0.028, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.16);
+            
             osc.connect(gain);
             gain.connect(audioCtx.destination);
             osc.start();
-            osc.stop(audioCtx.currentTime + 0.25);
+            osc.stop(audioCtx.currentTime + 0.16);
             step++;
         } catch(e) {}
-    }, 320);
+    }, 170);
 }
 
 function playSoundTick() {
@@ -545,12 +554,20 @@ function playSoundTick() {
     } catch(e) {}
 }
 
-function playSoundShoot(weaponType) {
+function playSoundShoot(weaponType, mod = 'normal') {
     if (!audioCtx) return;
     try {
         let osc = audioCtx.createOscillator();
         let gain = audioCtx.createGain();
-        if (weaponType === 'arrow') {
+        if (mod === 'laser') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(980, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(180, audioCtx.currentTime + 0.14);
+        } else if (mod === 'flame') {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(240, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(85, audioCtx.currentTime + 0.15);
+        } else if (weaponType === 'arrow') {
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(650, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(220, audioCtx.currentTime + 0.09);
@@ -660,7 +677,7 @@ function showNotification(msg) {
     toast.classList.add('show');
     setTimeout(() => {
         toast.classList.remove('show');
-    }, 2800);
+    }, 3000);
 }
 
 let currentUserName = "";
@@ -741,7 +758,6 @@ const TILE_SIZE = 32;
 const VIEW_WIDTH = canvas.width / TILE_SIZE;
 const VIEW_HEIGHT = canvas.height / TILE_SIZE;
 
-// 第1回的经典地形风格
 const TERRAINS_ROUND1 = [
     { name: '深海', color: '#153b6b', speedMultiplier: 0.0, solid: true },
     { name: '浅水', color: '#0077b6', speedMultiplier: 0.72, solid: false },
@@ -752,7 +768,6 @@ const TERRAINS_ROUND1 = [
     { name: '雪山', color: '#dce4ec', speedMultiplier: 0.65, solid: false }
 ];
 
-// 第2回及之后的赛博魔幻/虚空异世全新地图风格
 const TERRAINS_ROUND2 = [
     { name: '虚空死海', color: '#0b091a', speedMultiplier: 0.0, solid: true },
     { name: '暗影沼泽', color: '#1f1135', speedMultiplier: 0.75, solid: false },
@@ -767,24 +782,76 @@ function getTerrainList() {
     return gameRound > 1 ? TERRAINS_ROUND2 : TERRAINS_ROUND1;
 }
 
-const ITEM_TYPES = [
-    { type: 'speed', name: '疾风跑鞋', color: '#00e676', icon: '👟', desc: '移动速度+35%' },
-    { type: 'multishot', name: '散弹拳套', color: '#ff9100', icon: '🥊', desc: '一次发射3连发攻击' },
-    { type: 'rapid', name: '连环快速拳', color: '#29b6f6', icon: '⚡', desc: '射速大幅提升' },
-    { type: 'shield', name: '金钟护体', color: '#ffd700', icon: '🛡️', desc: '免疫1次攻击' },
-    { type: 'wolf', name: '忠诚战狼护卫', color: '#ff5722', icon: '🐺', desc: '召唤永久战狼护卫帮你打怪！' },
-    { type: 'invincible', name: '无敌金身', color: '#ffeb3b', icon: '⭐', desc: '10秒绝对无敌免疫伤害' },
-    { type: 'clone', name: '影分身符', color: '#ab47bc', icon: '👥', desc: '召唤2个分身影子跟随并同步射击15秒' },
-    { type: 'full_support', name: '天降神兵', color: '#ff1744', icon: '🚀', desc: '召唤3名无敌援军（两英雄形态+重装坦克）全屏无差别轰炸5秒' }
+const WEAPON_CAPSULES = [
+    {
+        isWeapon: true,
+        weaponMod: 'spread',
+        letter: 'S',
+        color: '#ff3d00',
+        borderColor: '#ffd740',
+        heroNames: {
+            1: '【S】五向气功散弹',
+            2: '【S】七星连珠箭阵',
+            3: '【S】四方旋风回旋镖'
+        }
+    },
+    {
+        isWeapon: true,
+        weaponMod: 'machine',
+        letter: 'M',
+        color: '#00e5ff',
+        borderColor: '#ffffff',
+        heroNames: {
+            1: '【M】机关连发气功炮',
+            2: '【M】疾风连珠神箭',
+            3: '【M】双旋高速风火镖'
+        }
+    },
+    {
+        isWeapon: true,
+        weaponMod: 'laser',
+        letter: 'L',
+        color: '#d500f9',
+        borderColor: '#ea80fc',
+        heroNames: {
+            1: '【L】离子贯穿激光波',
+            2: '【L】破甲贯日长虹箭',
+            3: '【L】超巨型光刃旋镖'
+        }
+    },
+    {
+        isWeapon: true,
+        weaponMod: 'flame',
+        letter: 'F',
+        color: '#ff9100',
+        borderColor: '#ffea00',
+        heroNames: {
+            1: '【F】烈焰爆裂气功弹',
+            2: '【F】火凤燎原爆裂箭',
+            3: '【F】烈火焚天风火轮'
+        }
+    }
 ];
 
-// 三条命对应角色形态配置
+const ITEM_TYPES = [
+    { type: 'speed', name: '疾风跑鞋', color: '#00e676', icon: '👟', desc: '移动速度+35%' },
+    { type: 'multishot', name: '散弹拳套', color: '#ff9100', icon: '🥊', desc: '临时额外增加散射数量' },
+    { type: 'rapid', name: '连环快速拳', color: '#29b6f6', icon: '⚡', desc: '临时攻速大幅提升' },
+    { type: 'shield', name: '金钟护体', color: '#ffd700', icon: '🛡️', desc: '免疫1次攻击' },
+    { type: 'wolf', name: '护卫战狼', color: '#ff5722', icon: '🐺', desc: '护卫战狼' },
+    { type: 'invincible', name: '无敌金身', color: '#ffeb3b', icon: '⭐', desc: '10秒绝对无敌免疫伤害' },
+    { type: 'clone', name: '影分身符', color: '#ab47bc', icon: '👥', desc: '召唤2个分身影子跟随并同步射击15秒' },
+    { type: 'full_support', name: '天降神兵', color: '#ff1744', icon: '🚀', desc: '召唤3名无敌援军全屏无差别轰炸5秒' },
+    { type: 'decoy', name: '替身草人', color: '#ff4081', icon: '🪆', desc: '在最远地方生成替身吸引全场仇恨5秒' }
+];
+
 const LIFE_FORMS = {
     1: {
         lifeNum: 1,
         title: '第1命 · 南宁老登',
         shortName: '南宁老登',
         weapon: 'bullet',
+        baseWeaponName: '初始·气功弹',
         shortsColor: '#0277bd',
         gloveColor: '#00bcd4',
         glowColor: '#00e5ff',
@@ -797,6 +864,7 @@ const LIFE_FORMS = {
         title: '第2命 · 北宁小后裔',
         shortName: '北宁小后裔',
         weapon: 'arrow',
+        baseWeaponName: '初始·追魂箭',
         shortsColor: '#2e7d32',
         gloveColor: '#76ff03',
         glowColor: '#69f0ae',
@@ -809,6 +877,7 @@ const LIFE_FORMS = {
         title: '第3命 · 章大头',
         shortName: '章大头',
         weapon: 'boomerang',
+        baseWeaponName: '初始·回旋镖',
         shortsColor: '#c62828',
         gloveColor: '#ff9100',
         glowColor: '#ff3d00',
@@ -820,17 +889,18 @@ const LIFE_FORMS = {
 
 let player = {};
 let wolf = null;
-let supportAllies = []; // 天降神兵召唤的无敌援军
-let supportTimer = 0;    // 天降神兵剩余时间
+let decoy = null;
+let supportAllies = [];
+let supportTimer = 0;
 let monsters = [];
 let bullets = [];
 let items = [];
 let floatingTexts = [];
+let blastEffects = [];
 
 let survivalTime = 0;
 let killCount = 0;
 let bossCount = 0;
-let lastBossKillMilestone = 0;
 let gameRound = 1;
 
 let isGameOver = false;
@@ -844,9 +914,31 @@ let lastIntSecond = 5;
 let lastShootTime = 0;
 let lastItemSpawnTime = 0;
 
+function getNextBossMilestone(currentBossCount) {
+    let milestones = [50, 100, 200, 400, 800, 1200];
+    if (currentBossCount < milestones.length) {
+        return milestones[currentBossCount];
+    }
+    return 1200 + (currentBossCount - milestones.length + 1) * 600;
+}
+
 function getCurrentLifeForm() {
     let lifeIndex = Math.min(3, Math.max(1, 4 - livesLeft));
     return LIFE_FORMS[lifeIndex];
+}
+
+function getCurrentWeaponDisplayInfo() {
+    let form = getCurrentLifeForm();
+    let mod = player.weaponMod || 'normal';
+    if (mod === 'normal') {
+        return { name: form.baseWeaponName, color: form.uiColor };
+    }
+    let cap = WEAPON_CAPSULES.find(c => c.weaponMod === mod);
+    if (!cap) return { name: form.baseWeaponName, color: form.uiColor };
+    return {
+        name: cap.heroNames[form.lifeNum],
+        color: cap.borderColor
+    };
 }
 
 const joystickState = {
@@ -1013,7 +1105,6 @@ function checkEntityCollision(nx, ny, radius = 0.32) {
     return false;
 }
 
-// 玩家带贴墙滑动碰撞检测
 function moveEntityWithCollision(entity, dx, dy, radius) {
     let nextX = entity.x + dx;
     if (!checkEntityCollision(nextX, entity.y, radius)) {
@@ -1025,18 +1116,15 @@ function moveEntityWithCollision(entity, dx, dy, radius) {
     }
 }
 
-// 智能避障移动：遇到障碍物时自动向左右扇形探测并灵活绕行，绝不卡死
 function moveEntitySmart(entity, desiredAngle, stepDist, radius) {
     if (stepDist <= 0) return false;
 
-    // 优先沿目标方向移动
     let dx = Math.cos(desiredAngle) * stepDist;
     let dy = Math.sin(desiredAngle) * stepDist;
 
     let oldX = entity.x;
     let oldY = entity.y;
 
-    // 尝试直行与贴墙滑动
     if (!checkEntityCollision(entity.x + dx, entity.y + dy, radius)) {
         entity.x += dx;
         entity.y += dy;
@@ -1044,7 +1132,6 @@ function moveEntitySmart(entity, desiredAngle, stepDist, radius) {
         return true;
     }
 
-    // 方向探测偏移列表（优先保持同一侧绕行方向，防止左右震荡）
     let prefSign = entity.avoidDir || 1;
     let angleOffsets = [
         prefSign * 0.45, -prefSign * 0.45,
@@ -1054,7 +1141,6 @@ function moveEntitySmart(entity, desiredAngle, stepDist, radius) {
         prefSign * 2.10, -prefSign * 2.10
     ];
 
-    // 向前方探测一小步，判断是否畅通
     let lookAhead = Math.max(stepDist * 2.5, 0.35);
     for (let offset of angleOffsets) {
         let testAngle = desiredAngle + offset;
@@ -1072,7 +1158,6 @@ function moveEntitySmart(entity, desiredAngle, stepDist, radius) {
         }
     }
 
-    // 兜底：分轴微调滑动
     moveEntityWithCollision(entity, dx, dy, radius);
     return (Math.hypot(entity.x - oldX, entity.y - oldY) > stepDist * 0.1);
 }
@@ -1140,6 +1225,10 @@ const BOSS_CONFIGS = [
 ];
 
 function spawnMonster(isBoss = false) {
+    if (isBoss && monsters.some(m => m.isBoss)) {
+        return;
+    }
+
     let spawnX = player.x;
     let spawnY = player.y;
     let foundValidSpot = false;
@@ -1240,7 +1329,49 @@ function spawnItem() {
     }
 }
 
-// 激活【天降神兵】：召唤另外两种英雄形态（无敌）+ 重装坦克车（无敌）
+function spawnWeaponCapsule(bx, by) {
+    let capTemplate = WEAPON_CAPSULES[Math.floor(Math.random() * WEAPON_CAPSULES.length)];
+    items.push({
+        ...capTemplate,
+        x: bx,
+        y: by,
+        life: 45.0
+    });
+    showNotification(`🔥 BOSS掉落【双截龙 ${capTemplate.letter} 秘籍胶囊】！`);
+    addFloatingText(`🎁 掉落秘籍胶囊 [${capTemplate.letter}]!`, bx, by - 1, capTemplate.color);
+}
+
+function activateDecoy() {
+    let bestX = player.x;
+    let bestY = player.y;
+    let maxDist = 0;
+
+    for (let i = 0; i < 25; i++) {
+        let angle = Math.random() * Math.PI * 2;
+        let dist = 8 + Math.random() * 8;
+        let tx = player.x + Math.cos(angle) * dist;
+        let ty = player.y + Math.sin(angle) * dist;
+        if (!checkEntityCollision(tx, ty, 0.4)) {
+            let d = Math.hypot(tx - player.x, ty - player.y);
+            if (d > maxDist) {
+                maxDist = d;
+                bestX = tx;
+                bestY = ty;
+            }
+        }
+    }
+
+    decoy = {
+        x: bestX,
+        y: bestY,
+        timeLeft: 5.0
+    };
+
+    playSoundPowerup();
+    showNotification("🪆【替身草人】已在最远安全处生成，吸引全场仇恨5秒！");
+    addFloatingText("🪆 替身吸引全场火力！", player.x, player.y - 1.5, "#ff4081");
+}
+
 function activateFullSupport() {
     supportAllies = [];
     supportTimer = 5.0;
@@ -1254,7 +1385,6 @@ function activateFullSupport() {
         { dx: 0, dy: 2.0 }
     ];
 
-    // 1. 召唤主角的另外两种英雄形态
     otherFormNums.forEach((formNum, idx) => {
         let f = LIFE_FORMS[formNum];
         let sx = player.x + offsets[idx].dx;
@@ -1274,12 +1404,11 @@ function activateFullSupport() {
             isMoving: false,
             runCycle: 0,
             lastAttackTime: 0,
-            attackCooldown: 240, // 高频无差别攻击
+            attackCooldown: 240,
             avoidDir: 0
         });
     });
 
-    // 2. 召唤第三位援军：重装坦克车
     let tx = player.x + offsets[2].dx;
     let ty = player.y + offsets[2].dy;
     if (checkEntityCollision(tx, ty, 0.35)) {
@@ -1330,15 +1459,23 @@ function addExp(amount) {
 function shootBullet() {
     if (isGameOver || isPaused || isRespawning) return;
     let now = performance.now();
-    let baseCooldown = Math.max(180, 920 - (player.level - 1) * 12);
+    let form = getCurrentLifeForm();
+    let weaponType = form.weapon;
+    let mod = player.weaponMod || 'normal';
+
+    let baseCooldown = Math.max(160, 920 - (player.level - 1) * 12);
+    if (mod === 'machine') {
+        if (form.lifeNum === 1) baseCooldown *= 0.35;
+        else if (form.lifeNum === 2) baseCooldown *= 0.30;
+        else if (form.lifeNum === 3) baseCooldown *= 0.40;
+    }
     let cooldown = player.buffs.rapid.active ? baseCooldown * 0.4 : baseCooldown;
 
     if (now - lastShootTime < cooldown) return;
     lastShootTime = now;
 
-    let form = getCurrentLifeForm();
-    let weaponType = form.weapon;
-    playSoundShoot(weaponType);
+    let soundMod = (mod === 'laser' ? 'laser' : (mod === 'flame' ? 'flame' : 'normal'));
+    playSoundShoot(weaponType, soundMod);
 
     function createProjectileAt(startX, startY) {
         let target = getClosestMonster(startX, startY);
@@ -1356,7 +1493,26 @@ function shootBullet() {
         }
 
         let angles = [0];
-        if (player.buffs.multishot.active) angles = [-0.25, 0, 0.25];
+        let dmg = player.bulletDamage;
+
+        if (mod === 'spread') {
+            if (form.lifeNum === 1) angles = [-0.35, -0.17, 0, 0.17, 0.35];
+            else if (form.lifeNum === 2) angles = [-0.42, -0.28, -0.14, 0, 0.14, 0.28, 0.42];
+            else angles = [-Math.PI/2, 0, Math.PI/2, Math.PI];
+        } else if (mod === 'machine') {
+            angles = [0];
+            if (form.lifeNum === 3) angles = [-0.08, 0.08];
+        } else if (mod === 'laser') {
+            angles = [0];
+            if (form.lifeNum === 1) dmg = Math.ceil(dmg * 1.6);
+            else if (form.lifeNum === 2) dmg = Math.ceil(dmg * 1.7);
+            else dmg = Math.ceil(dmg * 1.5);
+        } else if (mod === 'flame') {
+            angles = [0];
+            if (player.buffs.multishot.active) angles = [-0.2, 0, 0.2];
+        } else {
+            if (player.buffs.multishot.active) angles = [-0.25, 0, 0.25];
+        }
 
         angles.forEach(ang => {
             let cos = Math.cos(ang), sin = Math.sin(ang);
@@ -1364,39 +1520,47 @@ function shootBullet() {
             let vy = baseVx * sin + baseVy * cos;
 
             if (weaponType === 'arrow') {
+                let speedMultiplier = (mod === 'machine' ? 4.2 : (mod === 'laser' ? 3.8 : 3.4));
                 bullets.push({
                     type: 'arrow',
+                    mod: mod,
                     x: startX,
                     y: startY,
                     vx, vy,
-                    speed: player.baseSpeed * 3.4,
-                    damage: player.bulletDamage,
+                    speed: player.baseSpeed * speedMultiplier,
+                    damage: dmg,
                     targetId: target ? target.id : null,
-                    life: 4.0
+                    life: 4.5
                 });
             } else if (weaponType === 'boomerang') {
+                let sizeScale = (mod === 'laser' ? 2.2 : 1.0);
+                let speedMultiplier = (mod === 'machine' ? 3.2 : 2.5);
                 bullets.push({
                     type: 'boomerang',
+                    mod: mod,
                     x: startX,
                     y: startY,
                     vx, vy,
-                    speed: player.baseSpeed * 2.5,
-                    damage: player.bulletDamage,
+                    speed: player.baseSpeed * speedMultiplier,
+                    damage: dmg,
+                    sizeScale: sizeScale,
                     elapsed: 0,
-                    maxOutTime: 0.55,
+                    maxOutTime: mod === 'machine' ? 0.7 : 0.55,
                     returning: false,
                     spinAngle: 0,
                     hitHistory: {},
-                    life: 5.0
+                    life: 5.5
                 });
             } else {
+                let speedMultiplier = (mod === 'machine' ? 3.5 : (mod === 'laser' ? 3.2 : 2.7));
                 bullets.push({
                     type: 'bullet',
+                    mod: mod,
                     x: startX,
                     y: startY,
                     vx, vy,
-                    speed: player.baseSpeed * 2.7,
-                    damage: player.bulletDamage,
+                    speed: player.baseSpeed * speedMultiplier,
+                    damage: dmg,
                     targetId: target ? target.id : null,
                     life: 4.5
                 });
@@ -1427,7 +1591,6 @@ function getClosestMonster(x, y) {
     return closest;
 }
 
-// 获取屏幕可视范围内的所有怪物（用于天降神兵无差别攻击）
 function getScreenMonsters() {
     let halfW = VIEW_WIDTH / 2 + 1.5;
     let halfH = VIEW_HEIGHT / 2 + 1.5;
@@ -1438,8 +1601,9 @@ function getScreenMonsters() {
 }
 
 function checkBossSpawnMilestone() {
-    if (killCount > 0 && killCount % 20 === 0 && killCount !== lastBossKillMilestone) {
-        lastBossKillMilestone = killCount;
+    let activeBossCount = monsters.filter(m => m.isBoss).length;
+    let nextMilestone = getNextBossMilestone(bossCount);
+    if (killCount >= nextMilestone && activeBossCount === 0) {
         spawnMonster(true);
     }
 }
@@ -1449,6 +1613,8 @@ function resetGame() {
     gameRound = 1;
     isRespawning = false;
     respawnTimer = 0;
+    decoy = null;
+    wolf = null;
 
     player = {
         x: 0.5, y: 0.5,
@@ -1457,6 +1623,7 @@ function resetGame() {
         maxExp: 45,
         baseSpeed: 5.8,
         bulletDamage: 1,
+        weaponMod: 'normal',
         facingX: 0, facingY: 1,
         isMoving: false,
         runCycle: 0,
@@ -1470,17 +1637,16 @@ function resetGame() {
             clone: { active: false, timeLeft: 0 }
         }
     };
-    wolf = null;
     supportAllies = [];
     supportTimer = 0;
     monsters = [];
     bullets = [];
     items = [];
     floatingTexts = [];
+    blastEffects = [];
     survivalTime = 0;
     killCount = 0;
     bossCount = 0;
-    lastBossKillMilestone = 0;
     isGameOver = false;
     isPaused = false;
     lastShootTime = 0;
@@ -1544,13 +1710,17 @@ function updateUI() {
         formEl.style.color = form.uiColor;
     }
 
+    let wInfo = getCurrentWeaponDisplayInfo();
+    document.getElementById('currentWeaponDisplay').textContent = wInfo.name;
+    document.getElementById('currentWeaponDisplay').style.color = wInfo.color;
+
     document.getElementById('roundDisplay').textContent = `第 ${gameRound} 回 ${gameRound > 1 ? '(虚空异世)' : '(经典论剑)'}`;
     document.getElementById('playerLevel').textContent = `Lv.${player.level}`;
     document.getElementById('atkDisplay').textContent = player.bulletDamage;
     document.getElementById('survivalTime').textContent = survivalTime.toFixed(1);
     document.getElementById('killCount').textContent = killCount;
 
-    let nextMilestone = (Math.floor(killCount / 20) + 1) * 20;
+    let nextMilestone = getNextBossMilestone(bossCount);
     document.getElementById('nextBossKills').textContent = nextMilestone;
     document.getElementById('bossWaveCount').textContent = bossCount;
 
@@ -1560,12 +1730,16 @@ function updateUI() {
     const buffContainer = document.getElementById('buffContainer');
     let activeBuffs = [];
 
+    if (decoy) {
+        activeBuffs.push(`<span class="buff-tag" style="border-color:#ff4081; color:#ff80ab; background:rgba(255,64,129,0.25);">🪆 替身草人 (${decoy.timeLeft.toFixed(1)}s)</span>`);
+    }
+
     if (supportTimer > 0 && supportAllies.length > 0) {
-        activeBuffs.push(`<span class="buff-tag" style="border-color:#ff1744; color:#ff8a80; background:rgba(255,23,68,0.25);">🚀 天降神兵·无敌援军 (${supportTimer.toFixed(1)}s)</span>`);
+        activeBuffs.push(`<span class="buff-tag" style="border-color:#ff1744; color:#ff8a80; background:rgba(255,23,68,0.25);">🚀 天降神兵 (${supportTimer.toFixed(1)}s)</span>`);
     }
 
     if (!isRespawning && player.stealthTimer > 0) {
-        activeBuffs.push(`<span class="buff-tag" style="border-color:#00e5ff; color:#84ffff;">👻 复活隐身保护 (${player.stealthTimer.toFixed(1)}s)</span>`);
+        activeBuffs.push(`<span class="buff-tag" style="border-color:#00e5ff; color:#84ffff;">👻 复活隐身 (${player.stealthTimer.toFixed(1)}s)</span>`);
     }
     
     for (let key in player.buffs) {
@@ -1576,14 +1750,17 @@ function updateUI() {
         }
     }
     if (wolf) {
-        activeBuffs.push(`<span class="buff-tag" style="border-color:#ff5722; color:#ff7043;">🐺 战狼护卫 (Lv.${wolf.level})</span>`);
+        activeBuffs.push(`<span class="buff-tag" style="border-color:#ff5722; color:#ff7043;">🐺 护卫战狼</span>`);
     }
 
-    buffContainer.innerHTML = activeBuffs.length === 0 ? '<span style="color:#aaa;">道具状态: 无 (有效30秒)</span>' : activeBuffs.join('');
+    buffContainer.innerHTML = activeBuffs.length === 0 ? '<span style="color:#aaa;">临时道具: 无 (武器胶囊永久有效至阵亡)</span>' : activeBuffs.join('');
 }
 
 function handlePlayerDeath() {
     livesLeft--;
+    player.weaponMod = 'normal';
+    wolf = null;
+
     if (livesLeft > 0) {
         isRespawning = true;
         respawnTimer = 5.0;
@@ -1599,7 +1776,6 @@ function handlePlayerDeath() {
     }
 }
 
-// 天降神兵援军逻辑更新（无敌、智能追踪全屏所有小怪与BOSS、无差别开火）
 function updateSupportAllies(deltaSec, deltaTime) {
     if (supportTimer <= 0 || supportAllies.length === 0) return;
 
@@ -1615,11 +1791,9 @@ function updateSupportAllies(deltaSec, deltaTime) {
     let screenTargets = getScreenMonsters();
 
     supportAllies.forEach((ally, idx) => {
-        // 分配不同目标以实现全屏无差别覆盖打击
         let target = null;
         if (screenTargets.length > 0) {
             target = screenTargets[idx % screenTargets.length];
-            // 优先寻找离自己最近的可视目标
             let bestDist = Infinity;
             screenTargets.forEach((m, mIdx) => {
                 let d = Math.hypot(m.x - ally.x, m.y - ally.y);
@@ -1647,14 +1821,12 @@ function updateSupportAllies(deltaSec, deltaTime) {
                 ally.facingY = Math.sin(angleToTarget);
             }
 
-            // 保持最佳射击距离（3.5 ~ 5.5格），灵活避障走位
             if (dist > 4.5) {
                 moveEntitySmart(ally, angleToTarget, moveSpeed, 0.30);
                 if (ally.kind === 'tank') ally.bodyAngle = angleToTarget;
                 ally.isMoving = true;
                 ally.runCycle = (ally.runCycle || 0) + deltaTime * 0.018;
             } else {
-                // 环绕机动走位
                 let strafeAngle = angleToTarget + (idx % 2 === 0 ? Math.PI / 2 : -Math.PI / 2);
                 moveEntitySmart(ally, strafeAngle, moveSpeed * 0.65, 0.30);
                 if (ally.kind === 'tank') ally.bodyAngle = strafeAngle;
@@ -1662,7 +1834,6 @@ function updateSupportAllies(deltaSec, deltaTime) {
                 ally.runCycle = (ally.runCycle || 0) + deltaTime * 0.015;
             }
 
-            // 全屏无差别高频攻击
             if (now - ally.lastAttackTime >= ally.attackCooldown) {
                 ally.lastAttackTime = now;
                 let vx = Math.cos(angleToTarget);
@@ -1670,7 +1841,6 @@ function updateSupportAllies(deltaSec, deltaTime) {
                 let dmg = Math.max(2, Math.ceil(player.bulletDamage * 1.5));
 
                 if (ally.kind === 'tank') {
-                    // 坦克发射高爆穿甲炮弹（带范围溅射伤害）
                     playSoundShoot('tank_shell');
                     bullets.push({
                         type: 'tank_shell',
@@ -1683,7 +1853,6 @@ function updateSupportAllies(deltaSec, deltaTime) {
                         life: 3.5
                     });
                 } else {
-                    // 英雄形态使用专属武器（2连发扇形压制）
                     let wType = ally.form.weapon;
                     playSoundShoot(wType);
                     [-0.14, 0.14].forEach(spread => {
@@ -1699,6 +1868,7 @@ function updateSupportAllies(deltaSec, deltaTime) {
                                 vy: svy,
                                 speed: player.baseSpeed * 2.8,
                                 damage: dmg,
+                                sizeScale: 1.0,
                                 elapsed: 0,
                                 maxOutTime: 0.5,
                                 returning: false,
@@ -1723,7 +1893,6 @@ function updateSupportAllies(deltaSec, deltaTime) {
                 }
             }
         } else {
-            // 无敌人时围绕主角护航
             let orbitAngle = performance.now() * 0.003 + (idx * Math.PI * 2 / 3);
             let targetX = player.x + Math.cos(orbitAngle) * 2.2;
             let targetY = player.y + Math.sin(orbitAngle) * 2.2;
@@ -1779,6 +1948,14 @@ function updateGame(deltaTime) {
 
     survivalTime += deltaSec;
 
+    if (decoy) {
+        decoy.timeLeft -= deltaSec;
+        if (decoy.timeLeft <= 0) {
+            decoy = null;
+            addFloatingText("🪆 替身草人能量耗尽消失！", player.x, player.y - 1, "#ff80ab");
+        }
+    }
+
     if (player.stealthTimer > 0) {
         player.stealthTimer -= deltaSec;
         if (player.stealthTimer <= 0) {
@@ -1805,7 +1982,9 @@ function updateGame(deltaTime) {
 
     if (keys[' ']) shootBullet();
 
-    let maxMonsters = Math.min(45, 10 + Math.floor(player.level * 1.3) + Math.floor(survivalTime / 12));
+    let hasBossOnField = monsters.some(m => m.isBoss);
+    let maxMonsters = hasBossOnField ? 22 : Math.min(45, 10 + Math.floor(player.level * 1.3) + Math.floor(survivalTime / 12));
+    
     if (monsters.length < maxMonsters) {
         spawnMonster(false);
         if (monsters.length < maxMonsters && Math.random() < 0.45) {
@@ -1851,71 +2030,87 @@ function updateGame(deltaTime) {
         player.runCycle = 0;
     }
 
-    // 更新天降神兵无敌单位
     updateSupportAllies(deltaSec, deltaTime);
 
-    // 战狼护卫智能避障与战斗
     if (wolf) {
         wolf.level = player.level;
-        let targetMonster = getClosestMonster(wolf.x, wolf.y);
-        let wolfSpeed = 4.8 * deltaSec;
+        let wolfSpeed = 6.2 * deltaSec;
 
-        if (targetMonster && Math.hypot(targetMonster.x - wolf.x, targetMonster.y - wolf.y) < 8.5) {
-            let wdx = targetMonster.x - wolf.x;
-            let wdy = targetMonster.y - wolf.y;
+        let nearbyMonster = null;
+        let minMonsterDist = 3.0;
+
+        monsters.forEach(m => {
+            let distToPlayer = Math.hypot(m.x - player.x, m.y - player.y);
+            if (distToPlayer <= 3.0) {
+                let distToWolf = Math.hypot(m.x - wolf.x, m.y - wolf.y);
+                if (distToWolf < minMonsterDist) {
+                    minMonsterDist = distToWolf;
+                    nearbyMonster = m;
+                }
+            }
+        });
+
+        if (nearbyMonster) {
+            let wdx = nearbyMonster.x - wolf.x;
+            let wdy = nearbyMonster.y - wolf.y;
             let wdist = Math.hypot(wdx, wdy);
             if (wdist > 0) {
                 moveEntitySmart(wolf, Math.atan2(wdy, wdx), wolfSpeed, 0.25);
             }
 
-            if (wdist < 1.0 && performance.now() - wolf.lastAttackTime > 750) {
+            if (wdist < 1.2 && performance.now() - wolf.lastAttackTime > 450) {
                 wolf.lastAttackTime = performance.now();
-                let isUlt = Math.random() < 0.25;
-                let dmg = isUlt ? player.bulletDamage * 3 : player.bulletDamage;
-                targetMonster.hp -= dmg;
+                let isCrit = Math.random() < 0.4;
+                let dmg = isCrit ? player.bulletDamage * 6 : player.bulletDamage * 3.0;
+                nearbyMonster.hp -= dmg;
 
-                if (isUlt) {
-                    addFloatingText(`🐺 战狼【狂野绝息斩】! -${dmg}`, targetMonster.x, targetMonster.y - 1, "#ff9100");
+                blastEffects.push({ x: nearbyMonster.x, y: nearbyMonster.y, radius: 1.1, life: 0.25, color: '#ff5722' });
+
+                if (isCrit) {
+                    addFloatingText(`🐺 战狼【烈火狂牙暴击】! -${Math.round(dmg)}`, nearbyMonster.x, nearbyMonster.y - 1, "#ff9100");
                 } else {
-                    addFloatingText(`🐺 战狼扑击 -${dmg}`, targetMonster.x, targetMonster.y, "#ff7043");
+                    addFloatingText(`🐺 战狼撕咬 -${Math.round(dmg)}`, nearbyMonster.x, nearbyMonster.y, "#ff7043");
                 }
 
-                if (targetMonster.hp <= 0) {
+                if (nearbyMonster.hp <= 0) {
                     playSoundHit();
-                    addFloatingText(targetMonster.isBoss ? "👑 战狼助攻BOSS击破!" : "K.O.!", targetMonster.x, targetMonster.y, "#ffca28");
-                    let mIndex = monsters.findIndex(m => m.id === targetMonster.id);
+                    addFloatingText(nearbyMonster.isBoss ? "👑 战狼神威秒杀BOSS!" : "K.O.!", nearbyMonster.x, nearbyMonster.y, "#ffca28");
+                    if (nearbyMonster.isBoss) {
+                        spawnWeaponCapsule(nearbyMonster.x, nearbyMonster.y);
+                    }
+                    let mIndex = monsters.findIndex(m => m.id === nearbyMonster.id);
                     if (mIndex !== -1) monsters.splice(mIndex, 1);
                     killCount++;
-                    addExp(targetMonster.exp);
+                    addExp(nearbyMonster.exp);
                     checkBossSpawnMilestone();
                     updateUI();
                 }
             }
         } else {
-            let pdist = Math.hypot(player.x - wolf.x, player.y - wolf.y);
-            if (pdist > 1.8) {
-                let pdx = player.x - wolf.x;
-                let pdy = player.y - wolf.y;
-                moveEntitySmart(wolf, Math.atan2(pdy, pdx), wolfSpeed, 0.25);
+            let orbitAngle = performance.now() * 0.0025;
+            let targetX = player.x + Math.cos(orbitAngle) * 2.0;
+            let targetY = player.y + Math.sin(orbitAngle) * 2.0;
+            let dx = targetX - wolf.x;
+            let dy = targetY - wolf.y;
+            let dist = Math.hypot(dx, dy);
+            if (dist > 0.25) {
+                moveEntitySmart(wolf, Math.atan2(dy, dx), wolfSpeed * 0.85, 0.25);
             }
-        }
-
-        let attackersCount = monsters.filter(m => Math.hypot(m.x - wolf.x, m.y - wolf.y) < 0.95).length;
-        if (attackersCount >= 3) {
-            showNotification("💀 警告：战狼护卫遭到多只怪物围攻牺牲了！");
-            playSoundGameOver();
-            wolf = null;
-            updateUI();
         }
     }
 
-    // 道具拾取判定
     for (let i = items.length - 1; i >= 0; i--) {
         let it = items[i];
         it.life -= deltaSec;
         if (it.life <= 0) { items.splice(i, 1); continue; }
         if (Math.hypot(it.x - player.x, it.y - player.y) < 0.95) {
-            if (it.type === 'wolf') {
+            if (it.isWeapon) {
+                player.weaponMod = it.weaponMod;
+                let f = getCurrentLifeForm();
+                playSoundPowerup();
+                showNotification(`🔥 获得秘籍【${it.heroNames[f.lifeNum]}】！永久有效直到阵亡！`);
+                addFloatingText(`✨ 获得秘籍 [${it.letter}]!`, player.x, player.y - 1, it.color);
+            } else if (it.type === 'wolf') {
                 wolf = {
                     x: player.x,
                     y: player.y,
@@ -1924,10 +2119,12 @@ function updateGame(deltaTime) {
                     avoidDir: 0
                 };
                 playSoundPowerup();
-                showNotification("🐺 成功召唤【战狼护卫】！永久跟随帮你战斗！");
-                addFloatingText(`🐺 召唤战狼护卫成功！`, player.x, player.y - 1, "#ff5722");
+                showNotification("🐺 召唤【护卫战狼】成功！环绕主角身侧，自动护卫！");
+                addFloatingText(`🐺 召唤护卫战狼！`, player.x, player.y - 1, "#ff5722");
             } else if (it.type === 'full_support') {
                 activateFullSupport();
+            } else if (it.type === 'decoy') {
+                activateDecoy();
             } else {
                 player.buffs[it.type].active = true;
                 let duration = 30.0;
@@ -1942,13 +2139,20 @@ function updateGame(deltaTime) {
         }
     }
 
-    // 小怪与BOSS智能避障追踪
     for (let mIdx = 0; mIdx < monsters.length; mIdx++) {
         let m = monsters[mIdx];
-        let dx = player.x - m.x, dy = player.y - m.y;
+        
+        let targetX = player.x;
+        let targetY = player.y;
+        if (decoy) {
+            targetX = decoy.x;
+            targetY = decoy.y;
+        }
+
+        let dx = targetX - m.x, dy = targetY - m.y;
         let dist = Math.hypot(dx, dy);
 
-        if (player.stealthTimer > 0) {
+        if (player.stealthTimer > 0 && !decoy) {
             let wanderAngle = (parseInt(m.id.slice(0, 4), 36) || 1) + survivalTime * 0.8;
             let mSpeed = m.speed * 0.4 * deltaSec;
             let mRadius = m.isBoss ? 0.48 : 0.28;
@@ -1962,8 +2166,15 @@ function updateGame(deltaTime) {
             moveEntitySmart(m, targetAngle, mSpeed, mRadius);
         }
 
+        if (decoy && Math.hypot(decoy.x - m.x, decoy.y - m.y) < (m.isBoss ? 1.0 : 0.7)) {
+            if (Math.random() < 0.2) {
+                addFloatingText("💥 吸引", decoy.x + (Math.random()-0.5), decoy.y + (Math.random()-0.5), "#ff4081");
+            }
+        }
+
+        let playerDist = Math.hypot(player.x - m.x, player.y - m.y);
         let hitDist = m.isBoss ? 0.95 : 0.72;
-        if (dist < hitDist) {
+        if (playerDist < hitDist && !decoy) {
             if (player.stealthTimer > 0) {
                 continue;
             }
@@ -1994,7 +2205,13 @@ function updateGame(deltaTime) {
         }
     }
 
-    // 子弹/武器更新与击杀经验结算
+    for (let i = blastEffects.length - 1; i >= 0; i--) {
+        let bl = blastEffects[i];
+        bl.life -= deltaSec;
+        bl.radius += deltaSec * 12;
+        if (bl.life <= 0) blastEffects.splice(i, 1);
+    }
+
     for (let i = bullets.length - 1; i >= 0; i--) {
         let b = bullets[i];
         b.life -= deltaSec;
@@ -2032,14 +2249,22 @@ function updateGame(deltaTime) {
             let nowMs = performance.now();
             for (let j = monsters.length - 1; j >= 0; j--) {
                 let m = monsters[j];
-                let hitRadius = m.isBoss ? 1.05 : 0.78;
+                let hitRadius = (m.isBoss ? 1.05 : 0.78) * (b.sizeScale || 1.0);
                 if (Math.hypot(m.x - b.x, m.y - b.y) < hitRadius) {
-                    if (!b.hitHistory[m.id] || nowMs - b.hitHistory[m.id] > 280) {
+                    if (!b.hitHistory[m.id] || nowMs - b.hitHistory[m.id] > 250) {
                         b.hitHistory[m.id] = nowMs;
                         m.hp -= b.damage;
+
+                        if (b.mod === 'flame') {
+                            blastEffects.push({ x: b.x, y: b.y, radius: 0.6, life: 0.35, color: '#ff9100' });
+                        }
+
                         if (m.hp <= 0) {
                             playSoundHit();
                             addFloatingText(m.isBoss ? `👑 ${m.name} 击破!` : "K.O.!", m.x, m.y, m.isBoss ? "#ffca28" : "#ff1744");
+                            if (m.isBoss) {
+                                spawnWeaponCapsule(m.x, m.y);
+                            }
                             monsters.splice(j, 1);
                             killCount++;
                             addExp(m.exp);
@@ -2057,11 +2282,11 @@ function updateGame(deltaTime) {
         let target = monsters.find(m => m.id === b.targetId);
         if (!target) { target = getClosestMonster(b.x, b.y); if (target) b.targetId = target.id; }
 
-        if (target) {
+        if (target && b.mod !== 'laser') {
             let tdx = target.x - b.x, tdy = target.y - b.y;
             let tDist = Math.hypot(tdx, tdy);
             if (tDist > 0) {
-                let turnRate = b.type === 'arrow' ? 0.12 : (b.type === 'tank_shell' ? 0.15 : 0.18);
+                let turnRate = b.type === 'arrow' ? 0.12 : 0.18;
                 b.vx = b.vx * (1 - turnRate) + (tdx / tDist) * turnRate;
                 b.vy = b.vy * (1 - turnRate) + (tdy / tDist) * turnRate;
                 let vLen = Math.hypot(b.vx, b.vy);
@@ -2076,7 +2301,11 @@ function updateGame(deltaTime) {
         let bGy = Math.floor(b.y);
         let bTerrain = getTerrain(bGx, bGy);
         let bObj = getObjectAt(bGx, bGy, bTerrain.name);
-        if (bObj === 'tree' || bObj === 'rock' || bObj === 'ice_pillar') {
+        
+        if (b.mod !== 'laser' && (bObj === 'tree' || bObj === 'rock' || bObj === 'ice_pillar')) {
+            if (b.mod === 'flame') {
+                blastEffects.push({ x: b.x, y: b.y, radius: 1.8, life: 0.4, color: '#ff3d00' });
+            }
             bullets.splice(i, 1);
             continue;
         }
@@ -2091,20 +2320,29 @@ function updateGame(deltaTime) {
             let hitX = b.x;
             let hitY = b.y;
             let isTankShell = b.type === 'tank_shell';
-            bullets.splice(i, 1);
+            let isLaser = b.mod === 'laser';
+            let isFlame = b.mod === 'flame';
 
-            if (isTankShell) {
-                // 坦克高爆炮弹范围溅射伤害（半径 2.2 格）
-                addFloatingText(`💥 坦克重炮轰击!`, hitX, hitY - 0.8, "#ff9100");
+            if (!isLaser) {
+                bullets.splice(i, 1);
+            }
+
+            if (isTankShell || isFlame) {
+                let radius = isFlame ? 2.4 : 2.2;
+                blastEffects.push({ x: hitX, y: hitY, radius: radius, life: 0.45, color: isFlame ? '#ff9100' : '#ff3d00' });
+                addFloatingText(isFlame ? `🔥 烈焰爆裂!` : `💥 坦克重炮轰击!`, hitX, hitY - 0.8, "#ff9100");
                 for (let j = monsters.length - 1; j >= 0; j--) {
                     let m = monsters[j];
                     let distToBlast = Math.hypot(m.x - hitX, m.y - hitY);
-                    if (distToBlast <= 2.2) {
-                        let actualDmg = j === hitIndex ? b.damage : Math.max(1, Math.floor(b.damage * 0.6));
+                    if (distToBlast <= radius) {
+                        let actualDmg = j === hitIndex ? b.damage : Math.max(1, Math.floor(b.damage * 0.7));
                         m.hp -= actualDmg;
                         if (m.hp <= 0) {
                             playSoundHit();
-                            addFloatingText(m.isBoss ? `👑 坦克击破 ${m.name}!` : "💥 轰杀!", m.x, m.y, "#ffca28");
+                            addFloatingText(m.isBoss ? `👑 击破 ${m.name}!` : "💥 轰杀!", m.x, m.y, "#ffca28");
+                            if (m.isBoss) {
+                                spawnWeaponCapsule(m.x, m.y);
+                            }
                             monsters.splice(j, 1);
                             killCount++;
                             addExp(m.exp);
@@ -2121,6 +2359,9 @@ function updateGame(deltaTime) {
                 if (m.hp <= 0) {
                     playSoundHit();
                     addFloatingText(m.isBoss ? `👑 ${m.name} 击破!` : "K.O.!", m.x, m.y, m.isBoss ? "#ffca28" : "#ff1744");
+                    if (m.isBoss) {
+                        spawnWeaponCapsule(m.x, m.y);
+                    }
                     monsters.splice(hitIndex, 1);
                     killCount++;
                     addExp(m.exp);
@@ -2153,7 +2394,6 @@ function triggerGameOver() {
     addRecord(survivalTime, killCount, player.level, gameRound);
 }
 
-// 绘制英雄角色（支持自定义形态与无敌光环）
 function drawBoxerHero(cx, cy, p, overrideForm = null, isInvincibleAlly = false) {
     let form = overrideForm || getCurrentLifeForm();
     let runAngle = p.isMoving ? Math.sin(p.runCycle) * 0.6 : 0;
@@ -2272,18 +2512,44 @@ function drawBoxerHero(cx, cy, p, overrideForm = null, isInvincibleAlly = false)
     ctx.restore();
 }
 
-// 绘制无敌重装坦克车
+function drawDecoy(d, offsetX, offsetY) {
+    let dx = d.x * TILE_SIZE + offsetX;
+    let dy = d.y * TILE_SIZE + offsetY;
+
+    ctx.save();
+    ctx.translate(dx, dy);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.beginPath(); ctx.ellipse(0, 15, 16, 6, 0, 0, Math.PI * 2); ctx.fill();
+
+    ctx.strokeStyle = '#ff4081';
+    ctx.lineWidth = 3;
+    ctx.shadowColor = '#ff4081';
+    ctx.shadowBlur = 15;
+    ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI * 2); ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = '#ffb74d';
+    ctx.beginPath(); ctx.roundRect(-10, -18, 20, 24, 4); ctx.fill();
+
+    ctx.fillStyle = '#ff4081';
+    ctx.beginPath(); ctx.arc(0, -26, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('🪆替身', 0, -40);
+
+    ctx.restore();
+}
+
 function drawSupportTank(cx, cy, tank) {
     ctx.save();
     ctx.translate(cx, cy);
 
-    // 底部阴影
     ctx.fillStyle = 'rgba(0,0,0,0.45)';
     ctx.beginPath();
     ctx.ellipse(0, 14, 24, 10, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // 无敌金光护盾
     ctx.strokeStyle = 'rgba(255, 235, 59, 0.95)';
     ctx.lineWidth = 4;
     ctx.shadowColor = '#ffeb3b';
@@ -2293,7 +2559,6 @@ function drawSupportTank(cx, cy, tank) {
     ctx.stroke();
     ctx.shadowBlur = 0;
 
-    // 坦克底盘与履带
     ctx.save();
     ctx.rotate(tank.bodyAngle);
     ctx.fillStyle = '#263238';
@@ -2302,7 +2567,6 @@ function drawSupportTank(cx, cy, tank) {
     ctx.roundRect(-20, 10, 40, 6, 2);
     ctx.fill();
 
-    // 装甲车体
     ctx.fillStyle = '#388e3c';
     ctx.strokeStyle = '#a5d6a7';
     ctx.lineWidth = 1.5;
@@ -2312,7 +2576,6 @@ function drawSupportTank(cx, cy, tank) {
     ctx.stroke();
     ctx.restore();
 
-    // 旋转炮塔与重型炮管
     ctx.save();
     ctx.rotate(tank.turretAngle);
     ctx.fillStyle = '#1b5e20';
@@ -2329,7 +2592,6 @@ function drawSupportTank(cx, cy, tank) {
     ctx.stroke();
     ctx.restore();
 
-    // 头顶标签
     ctx.fillStyle = '#ffeb3b';
     ctx.font = 'bold 11px sans-serif';
     ctx.textAlign = 'center';
@@ -2346,17 +2608,46 @@ function drawWolf(w, offsetX, offsetY) {
 
     ctx.save();
     ctx.translate(wx, wy);
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.beginPath(); ctx.ellipse(0, 10, 12, 4, 0, 0, Math.PI * 2); ctx.fill();
 
-    ctx.fillStyle = '#ff7043';
-    ctx.beginPath(); ctx.ellipse(0, 0, 14, 8, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(10, -4, 8, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(8, -10); ctx.lineTo(6, -14); ctx.lineTo(10, -11); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.beginPath(); ctx.ellipse(0, 14, 16, 6, 0, 0, Math.PI * 2); ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255, 145, 0, 0.9)';
+    ctx.lineWidth = 3.5;
+    ctx.shadowColor = '#ff5722';
+    ctx.shadowBlur = 16;
+    ctx.beginPath(); ctx.arc(0, 0, 28, 0, Math.PI * 2); ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = '#b0bec5';
+    ctx.beginPath(); ctx.ellipse(0, 2, 18, 10, 0, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = '#90a4ae';
+    ctx.beginPath(); ctx.arc(12, -4, 10, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = '#78909c';
+    ctx.beginPath();
+    ctx.moveTo(8, -12); ctx.lineTo(12, -18); ctx.lineTo(15, -11); ctx.closePath();
+    ctx.moveTo(14, -11); ctx.lineTo(18, -16); ctx.lineTo(20, -9); ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#ffea00';
+    ctx.beginPath(); ctx.arc(15, -6, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#000';
+    ctx.beginPath(); ctx.arc(15.5, -6, 1, 0, Math.PI * 2); ctx.fill();
+
+    ctx.strokeStyle = '#cfd8dc';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-16, 0);
+    ctx.quadraticCurveTo(-24, -6, -22, -14);
+    ctx.stroke();
 
     ctx.fillStyle = '#ffca28';
     ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(`🐺Lv.${w.level}`, 0, -18);
+    ctx.shadowColor = '#000'; ctx.shadowBlur = 4;
+    ctx.fillText(`🐺护卫战狼`, 0, -36);
 
     ctx.restore();
 }
@@ -2452,15 +2743,52 @@ function renderGame() {
     items.forEach(it => {
         let itDrawX = it.x * TILE_SIZE + offsetX;
         let itDrawY = it.y * TILE_SIZE + offsetY;
-        let pulse = Math.sin(performance.now() * 0.005) * 3;
+        let pulse = Math.sin(performance.now() * 0.006) * 4;
 
-        ctx.fillStyle = it.color; ctx.globalAlpha = 0.3;
-        ctx.beginPath(); ctx.arc(itDrawX, itDrawY, 14 + pulse, 0, Math.PI * 2); ctx.fill();
-        ctx.globalAlpha = 1.0;
+        ctx.save();
+        if (it.isWeapon) {
+            ctx.shadowColor = it.color;
+            ctx.shadowBlur = 15;
+            ctx.fillStyle = it.color;
+            ctx.beginPath();
+            ctx.roundRect(itDrawX - 16, itDrawY - 16, 32, 32, 6);
+            ctx.fill();
 
-        ctx.beginPath(); ctx.arc(itDrawX, itDrawY, 10, 0, Math.PI * 2); ctx.fill();
-        ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(it.icon, itDrawX, itDrawY);
+            ctx.strokeStyle = it.borderColor;
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 18px Segoe UI, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(it.letter, itDrawX, itDrawY);
+        } else {
+            ctx.fillStyle = it.color; ctx.globalAlpha = 0.3;
+            ctx.beginPath(); ctx.arc(itDrawX, itDrawY, 14 + pulse, 0, Math.PI * 2); ctx.fill();
+            ctx.globalAlpha = 1.0;
+
+            ctx.beginPath(); ctx.arc(itDrawX, itDrawY, 10, 0, Math.PI * 2); ctx.fill();
+            ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(it.icon, itDrawX, itDrawY);
+        }
+        ctx.restore();
+    });
+
+    blastEffects.forEach(bl => {
+        let bDrawX = bl.x * TILE_SIZE + offsetX;
+        let bDrawY = bl.y * TILE_SIZE + offsetY;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, bl.life * 2);
+        ctx.strokeStyle = bl.color;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(bDrawX, bDrawY, bl.radius * TILE_SIZE, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = bl.color;
+        ctx.globalAlpha *= 0.25;
+        ctx.fill();
+        ctx.restore();
     });
 
     bullets.forEach(b => {
@@ -2473,20 +2801,20 @@ function renderGame() {
             ctx.translate(bDrawX, bDrawY);
             ctx.rotate(angle);
 
-            ctx.shadowColor = '#69f0ae';
-            ctx.shadowBlur = 8;
-            ctx.strokeStyle = '#d7ccc8';
-            ctx.lineWidth = 2.5;
+            ctx.shadowColor = b.mod === 'laser' ? '#d500f9' : '#69f0ae';
+            ctx.shadowBlur = b.mod === 'laser' ? 14 : 8;
+            ctx.strokeStyle = b.mod === 'laser' ? '#ea80fc' : '#d7ccc8';
+            ctx.lineWidth = b.mod === 'laser' ? 4 : 2.5;
             ctx.beginPath();
-            ctx.moveTo(-14, 0);
-            ctx.lineTo(10, 0);
+            ctx.moveTo(-16, 0);
+            ctx.lineTo(b.mod === 'laser' ? 22 : 10, 0);
             ctx.stroke();
 
-            ctx.fillStyle = '#00e676';
+            ctx.fillStyle = b.mod === 'laser' ? '#ffeb3b' : '#00e676';
             ctx.beginPath();
-            ctx.moveTo(15, 0);
-            ctx.lineTo(7, -4.5);
-            ctx.lineTo(7, 4.5);
+            ctx.moveTo(18, 0);
+            ctx.lineTo(8, -5);
+            ctx.lineTo(8, 5);
             ctx.closePath();
             ctx.fill();
 
@@ -2496,15 +2824,16 @@ function renderGame() {
             ctx.translate(bDrawX, bDrawY);
             ctx.rotate(b.spinAngle);
 
-            ctx.shadowColor = '#ff3d00';
-            ctx.shadowBlur = 10;
-            ctx.strokeStyle = '#ff9100';
-            ctx.lineWidth = 4.5;
+            let sScale = b.sizeScale || 1.0;
+            ctx.shadowColor = b.mod === 'flame' ? '#ff3d00' : '#ff9100';
+            ctx.shadowBlur = 12;
+            ctx.strokeStyle = b.mod === 'flame' ? '#ffea00' : '#ff9100';
+            ctx.lineWidth = 4.5 * sScale;
             ctx.lineCap = 'round';
             ctx.beginPath();
-            ctx.moveTo(-10, -8);
-            ctx.lineTo(2, 0);
-            ctx.lineTo(-10, 8);
+            ctx.moveTo(-12 * sScale, -10 * sScale);
+            ctx.lineTo(3 * sScale, 0);
+            ctx.lineTo(-12 * sScale, 10 * sScale);
             ctx.stroke();
 
             ctx.restore();
@@ -2525,9 +2854,12 @@ function renderGame() {
             ctx.fill();
             ctx.restore();
         } else {
-            ctx.shadowColor = '#00e5ff'; ctx.shadowBlur = 10;
-            ctx.fillStyle = '#e0f7fa';
-            ctx.beginPath(); ctx.arc(bDrawX, bDrawY, 5 + Math.min(3, b.damage * 0.5), 0, Math.PI * 2); ctx.fill();
+            ctx.shadowColor = b.mod === 'laser' ? '#d500f9' : '#00e5ff';
+            ctx.shadowBlur = b.mod === 'laser' ? 16 : 10;
+            ctx.fillStyle = b.mod === 'laser' ? '#ea80fc' : '#e0f7fa';
+            ctx.beginPath();
+            ctx.arc(bDrawX, bDrawY, (b.mod === 'laser' ? 7 : 5) + Math.min(3, b.damage * 0.4), 0, Math.PI * 2);
+            ctx.fill();
             ctx.shadowBlur = 0;
         }
     });
@@ -2581,11 +2913,14 @@ function renderGame() {
         }
     });
 
+    if (decoy) {
+        drawDecoy(decoy, offsetX, offsetY);
+    }
+
     if (wolf) {
         drawWolf(wolf, offsetX, offsetY);
     }
 
-    // 渲染天降神兵的无敌援军
     if (supportTimer > 0 && supportAllies.length > 0) {
         supportAllies.forEach(ally => {
             let ax = ally.x * TILE_SIZE + offsetX;
@@ -2674,4 +3009,3 @@ function startGameLoop() {
 
 </body>
 </html>
-
