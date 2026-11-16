@@ -367,7 +367,7 @@
             background: linear-gradient(135deg, #ffa726, #ff5722);
         }
 
-        /* 模拟广告弹窗容器样式（替换真实广告时可调整） */
+        /* 广告弹窗容器样式 */
         #ad-overlay {
             z-index: 20;
             background: rgba(0, 0, 0, 0.94);
@@ -381,12 +381,26 @@
             width: 90%;
             text-align: center;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+            position: relative;
+        }
+        .ad-close-btn {
+            position: absolute;
+            top: 12px;
+            right: 15px;
+            background: transparent;
+            border: none;
+            color: #888;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        .ad-close-btn:hover {
+            color: #fff;
         }
         .ad-placeholder-area {
             background: #2b2b2b;
             border: 1px dashed #666;
             border-radius: 8px;
-            padding: 30px 15px;
+            padding: 20px 15px;
             margin: 15px 0;
             color: #ffca28;
             font-size: 14px;
@@ -529,32 +543,27 @@
         </div>
 
         <!-- ==================== 【广告代码替换区域 - HTML弹窗结构 START】 ==================== -->
-        <!-- 如果你使用的是第三方广告SDK（如 Google AdSense/IMA、穿山甲、优量汇、Telegram Ads 等），
-             可直接替换下方 #ad-overlay 内的广告容器或直接修改下方 JS 中的 watchAdToContinue() 函数 -->
         <div id="ad-overlay" class="overlay-screen">
             <div class="ad-box">
-            
+                <button class="ad-close-btn" onclick="attemptCloseAd()" title="关闭广告">✕</button>
+                <h3 style="color: #ff9100; margin-bottom: 10px; font-size: 16px;">📺 激励视频广告</h3>
                 
-                <!-- 真实广告代码嵌入位（可在此处放入广告 iframe / script / banner） -->
-                
+                <!-- 您提供的 Google AdSense 广告代码 -->
                 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1805477885216561"
-     crossorigin="anonymous"></script>
-<!-- game -->
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-client="ca-pub-1805477885216561"
-     data-ad-slot="2172920426"
-     data-ad-format="auto"
-     data-full-width-responsive="true"></ins>
-<script>
-     (adsbygoogle = window.adsbygoogle || []).push({});
-</script>
-                
-                
+                     crossorigin="anonymous"></script>
+                <!-- game -->
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-1805477885216561"
+                     data-ad-slot="2172920426"
+                     data-ad-format="auto"
+                     data-full-width-responsive="true"></ins>
+                <script>
+                     (adsbygoogle = window.adsbygoogle || []).push({});
+                </script>
                 
                 <div id="ad-slot-container" class="ad-placeholder-area">
-         
-                    <p style="font-size: 13px; color: #ddd;">剩余时间: <span id="adCountdown" style="color: #00e676; font-weight: bold; font-size: 18px;">15</span> 秒</p>
+                    <p style="font-size: 13px; color: #ddd;">广告播放中... 剩余时间: <span id="adCountdown" style="color: #00e676; font-weight: bold; font-size: 18px;">15</span> 秒</p>
                 </div>
 
                 <button id="adClaimBtn" class="overlay-btn ad-btn" style="display: none; width: 100%; margin-top: 10px;" onclick="reviveFromAd()">✅ 领取 3 条命继续挑战</button>
@@ -2475,22 +2484,18 @@ function triggerGameOver() {
 
 // ==================== 【广告代码替换区域 - JS逻辑 START】 ====================
 let adTimerInterval = null;
+let adIsCompleted = false; // 记录广告是否完整播放完毕
 
-/**
- * 点击“看广告，继续挑战”触发的函数
- * 说明：如果你有真实的激励广告SDK（如 Google AdSense / IMA / Telegram Ads / 穿山甲 / 优量汇等），
- * 可在此函数内调用你的真实广告展示API，并在广告播放完成（onReward / onComplete）的回调里调用 reviveFromAd() 即可。
- */
 function watchAdToContinue() {
-    // 隐藏结算弹窗，打开广告弹窗
     document.getElementById('game-over-overlay').classList.remove('active');
     document.getElementById('ad-overlay').classList.add('active');
 
     let claimBtn = document.getElementById('adClaimBtn');
     let countdownEl = document.getElementById('adCountdown');
     claimBtn.style.display = 'none';
+    adIsCompleted = false;
 
-    let secondsLeft = 5; // 模拟广告倒计时（秒）
+    let secondsLeft = 15; // 15秒倒计时
     countdownEl.textContent = secondsLeft;
 
     if (adTimerInterval) clearInterval(adTimerInterval);
@@ -2500,32 +2505,54 @@ function watchAdToContinue() {
         if (secondsLeft <= 0) {
             clearInterval(adTimerInterval);
             adTimerInterval = null;
-            // 广告播放完毕，显示领取按钮（也可以直接自动调用 reviveFromAd()）
-            claimBtn.style.display = 'block';
+            adIsCompleted = true;
+            claimBtn.style.display = 'block'; // 倒计时结束，显示领取按钮
         }
     }, 1000);
 }
 
-/**
- * 广告观看完成后的奖励发放函数：在当前进度恢复 3 条命并继续游戏
- */
-function reviveFromAd() {
+// 用户尝试关闭广告触发的拦截逻辑
+function attemptCloseAd() {
+    if (adIsCompleted) {
+        // 如果广告已经完整播放过，直接关闭广告并复活
+        closeAdAndResume();
+        return;
+    }
+
+    // 广告未播放完，弹窗警告
+    let confirmClose = confirm("⚠️ 关闭广告将无法获得三条命，建议取消继续观看！\n\n点击“确定”将强行关闭并直接结束游戏，点击“取消”继续观看广告。");
+    if (confirmClose) {
+        // 用户强行关闭，直接结束游戏清理广告状态
+        if (adTimerInterval) {
+            clearInterval(adTimerInterval);
+            adTimerInterval = null;
+        }
+        document.getElementById('ad-overlay').classList.remove('active');
+        // 游戏彻底结束，返回结算画面或重置
+        document.getElementById('game-over-overlay').classList.add('active');
+        showNotification("❌ 强行关闭广告，挑战正式结束！");
+    }
+}
+
+function closeAdAndResume() {
     if (adTimerInterval) {
         clearInterval(adTimerInterval);
         adTimerInterval = null;
     }
-
     document.getElementById('ad-overlay').classList.remove('active');
-    document.getElementById('game-over-overlay').classList.remove('active');
+}
 
-    // 恢复 3 条命并保留当前所有游戏进度（等级、击杀数、时间、轮回、位置）
+function reviveFromAd() {
+    closeAdAndResume();
+
+    // 恢复 3 条命并保留当前所有游戏进度
     livesLeft = 3;
     isGameOver = false;
     isRespawning = false;
     respawnTimer = 0;
     bullets = [];
 
-    // 给予 5 秒隐身无敌保护，防止复活瞬间被周围怪物秒杀
+    // 给予 5 秒隐身无敌保护
     player.stealthTimer = 5.0;
 
     playSoundPowerup();
