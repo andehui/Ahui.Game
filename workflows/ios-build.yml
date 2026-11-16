@@ -1,0 +1,23 @@
+YAML
+name: Build iOS App
+on: [push]
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: |
+          npm install @capacitor/core @capacitor/cli @capacitor/ios
+      - name: Init Capacitor iOS
+        run: |
+          npx cap add ios
+          npx cap sync
+      - name: Build iOS project
+        run: |
+          cd ios/App
+          xcodebuild -workspace App.xcworkspace -scheme App -sdk iphoneos -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
