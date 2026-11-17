@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>绿城南宁·贪吃蛇大作战 (畅爽优化与暂停版)</title>
+    <title>绿城南宁·贪吃蛇大作战 (猎杀Boss版)</title>
     <style>
         * {
             margin: 0;
@@ -13,7 +13,9 @@
             -webkit-user-select: none;
             -webkit-touch-callout: none;
         }
-        body {
+        html, body {
+            width: 100%;
+            height: 100%;
             overflow: hidden;
             background-color: #1a2e1a;
             font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
@@ -53,8 +55,8 @@
             margin-bottom: 3px;
         }
         .progress-bar {
-            width: 150px;
-            height: 7px;
+            width: 160px;
+            height: 8px;
             background: rgba(255,255,255,0.2);
             border-radius: 4px;
             overflow: hidden;
@@ -64,15 +66,16 @@
             height: 100%;
             background: linear-gradient(90deg, #2ed573, #eccc68);
             width: 0%;
+            transition: width 0.2s ease;
         }
 
-        /* 顶部右上角按钮群 (音乐 & 暂停) */
+        /* 顶部右上角按钮群 (全屏 & 音乐 & 暂停) */
         .top-right-btns {
             position: absolute;
             top: 15px;
             right: 15px;
             display: flex;
-            gap: 10px;
+            gap: 8px;
             pointer-events: auto;
         }
         .top-btn {
@@ -83,6 +86,9 @@
             border-radius: 8px;
             cursor: pointer;
             font-size: 13px;
+        }
+        .top-btn:active {
+            transform: scale(0.95);
         }
 
         /* 状态 Buff 提示 */
@@ -193,7 +199,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.82);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -205,16 +211,44 @@
             text-align: center;
         }
         #modal h1 {
-            font-size: 32px;
+            font-size: 30px;
             color: #2ed573;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
         #modal p {
             font-size: 15px;
             max-width: 480px;
-            line-height: 1.5;
-            margin-bottom: 20px;
+            line-height: 1.6;
+            margin-bottom: 18px;
             color: #dfe4ea;
+        }
+        #name-input-box {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        #name-input-box label {
+            font-size: 14px;
+            color: #7bed9f;
+            font-weight: bold;
+        }
+        #player-name-input {
+            padding: 10px 18px;
+            font-size: 16px;
+            border-radius: 20px;
+            border: 2px solid #2ed573;
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            text-align: center;
+            outline: none;
+            width: 220px;
+            user-select: text;
+            -webkit-user-select: text;
+        }
+        #player-name-input::placeholder {
+            color: rgba(255, 255, 255, 0.45);
         }
         .btn {
             padding: 12px 36px;
@@ -227,6 +261,9 @@
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(46, 213, 115, 0.4);
         }
+        .btn:active {
+            transform: scale(0.96);
+        }
     </style>
 </head>
 <body>
@@ -236,15 +273,16 @@
 <div id="ui-layer">
     <div class="hud-top-left">
         <h2 id="level-title">第 1 关：青秀山绿肺</h2>
-        <div class="hud-item">当前长度: <span id="score-val">30</span></div>
-        <div class="hud-item">召唤目标: <span id="target-val">80</span></div>
+        <div class="hud-item">玩家: <span id="hud-player-name" style="color:#eccc68;font-weight:bold;">勇士</span> | 长度: <span id="score-val">30</span></div>
+        <div class="hud-item" id="quest-status">小蛇击杀: <span id="kill-val">0</span> / <span id="target-kill-val">3</span></div>
         <div class="progress-bar"><div class="progress-fill" id="level-progress"></div></div>
         <div class="hud-item" id="controls-tip" style="margin-top:5px; font-size:11px; color:#a4b0be;">
-            PC: 方向键/WASD | [Esc] 暂停
+            PC: 方向键/WASD/鼠标 | [Esc] 暂停
         </div>
     </div>
 
     <div class="top-right-btns">
+        <button class="top-btn" id="fullscreen-btn">⛶ 全屏</button>
         <button class="top-btn" id="pause-btn">⏸️ 暂停</button>
         <button class="top-btn" id="sound-btn">🔊 音乐: 开</button>
     </div>
@@ -272,13 +310,16 @@
 
 <div id="modal">
     <h1>邕城绿野·贪吃蛇大作战</h1>
-    <p>
-        欢迎来到绿城南宁！吞噬地图上的铜鼓光点和敌人尸体让自己不断变大。<br>
-        ⚡ <b>1号道具(蓝色闪电)</b>：免费极速冲刺 5 秒<br>
-        🛡️ <b>2号道具(金色铜鼓)</b>：无敌霸体 5 秒（可直接撞碎敌人）<br>
-        通关全部 10 个南宁地标关卡，击败关底 Boss 成为邕城霸主！
+    <p id="modal-desc">
+        欢迎来到绿城南宁！击败本关所有小蛇即可召唤关底 Boss！<br>
+        第1关 <b>3条</b>小蛇，第2关 <b>6条</b>，第3关 <b>9条</b>……每关递增 3 条（场上最多同时出现 5 条）。<br>
+        ⚡ <b>蓝色闪电</b>：极速冲刺 5 秒 &nbsp;|&nbsp; 🛡️ <b>金色铜鼓</b>：无敌护盾 5 秒
     </p>
-    <button class="btn" id="start-btn">开始第 1 关</button>
+    <div id="name-input-box">
+        <label for="player-name-input">请输入你的玩家名称</label>
+        <input type="text" id="player-name-input" maxlength="12" placeholder="输入昵称..." value="">
+    </div>
+    <button class="btn" id="start-btn">进入全屏并开始第 1 关</button>
 </div>
 
 <script>
@@ -296,11 +337,50 @@ window.addEventListener('resize', resize);
 resize();
 
 const WORLD_SIZE = 1800;
+const MAX_ACTIVE_MINIONS = 5; // 场上同时最多出现 5 条小蛇
 
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 850;
 if (isMobile) {
     document.getElementById('virtual-controls').style.display = 'block';
     document.getElementById('controls-tip').innerText = '手机端：左下角摇杆 | 右侧按钮冲刺';
+}
+
+// ==================== 全屏管理 ====================
+function requestFullScreenMode() {
+    const docEl = document.documentElement;
+    if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+        if (docEl.requestFullscreen) {
+            docEl.requestFullscreen().catch(() => {});
+        } else if (docEl.webkitRequestFullscreen) {
+            docEl.webkitRequestFullscreen();
+        } else if (docEl.msRequestFullscreen) {
+            docEl.msRequestFullscreen();
+        }
+    }
+}
+
+function toggleFullScreen() {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        requestFullScreenMode();
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        }
+    }
+}
+
+document.getElementById('fullscreen-btn').addEventListener('click', () => {
+    toggleFullScreen();
+});
+
+// ==================== 玩家名称读取与初始化 ====================
+let playerName = localStorage.getItem('nn_snake_player_name') || '';
+const nameInputBox = document.getElementById('name-input-box');
+const playerNameInput = document.getElementById('player-name-input');
+if (playerName) {
+    playerNameInput.value = playerName;
 }
 
 // ==================== 音频与背景音乐系统 ====================
@@ -336,6 +416,13 @@ function playSound(type) {
             gain.gain.setValueAtTime(0.12, now);
             gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
             osc.start(now); osc.stop(now + 0.25);
+        } else if (type === 'kill') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(520, now);
+            osc.frequency.exponentialRampToValueAtTime(880, now + 0.18);
+            gain.gain.setValueAtTime(0.14, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+            osc.start(now); osc.stop(now + 0.2);
         } else if (type === 'die') {
             osc.type = 'sawtooth';
             osc.frequency.setValueAtTime(200, now);
@@ -382,18 +469,18 @@ document.getElementById('sound-btn').addEventListener('click', () => {
     document.getElementById('sound-btn').innerText = musicEnabled ? "🔊 音乐: 开" : "🔇 音乐: 关";
 });
 
-// ==================== 10个南宁特色关卡配置 ====================
+// ==================== 10个南宁特色关卡配置 (每关小蛇总数 = 3 * 关卡数) ====================
 const LEVELS = [
-    { name: "第 1 关：青秀山绿肺", bg: "#427233", grid: "#37612a", decorType: "flower", decorColor: "#ffffff", targetLen: 75, aiCount: 8, bossHpLen: 110, bossSpeed: 3.4, bossColor: "#ff4757", bossName: "青秀山神兽" },
-    { name: "第 2 关：南湖公园碧波", bg: "#366b43", grid: "#2d5937", decorType: "clover", decorColor: "#7bed9f", targetLen: 110, aiCount: 9, bossHpLen: 150, bossSpeed: 3.6, bossColor: "#ffa502", bossName: "南湖巨鲤Boss" },
-    { name: "第 3 关：三街两巷老街", bg: "#507a32", grid: "#42672a", decorType: "stone", decorColor: "#d1ccc0", targetLen: 150, aiCount: 10, bossHpLen: 190, bossSpeed: 3.8, bossColor: "#3742fa", bossName: "骑楼老街霸主" },
-    { name: "第 4 关：邕江夜游长廊", bg: "#28604a", grid: "#214e3d", decorType: "bamboo", decorColor: "#badc58", targetLen: 200, aiCount: 11, bossHpLen: 240, bossSpeed: 4.0, bossColor: "#a55eea", bossName: "邕江水怪Boss" },
-    { name: "第 5 关：民歌湖音乐小镇", bg: "#2a6639", grid: "#225430", decorType: "flower", decorColor: "#ffda79", targetLen: 250, aiCount: 12, bossHpLen: 290, bossSpeed: 4.2, bossColor: "#eb4d4b", bossName: "民歌铜鼓王" },
-    { name: "第 6 关：五象新区广场", bg: "#24523c", grid: "#1c4230", decorType: "stone", decorColor: "#84817a", targetLen: 310, aiCount: 13, bossHpLen: 350, bossSpeed: 4.3, bossColor: "#f0932b", bossName: "五象神像守护" },
-    { name: "第 7 关：方特东盟神画", bg: "#1e4d2a", grid: "#173d21", decorType: "flower", decorColor: "#ff9ff3", targetLen: 370, aiCount: 14, bossHpLen: 410, bossSpeed: 4.5, bossColor: "#be2edd", bossName: "东盟神话巨蟒" },
-    { name: "第 8 关：大明山雨林奇观", bg: "#345224", grid: "#2a431d", decorType: "mushroom", decorColor: "#ff6b81", targetLen: 430, aiCount: 15, bossHpLen: 470, bossSpeed: 4.7, bossColor: "#ff3838", bossName: "大明山林霸" },
-    { name: "第 9 关：德天跨国瀑布", bg: "#163a23", grid: "#112e1b", decorType: "clover", decorColor: "#70a1ff", targetLen: 500, aiCount: 16, bossHpLen: 540, bossSpeed: 4.9, bossColor: "#ff9f1a", bossName: "跨国瀑布龙" },
-    { name: "第 10 关：南宁国际会展中心", bg: "#184537", grid: "#12372c", decorType: "flower", decorColor: "#ffeaa7", targetLen: 580, aiCount: 18, bossHpLen: 620, bossSpeed: 5.1, bossColor: "#ff0055", bossName: "金紫荆会展之王" }
+    { name: "第 1 关：青秀山绿肺", bg: "#427233", grid: "#37612a", decorType: "flower", decorColor: "#ffffff", totalMinions: 3,  bossHpLen: 95,  bossSpeed: 3.3, bossColor: "#ff4757", bossName: "青秀山神兽" },
+    { name: "第 2 关：南湖公园碧波", bg: "#366b43", grid: "#2d5937", decorType: "clover", decorColor: "#7bed9f", totalMinions: 6,  bossHpLen: 130, bossSpeed: 3.5, bossColor: "#ffa502", bossName: "南湖巨鲤Boss" },
+    { name: "第 3 关：三街两巷老街", bg: "#507a32", grid: "#42672a", decorType: "stone",  decorColor: "#d1ccc0", totalMinions: 9,  bossHpLen: 165, bossSpeed: 3.7, bossColor: "#3742fa", bossName: "骑楼老街霸主" },
+    { name: "第 4 关：邕江夜游长廊", bg: "#28604a", grid: "#214e3d", decorType: "bamboo", decorColor: "#badc58", totalMinions: 12, bossHpLen: 205, bossSpeed: 3.9, bossColor: "#a55eea", bossName: "邕江水怪Boss" },
+    { name: "第 5 关：民歌湖音乐小镇", bg: "#2a6639", grid: "#225430", decorType: "flower", decorColor: "#ffda79", totalMinions: 15, bossHpLen: 245, bossSpeed: 4.1, bossColor: "#eb4d4b", bossName: "民歌铜鼓王" },
+    { name: "第 6 关：五象新区广场", bg: "#24523c", grid: "#1c4230", decorType: "stone",  decorColor: "#84817a", totalMinions: 18, bossHpLen: 290, bossSpeed: 4.3, bossColor: "#f0932b", bossName: "五象神像守护" },
+    { name: "第 7 关：方特东盟神画", bg: "#1e4d2a", grid: "#173d21", decorType: "flower", decorColor: "#ff9ff3", totalMinions: 21, bossHpLen: 340, bossSpeed: 4.5, bossColor: "#be2edd", bossName: "东盟神话巨蟒" },
+    { name: "第 8 关：大明山雨林奇观", bg: "#345224", grid: "#2a431d", decorType: "mushroom", decorColor: "#ff6b81", totalMinions: 24, bossHpLen: 390, bossSpeed: 4.7, bossColor: "#ff3838", bossName: "大明山林霸" },
+    { name: "第 9 关：德天跨国瀑布", bg: "#163a23", grid: "#112e1b", decorType: "clover", decorColor: "#70a1ff", totalMinions: 27, bossHpLen: 445, bossSpeed: 4.9, bossColor: "#ff9f1a", bossName: "跨国瀑布龙" },
+    { name: "第 10 关：南宁国际会展中心", bg: "#184537", grid: "#12372c", decorType: "flower", decorColor: "#ffeaa7", totalMinions: 30, bossHpLen: 500, bossSpeed: 5.1, bossColor: "#ff0055", bossName: "金紫荆会展之王" }
 ];
 
 let currentLevelIdx = 0;
@@ -403,6 +490,10 @@ let snakes = [];
 let foods = [];
 let powerups = [];
 let grassDecors = [];
+
+// 小蛇刷怪与击杀计数
+let minionsKilledInLevel = 0;
+let minionsSpawnedInLevel = 0;
 let bossSpawned = false;
 let boss = null;
 
@@ -411,6 +502,7 @@ let isManualBoosting = false;
 let keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, KeyW: false, KeyS: false, KeyA: false, KeyD: false, Space: false };
 
 window.addEventListener('keydown', e => {
+    if (document.activeElement === playerNameInput) return;
     initAudio();
     if (e.code === 'Escape') {
         togglePause();
@@ -428,14 +520,19 @@ window.addEventListener('keyup', e => {
 window.addEventListener('mousemove', e => {
     if (!isMobile) { mouse.x = e.clientX; mouse.y = e.clientY; }
 });
-window.addEventListener('mousedown', e => { if (e.button === 0 && !isMobile) isManualBoosting = true; });
-window.addEventListener('mouseup', e => { if (e.button === 0 && !isMobile) isManualBoosting = false; });
+window.addEventListener('mousedown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+    if (e.button === 0 && !isMobile) isManualBoosting = true;
+});
+window.addEventListener('mouseup', e => {
+    if (e.button === 0 && !isMobile) isManualBoosting = false;
+});
 
 // 暂停功能切换函数
 function togglePause() {
     if (gameState === 'PLAYING') {
         gameState = 'PAUSED';
-        showModal("游戏已暂停", "点击下方按钮或按 [Esc] 键即可恢复游戏。", "继续游戏");
+        showModal("游戏已暂停", "点击下方按钮或按 [Esc] 键即可恢复游戏。", "继续游戏", false);
     } else if (gameState === 'PAUSED') {
         modal.style.display = 'none';
         gameState = 'PLAYING';
@@ -693,7 +790,7 @@ class Snake {
                 x: seg.x + (Math.random() - 0.5) * 12,
                 y: seg.y + (Math.random() - 0.5) * 12,
                 r: this.isBoss ? 10 : 7,
-                value: this.isBoss ? 4.0 : 2.2,
+                value: this.isBoss ? 4.0 : 2.5,
                 color: this.color,
                 isCorpse: true
             });
@@ -702,16 +799,20 @@ class Snake {
         if (this.isPlayer) {
             playSound('die');
             gameState = 'GAME_OVER';
-            showModal("挑战失败", `你在 [${LEVELS[currentLevelIdx].name}] 倒下了！<br>最终长度：${Math.floor(this.length)}`, "重新挑战当前关卡");
+            showModal("挑战失败", `<b>${playerName}</b> 在 [${LEVELS[currentLevelIdx].name}] 倒下了！<br>最终长度：${Math.floor(this.length)}`, "重新挑战当前关卡", false);
         } else if (this.isBoss) {
             boss = null;
             if (currentLevelIdx < LEVELS.length - 1) {
                 gameState = 'LEVEL_CLEAR';
-                showModal("🎉 成功通关！", `你征服了 [${LEVELS[currentLevelIdx].name}]！<br>下一站：${LEVELS[currentLevelIdx + 1].name}`, `前往下一关`);
+                showModal("🎉 成功通关！", `<b>${playerName}</b> 征服了 [${LEVELS[currentLevelIdx].name}]！<br>下一站：${LEVELS[currentLevelIdx + 1].name}`, `前往下一关`, false);
             } else {
                 gameState = 'VICTORY';
-                showModal("🏆 邕城霸主诞生！", `你已通关全部 10 个南宁地标关卡，制霸绿城！`, "重新开始挑战");
+                showModal("🏆 邕城霸主诞生！", `恭喜 <b>${playerName}</b> 通关全部 10 个南宁地标关卡，制霸绿城！`, "重新开始挑战", false);
             }
+        } else {
+            // 普通小蛇死亡：计入本关击杀总数
+            minionsKilledInLevel++;
+            playSound('kill');
         }
     }
 
@@ -752,10 +853,10 @@ class Snake {
 
         ctx.restore();
 
-        ctx.fillStyle = this.isBoss ? '#ff4757' : '#ffffff';
-        ctx.font = this.isBoss ? 'bold 14px sans-serif' : '11px sans-serif';
+        ctx.fillStyle = this.isBoss ? '#ff4757' : (this.isPlayer ? '#7bed9f' : '#ffffff');
+        ctx.font = this.isBoss ? 'bold 14px sans-serif' : (this.isPlayer ? 'bold 13px sans-serif' : '11px sans-serif');
         ctx.textAlign = 'center';
-        const label = this.isBoss ? `👑 ${LEVELS[currentLevelIdx].bossName} (${Math.floor(this.length)})` : (this.isPlayer ? '你' : this.name);
+        const label = this.isBoss ? `👑 ${LEVELS[currentLevelIdx].bossName} (${Math.floor(this.length)})` : (this.isPlayer ? playerName : this.name);
         ctx.fillText(label, head.x, head.y - r - 6);
     }
 }
@@ -781,36 +882,49 @@ function initLevel(idx) {
     snakes = [];
     foods = [];
     powerups = [];
+    minionsKilledInLevel = 0;
+    minionsSpawnedInLevel = 0;
     bossSpawned = false;
     boss = null;
     document.getElementById('boss-alert').style.display = 'none';
 
     generateGrassDecor(cfg);
 
-    const startLen = (idx === 0) ? 30 : Math.max(35, Math.floor(cfg.targetLen * 0.4));
-    player = new Snake(WORLD_SIZE / 2, WORLD_SIZE / 2, startLen, '#2ed573', true, false, '玩家');
+    const startLen = 30 + idx * 8;
+    player = new Snake(WORLD_SIZE / 2, WORLD_SIZE / 2, startLen, '#2ed573', true, false, playerName);
     snakes.push(player);
 
-    for (let i = 0; i < cfg.aiCount; i++) spawnAISnake();
+    // 初始刷出最多 5 条小蛇（且不超过本关总小蛇数）
+    const initialSpawnCount = Math.min(MAX_ACTIVE_MINIONS, cfg.totalMinions);
+    for (let i = 0; i < initialSpawnCount; i++) {
+        spawnAISnake();
+    }
+
     for (let i = 0; i < 140; i++) spawnFood();
     for (let i = 0; i < 6; i++) spawnPowerup();
 
     document.getElementById('level-title').innerText = cfg.name;
-    document.getElementById('target-val').innerText = cfg.targetLen;
+    document.getElementById('hud-player-name').innerText = playerName;
+    document.getElementById('level-progress').style.background = 'linear-gradient(90deg, #2ed573, #eccc68)';
+    
     gameState = 'PLAYING';
     startBGM();
 }
 
 function spawnAISnake() {
+    const cfg = LEVELS[currentLevelIdx];
+    if (minionsSpawnedInLevel >= cfg.totalMinions) return;
+
     let x, y;
     do {
         x = 100 + Math.random() * (WORLD_SIZE - 200);
         y = 100 + Math.random() * (WORLD_SIZE - 200);
     } while (player && Math.hypot(x - player.segments[0].x, y - player.segments[0].y) < 350);
 
+    minionsSpawnedInLevel++;
     const color = SNAKE_COLORS[Math.floor(Math.random() * SNAKE_COLORS.length)];
-    const len = 18 + Math.floor(Math.random() * (20 + currentLevelIdx * 5));
-    snakes.push(new Snake(x, y, len, color, false, false, `壮乡蛇#${Math.floor(Math.random()*90+10)}`));
+    const len = 18 + Math.floor(Math.random() * (16 + currentLevelIdx * 4));
+    snakes.push(new Snake(x, y, len, color, false, false, `壮乡蛇 #${minionsSpawnedInLevel}`));
 }
 
 function spawnBoss() {
@@ -818,11 +932,12 @@ function spawnBoss() {
     const cfg = LEVELS[currentLevelIdx];
     playSound('boss');
     const alertEl = document.getElementById('boss-alert');
+    alertEl.innerText = `⚠️ 关底 Boss [${cfg.bossName}] 降临！⚠️`;
     alertEl.style.display = 'block';
-    setTimeout(() => { alertEl.style.display = 'none'; }, 3000);
+    setTimeout(() => { alertEl.style.display = 'none'; }, 3500);
 
-    let bx = player.segments[0].x + (Math.random() > 0.5 ? 400 : -400);
-    let by = player.segments[0].y + (Math.random() > 0.5 ? 400 : -400);
+    let bx = player.segments[0].x + (Math.random() > 0.5 ? 420 : -420);
+    let by = player.segments[0].y + (Math.random() > 0.5 ? 420 : -420);
     bx = Math.max(150, Math.min(WORLD_SIZE - 150, bx));
     by = Math.max(150, Math.min(WORLD_SIZE - 150, by));
 
@@ -935,7 +1050,7 @@ function drawMinimap() {
         if (s.dead) continue;
         const head = s.segments[0];
         mCtx.beginPath();
-        mCtx.arc(head.x * scale, head.y * scale, s.isBoss ? 4 : (s.isPlayer ? 3 : 1.5), 0, Math.PI * 2);
+        mCtx.arc(head.x * scale, head.y * scale, s.isBoss ? 4.5 : (s.isPlayer ? 3.5 : 2), 0, Math.PI * 2);
         mCtx.fillStyle = s.isBoss ? '#ff0000' : (s.isPlayer ? '#2ed573' : '#ffffff');
         mCtx.fill();
     }
@@ -947,11 +1062,18 @@ function updateHUD() {
     const len = Math.floor(player.length);
     document.getElementById('score-val').innerText = len;
 
+    const questEl = document.getElementById('quest-status');
     if (!bossSpawned) {
-        const pct = Math.min(100, (len / cfg.targetLen) * 100);
+        questEl.innerHTML = `小蛇击杀: <span style="color:#7bed9f;font-weight:bold;">${minionsKilledInLevel}</span> / ${cfg.totalMinions} (场上 ${snakes.filter(s => !s.isPlayer && !s.isBoss).length} 条)`;
+        const pct = Math.min(100, (minionsKilledInLevel / cfg.totalMinions) * 100);
         document.getElementById('level-progress').style.width = pct + '%';
-        if (len >= cfg.targetLen) spawnBoss();
+
+        // 当本关小蛇全部被击败，召唤 Boss
+        if (minionsKilledInLevel >= cfg.totalMinions) {
+            spawnBoss();
+        }
     } else {
+        questEl.innerHTML = `🔥 <span style="color:#ff4757;font-weight:bold;">击败关底 Boss 过关！</span>`;
         document.getElementById('level-progress').style.width = '100%';
         document.getElementById('level-progress').style.background = '#ff4757';
     }
@@ -979,8 +1101,13 @@ function gameLoop(timestamp) {
         while (powerups.length < 6) spawnPowerup();
         
         snakes = snakes.filter(s => !s.dead);
-        const normalAICount = snakes.filter(s => !s.isPlayer && !s.isBoss).length;
-        if (normalAICount < LEVELS[currentLevelIdx].aiCount) spawnAISnake();
+        const cfg = LEVELS[currentLevelIdx];
+        const activeMinions = snakes.filter(s => !s.isPlayer && !s.isBoss).length;
+
+        // 场上保持最多 5 条小蛇，死一条补一条，直到达到本关总数
+        if (activeMinions < MAX_ACTIVE_MINIONS && minionsSpawnedInLevel < cfg.totalMinions) {
+            spawnAISnake();
+        }
 
         for (let s of snakes) s.update(dt);
         checkSnakeCollisions();
@@ -1032,17 +1159,29 @@ function gameLoop(timestamp) {
 const modal = document.getElementById('modal');
 const startBtn = document.getElementById('start-btn');
 
-function showModal(title, desc, btnText) {
+function showModal(title, desc, btnText, showNameInput = false) {
     document.querySelector('#modal h1').innerText = title;
-    document.querySelector('#modal p').innerHTML = desc;
+    document.getElementById('modal-desc').innerHTML = desc;
     startBtn.innerText = btnText;
+    nameInputBox.style.display = showNameInput ? 'flex' : 'none';
     modal.style.display = 'flex';
 }
 
+// 第一次进入，如果已有保存的名字也允许在主界面修改
+nameInputBox.style.display = 'flex';
+
 startBtn.addEventListener('click', () => {
+    // 进入游戏时自动请求全屏
+    requestFullScreenMode();
     initAudio();
+
+    if (gameState === 'MENU') {
+        const inputVal = playerNameInput.value.trim();
+        playerName = inputVal || '邕城勇士';
+        localStorage.setItem('nn_snake_player_name', playerName);
+    }
+
     modal.style.display = 'none';
-    document.getElementById('level-progress').style.background = 'linear-gradient(90deg, #2ed573, #eccc68)';
     
     if (gameState === 'PAUSED') {
         gameState = 'PLAYING';
@@ -1052,6 +1191,13 @@ startBtn.addEventListener('click', () => {
         initLevel(0);
     } else if (gameState === 'GAME_OVER') {
         initLevel(currentLevelIdx);
+    }
+});
+
+// 支持在输入框按回车直接开始
+playerNameInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+        startBtn.click();
     }
 });
 
