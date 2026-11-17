@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -324,13 +323,15 @@
             pointer-events: none;
             transition: opacity 0.3s ease;
             z-index: 10;
+            padding: 15px;
+            text-align: center;
         }
         .overlay-screen.active {
             opacity: 1;
             pointer-events: auto;
         }
         .overlay-screen h2 {
-            font-size: 26px;
+            font-size: 24px;
             margin-bottom: 10px;
         }
         .overlay-screen p {
@@ -338,18 +339,195 @@
             margin-bottom: 6px;
             color: #eee;
         }
+        .gameover-btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 15px;
+        }
         .overlay-btn {
             background: #2196F3;
             color: white;
             border: none;
-            padding: 10px 24px;
+            padding: 10px 22px;
             font-size: 15px;
-            border-radius: 20px;
+            font-weight: bold;
+            border-radius: 22px;
             cursor: pointer;
-            margin-top: 15px;
-            transition: background 0.2s;
+            transition: background 0.2s, transform 0.1s;
         }
-        .overlay-btn:hover { background: #1e88e5; }
+        .overlay-btn:hover { background: #1e88e5; transform: scale(1.03); }
+
+        .ad-revive-btn {
+            background: linear-gradient(135deg, #ff9100, #ff3d00);
+            box-shadow: 0 4px 15px rgba(255, 61, 0, 0.5);
+            animation: pulseAdBtn 1.5s infinite;
+        }
+        .ad-revive-btn:hover {
+            background: linear-gradient(135deg, #ffa726, #ff5722);
+        }
+        @keyframes pulseAdBtn {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* 看广告复活网页浮层 */
+        #ad-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #0d0d0d;
+            z-index: 200;
+            display: none;
+            flex-direction: column;
+        }
+        #ad-modal-overlay.active {
+            display: flex;
+        }
+        .ad-header {
+            background: #1a1a1a;
+            padding: 10px 15px;
+            border-bottom: 2px solid #ff9100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        .ad-status-box {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            text-align: left;
+        }
+        .ad-timer-text {
+            font-size: 15px;
+            font-weight: bold;
+            color: #ffca28;
+        }
+        .ad-scroll-tip {
+            font-size: 12px;
+            color: #00e676;
+            font-weight: bold;
+        }
+        .ad-scroll-tip.paused {
+            color: #ff5252;
+            animation: blinkTip 1s infinite;
+        }
+        @keyframes blinkTip {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.45; }
+        }
+        .ad-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ad-ext-btn {
+            background: #2c2c2c;
+            color: #64b5f6;
+            border: 1px solid #2196F3;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .ad-close-btn {
+            background: #333;
+            color: #ccc;
+            border: 1px solid #555;
+            padding: 6px 14px;
+            border-radius: 15px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .ad-close-btn:hover {
+            background: #d32f2f;
+            color: #fff;
+            border-color: #f44336;
+        }
+        #ad-iframe-wrapper {
+            position: relative;
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            overflow: hidden;
+            touch-action: pan-y;
+        }
+        #ad-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+            touch-action: pan-y;
+        }
+        /* 防关闭警告弹窗 */
+        #ad-warn-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 300;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        #ad-warn-dialog.active {
+            display: flex;
+        }
+        .ad-warn-card {
+            background: #1e1e1e;
+            border: 2px solid #ff5252;
+            border-radius: 14px;
+            padding: 24px 28px;
+            max-width: 380px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.9);
+        }
+        .ad-warn-card h3 {
+            color: #ff5252;
+            font-size: 19px;
+            margin-bottom: 10px;
+        }
+        .ad-warn-card p {
+            color: #eee;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        .ad-warn-btns {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+        .warn-btn-continue {
+            background: #00c853;
+            color: #fff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .warn-btn-quit {
+            background: #424242;
+            color: #bbb;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+        }
 
         /* 右侧战绩排行榜 */
         #leaderboard {
@@ -481,7 +659,10 @@
             <p>最终等级: <span id="finalLevel" class="level-highlight">Lv.1</span></p>
             <p>生存时间: <span id="finalTime" class="timer-highlight">0.0</span> 秒</p>
             <p>击杀妖怪: <span id="finalKills" class="kills-highlight">0</span> 只</p>
-            <button class="overlay-btn" onclick="resetGame()">再次挑战</button>
+            <div class="gameover-btn-group">
+                <button class="overlay-btn ad-revive-btn" onclick="openAdForRevive()">📺 看广告，继续复活三条命</button>
+                <button class="overlay-btn" onclick="resetGame()">再次挑战</button>
+            </div>
         </div>
     </div>
 
@@ -491,6 +672,35 @@
         <ul class="score-list" id="scoreList">
             <li class="no-records">⚠️ 暂无战绩记录</li>
         </ul>
+    </div>
+</div>
+
+<!-- 看广告复活网页浮层 -->
+<div id="ad-modal-overlay">
+    <div class="ad-header">
+        <div class="ad-status-box">
+            <div class="ad-timer-text" id="adTimerText">⏳ 需向下翻动浏览满 30.0 秒即可复活 3 条命</div>
+            <div class="ad-scroll-tip paused" id="adScrollTip">⬇️ 请在下方网页中向下滑动/滚动，倒计时才会减少！</div>
+        </div>
+        <div class="ad-actions">
+            <a href="https://blog.a169.org/" target="_blank" rel="noopener noreferrer" class="ad-ext-btn" onclick="registerAdScrollActivity()">新窗口打开</a>
+            <button class="ad-close-btn" onclick="attemptCloseAd()">关闭网页 ✕</button>
+        </div>
+    </div>
+    <div id="ad-iframe-wrapper">
+        <iframe id="ad-iframe" src="about:blank" title="广告浏览页"></iframe>
+    </div>
+</div>
+
+<!-- 30秒内关闭网页警告弹窗 -->
+<div id="ad-warn-dialog">
+    <div class="ad-warn-card">
+        <h3>⚠️ 警告：无法获得三条命！</h3>
+        <p>当前有效下滑浏览时间未满 30 秒，现在关闭网页将<strong>无法获得三条命复活奖励</strong>，确定要放弃吗？</p>
+        <div class="ad-warn-btns">
+            <button class="warn-btn-continue" onclick="dismissAdWarning()">继续向下浏览</button>
+            <button class="warn-btn-quit" onclick="forceCloseAd()">放弃奖励并关闭</button>
+        </div>
     </div>
 </div>
 
@@ -679,6 +889,165 @@ function showNotification(msg) {
         toast.classList.remove('show');
     }, 3000);
 }
+
+// --- 看广告复活三条命逻辑 ---
+let adState = {
+    active: false,
+    remainingTime: 30.0,
+    lastScrollActiveTime: 0,
+    timerId: null,
+    touchStartY: 0,
+    warnDialogOpen: false
+};
+
+function registerAdScrollActivity() {
+    if (!adState.active) return;
+    adState.lastScrollActiveTime = performance.now();
+}
+
+function openAdForRevive() {
+    adState.active = true;
+    adState.remainingTime = 30.0;
+    adState.lastScrollActiveTime = 0;
+    adState.warnDialogOpen = false;
+
+    const modal = document.getElementById('ad-modal-overlay');
+    const iframe = document.getElementById('ad-iframe');
+    iframe.src = 'https://blog.a169.org/';
+    modal.classList.add('active');
+    updateAdUI();
+
+    if (adState.timerId) clearInterval(adState.timerId);
+    let lastTick = performance.now();
+
+    adState.timerId = setInterval(() => {
+        if (!adState.active) return;
+        let now = performance.now();
+        let dt = (now - lastTick) / 1000;
+        lastTick = now;
+
+        if (adState.warnDialogOpen) return;
+
+        // 只有在向下翻动后的 2.5 秒活跃窗口内才减少倒计时
+        let isScrollingDown = (now - adState.lastScrollActiveTime) <= 2500;
+        if (isScrollingDown) {
+            adState.remainingTime = Math.max(0, adState.remainingTime - dt);
+        }
+
+        updateAdUI(isScrollingDown);
+
+        if (adState.remainingTime <= 0) {
+            completeAdRevive();
+        }
+    }, 100);
+}
+
+function updateAdUI(isScrollingDown = false) {
+    const timerText = document.getElementById('adTimerText');
+    const scrollTip = document.getElementById('adScrollTip');
+
+    timerText.textContent = `⏳ 剩余浏览时间: ${adState.remainingTime.toFixed(1)} 秒 (满30秒立即复活3条命)`;
+    if (isScrollingDown) {
+        scrollTip.textContent = '✅ 检测到向下翻动，倒计时减少中...';
+        scrollTip.classList.remove('paused');
+    } else {
+        scrollTip.textContent = '⬇️ 倒计时已暂停！请向下滑动/滚动网页以减少时间！';
+        scrollTip.classList.add('paused');
+    }
+}
+
+function attemptCloseAd() {
+    if (!adState.active) return;
+    if (adState.remainingTime > 0) {
+        adState.warnDialogOpen = true;
+        document.getElementById('ad-warn-dialog').classList.add('active');
+    } else {
+        completeAdRevive();
+    }
+}
+
+function dismissAdWarning() {
+    adState.warnDialogOpen = false;
+    document.getElementById('ad-warn-dialog').classList.remove('active');
+}
+
+function forceCloseAd() {
+    adState.active = false;
+    adState.warnDialogOpen = false;
+    if (adState.timerId) {
+        clearInterval(adState.timerId);
+        adState.timerId = null;
+    }
+    document.getElementById('ad-warn-dialog').classList.remove('active');
+    document.getElementById('ad-modal-overlay').classList.remove('active');
+    document.getElementById('ad-iframe').src = 'about:blank';
+    showNotification('❌ 未浏览满30秒已关闭，无法获得三条命！');
+}
+
+function completeAdRevive() {
+    adState.active = false;
+    adState.warnDialogOpen = false;
+    if (adState.timerId) {
+        clearInterval(adState.timerId);
+        adState.timerId = null;
+    }
+    document.getElementById('ad-warn-dialog').classList.remove('active');
+    document.getElementById('ad-modal-overlay').classList.remove('active');
+    document.getElementById('ad-iframe').src = 'about:blank';
+
+    // 恢复三条命并继续战斗
+    livesLeft = 3;
+    isGameOver = false;
+    isPaused = false;
+    isRespawning = false;
+    respawnTimer = 0;
+    player.stealthTimer = 5.0;
+    bullets = [];
+
+    document.getElementById('game-over-overlay').classList.remove('active');
+    playSoundLevelUp();
+    showNotification('🎉 浏览满30秒！已恢复三条命并开启5秒隐身继续战斗！');
+    addFloatingText('❤️ 复活三条命！继续战斗！', player.x, player.y - 1.5, '#00e676');
+    updateUI();
+}
+
+// 监听广告层内的向下滑动/滚轮/按键事件
+window.addEventListener('DOMContentLoaded', () => {
+    const adWrapper = document.getElementById('ad-iframe-wrapper');
+
+    // 鼠标滚轮向下滚动 (deltaY > 0)
+    adWrapper.addEventListener('wheel', e => {
+        if (adState.active && e.deltaY > 0) {
+            registerAdScrollActivity();
+        }
+    }, { passive: true });
+
+    // 触摸屏手指向上滑动（即页面向下翻动）
+    adWrapper.addEventListener('touchstart', e => {
+        if (adState.active && e.touches.length > 0) {
+            adState.touchStartY = e.touches[0].clientY;
+        }
+    }, { passive: true });
+
+    adWrapper.addEventListener('touchmove', e => {
+        if (adState.active && e.touches.length > 0) {
+            let currentY = e.touches[0].clientY;
+            if (adState.touchStartY - currentY > 6) {
+                registerAdScrollActivity();
+                adState.touchStartY = currentY;
+            }
+        }
+    }, { passive: true });
+
+    // 浏览器页面关闭/刷新拦截
+    window.addEventListener('beforeunload', e => {
+        if (adState.active && adState.remainingTime > 0) {
+            e.preventDefault();
+            e.returnValue = '未满30秒关闭网页将无法获得三条命！';
+            return e.returnValue;
+        }
+    });
+});
 
 let currentUserName = "";
 let records = [];
@@ -954,6 +1323,12 @@ const joystickState = {
 const keys = {};
 
 window.addEventListener('keydown', e => {
+    if (adState.active) {
+        if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
+            registerAdScrollActivity();
+        }
+        return;
+    }
     if (e.key === 'Escape') {
         togglePause();
         return;
