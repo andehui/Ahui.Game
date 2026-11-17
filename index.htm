@@ -1,10 +1,12 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
     <title>华山论剑 - 双截龙神兵版</title>
+    <!-- Google 广告主脚本放在 head 中提前异步加载 -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1805477885216561"
+         crossorigin="anonymous"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -257,7 +259,7 @@
             pointer-events: none;
         }
 
-        /* 左侧虚拟摇杆样式 */
+        /* 左侧转盘控件 */
         #joystick-base {
             position: absolute;
             bottom: 30px;
@@ -324,19 +326,29 @@
             pointer-events: none;
             transition: opacity 0.3s ease;
             z-index: 10;
+            text-align: center;
+            padding: 0 20px;
         }
         .overlay-screen.active {
             opacity: 1;
             pointer-events: auto;
         }
         .overlay-screen h2 {
-            font-size: 26px;
-            margin-bottom: 10px;
+            font-size: 24px;
+            margin-bottom: 8px;
         }
         .overlay-screen p {
-            font-size: 14px;
-            margin-bottom: 6px;
+            font-size: 13px;
+            margin-bottom: 5px;
             color: #eee;
+        }
+        .overlay-btn-group {
+            display: flex;
+            flex-direction: row;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
         .overlay-btn {
             background: #2196F3;
@@ -344,12 +356,59 @@
             border: none;
             padding: 10px 24px;
             font-size: 15px;
+            font-weight: bold;
             border-radius: 20px;
             cursor: pointer;
-            margin-top: 15px;
-            transition: background 0.2s;
+            transition: background 0.2s, transform 0.1s;
         }
-        .overlay-btn:hover { background: #1e88e5; }
+        .overlay-btn:hover { background: #1e88e5; transform: scale(1.03); }
+        .overlay-btn.ad-btn {
+            background: linear-gradient(135deg, #ff9100, #ff3d00);
+            box-shadow: 0 4px 15px rgba(255, 145, 0, 0.45);
+        }
+        .overlay-btn.ad-btn:hover {
+            background: linear-gradient(135deg, #ffa726, #ff5722);
+        }
+
+        /* 广告弹窗容器样式 - 提升层级保证盖在结算弹窗上方 */
+        #ad-overlay {
+            z-index: 30;
+            background: rgba(0, 0, 0, 0.94);
+        }
+        .ad-box {
+            background: #1e1e1e;
+            border: 2px solid #ff9100;
+            border-radius: 12px;
+            padding: 15px 20px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+            position: relative;
+        }
+        .ad-close-btn {
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            background: transparent;
+            border: none;
+            color: #888;
+            font-size: 18px;
+            cursor: pointer;
+            z-index: 5;
+        }
+        .ad-close-btn:hover {
+            color: #fff;
+        }
+        .ad-placeholder-area {
+            background: #2b2b2b;
+            border: 1px dashed #666;
+            border-radius: 6px;
+            padding: 8px;
+            margin: 8px 0;
+            color: #ffca28;
+            font-size: 13px;
+        }
 
         /* 右侧战绩排行榜 */
         #leaderboard {
@@ -481,13 +540,40 @@
             <p>最终等级: <span id="finalLevel" class="level-highlight">Lv.1</span></p>
             <p>生存时间: <span id="finalTime" class="timer-highlight">0.0</span> 秒</p>
             <p>击杀妖怪: <span id="finalKills" class="kills-highlight">0</span> 只</p>
-            <button class="overlay-btn" onclick="resetGame()">再次挑战</button>
+            <div class="overlay-btn-group">
+                <button class="overlay-btn" onclick="resetGame()">再次挑战</button>
+                <button class="overlay-btn ad-btn" onclick="watchAdToContinue()">📺 看广告，继续挑战</button>
+            </div>
         </div>
+
+        <!-- ==================== 【广告代码替换区域 - HTML弹窗结构 START】 ==================== -->
+        <div id="ad-overlay" class="overlay-screen">
+            <div class="ad-box">
+                <button class="ad-close-btn" onclick="attemptCloseAd()" title="关闭广告">✕</button>
+                <h3 style="color: #ff9100; margin-bottom: 6px; font-size: 15px;">📺 赞助商广告</h3>
+                
+                <!-- 赋予固定尺寸的广告容器，已填入新的广告单元 ID: ca-app-pub-1805477885216561/9689603314 -->
+                <div id="adsense-wrapper" style="width: 300px; min-height: 250px; margin: 0 auto; background: #262626; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 6px;">
+                    <ins class="adsbygoogle"
+                         style="display:inline-block;width:300px;height:250px"
+                         data-ad-client="ca-pub-1805477885216561"
+                         data-ad-slot="ca-app-pub-1805477885216561/9689603314"></ins>
+                </div>
+                
+                <div id="ad-slot-container" class="ad-placeholder-area">
+                    <p style="font-size: 13px; color: #ddd;">广告播放中... 剩余时间: <span id="adCountdown" style="color: #00e676; font-weight: bold; font-size: 18px;">15</span> 秒</p>
+                </div>
+
+                <!-- 增加强制可见内联样式，确保倒计时一到按钮百分之百出现 -->
+                <button id="adClaimBtn" class="overlay-btn ad-btn" style="display: none !important; width: 100%; margin-top: 8px;" onclick="reviveFromAd()">✅ 领取 3 条命继续挑战</button>
+            </div>
+        </div>
+        <!-- ==================== 【广告代码替换区域 - HTML弹窗结构 END】 ==================== -->
     </div>
 
     <!-- 战绩表 -->
     <div id="leaderboard">
-        <h2>最近10次战绩表</h2>
+        <h2>血战排行榜</h2>
         <ul class="score-list" id="scoreList">
             <li class="no-records">⚠️ 暂无战绩记录</li>
         </ul>
@@ -1657,6 +1743,7 @@ function resetGame() {
 
     document.getElementById('game-over-overlay').classList.remove('active');
     document.getElementById('pause-overlay').classList.remove('active');
+    document.getElementById('ad-overlay').classList.remove('active');
     updateUI();
     updateLeaderboardUI();
 }
@@ -2393,6 +2480,104 @@ function triggerGameOver() {
     document.getElementById('game-over-overlay').classList.add('active');
     addRecord(survivalTime, killCount, player.level, gameRound);
 }
+
+// ==================== 【广告代码替换区域 - JS逻辑 START】 ====================
+let adTimerInterval = null;
+let adIsCompleted = false; // 记录广告是否完整播放完毕
+
+function watchAdToContinue() {
+    // 隐藏游戏结束弹窗，显示广告弹窗
+    document.getElementById('game-over-overlay').classList.remove('active');
+    document.getElementById('ad-overlay').classList.add('active');
+
+    let claimBtn = document.getElementById('adClaimBtn');
+    let countdownEl = document.getElementById('adCountdown');
+    
+    // 初始化按钮状态：未倒计时结束前强制隐藏
+    claimBtn.style.display = 'none';
+    claimBtn.style.setProperty('display', 'none', 'important');
+    adIsCompleted = false;
+
+    // 重新注入广告代码（已填入新的广告单元 ID: ca-app-pub-1805477885216561/9689603314）
+    let wrapper = document.getElementById('adsense-wrapper');
+    wrapper.innerHTML = `
+        <ins class="adsbygoogle"
+             style="display:inline-block;width:300px;height:250px"
+             data-ad-client="ca-pub-1805477885216561"
+             data-ad-slot="ca-app-pub-1805477885216561/9689603314"></ins>
+    `;
+    setTimeout(() => {
+        try {
+            (adsbygoogle = window.adsbygoogle || []).push({});
+        } catch (e) {
+            console.error('广告加载异常:', e);
+        }
+    }, 150);
+
+    let secondsLeft = 15; // 15秒倒计时
+    countdownEl.textContent = secondsLeft;
+
+    if (adTimerInterval) clearInterval(adTimerInterval);
+    adTimerInterval = setInterval(() => {
+        secondsLeft--;
+        countdownEl.textContent = Math.max(0, secondsLeft);
+        if (secondsLeft <= 0) {
+            clearInterval(adTimerInterval);
+            adTimerInterval = null;
+            adIsCompleted = true;
+            // 倒计时结束，通过最高优先级强制显示领取奖励按钮
+            claimBtn.style.display = 'block';
+            claimBtn.style.setProperty('display', 'block', 'important');
+        }
+    }, 1000);
+}
+
+// 用户尝试关闭广告触发的拦截逻辑
+function attemptCloseAd() {
+    if (adIsCompleted) {
+        closeAdAndResume();
+        return;
+    }
+
+    let confirmClose = confirm("⚠️ 关闭广告将无法获得三条命，建议取消继续观看！\n\n点击“确定”将强行关闭并直接结束游戏，点击“取消”继续观看广告。");
+    if (confirmClose) {
+        if (adTimerInterval) {
+            clearInterval(adTimerInterval);
+            adTimerInterval = null;
+        }
+        document.getElementById('ad-overlay').classList.remove('active');
+        document.getElementById('game-over-overlay').classList.add('active');
+        showNotification("❌ 强行关闭广告，挑战正式结束！");
+    }
+}
+
+function closeAdAndResume() {
+    if (adTimerInterval) {
+        clearInterval(adTimerInterval);
+        adTimerInterval = null;
+    }
+    document.getElementById('ad-overlay').classList.remove('active');
+}
+
+function reviveFromAd() {
+    closeAdAndResume();
+
+    // 恢复 3 条命并保留当前所有游戏进度
+    livesLeft = 3;
+    isGameOver = false;
+    isRespawning = false;
+    respawnTimer = 0;
+    bullets = [];
+
+    // 给予 5 秒隐身无敌保护
+    player.stealthTimer = 5.0;
+
+    playSoundPowerup();
+    showNotification("🎉 观看广告成功！已满血恢复 3 条命，继续当前进度战斗！");
+    addFloatingText("❤️ 满血复活 (3命) + 5秒隐身！", player.x, player.y - 1.5, "#00e676");
+    updateUI();
+}
+// ==================== 【广告代码替换区域 - JS逻辑 END】 ====================
 
 function drawBoxerHero(cx, cy, p, overrideForm = null, isInvincibleAlly = false) {
     let form = overrideForm || getCurrentLifeForm();
