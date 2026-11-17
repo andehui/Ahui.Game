@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>绿城南宁·贪吃蛇大作战 (畅爽优化与暂停版)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+        body {
+            overflow: hidden;
+            background-color: #1a2e1a;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            touch-action: none;
+        }
+        canvas {
+            display: block;
+        }
+        /* UI 面板 */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .hud-top-left {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.65);
+            color: #fff;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 2px solid rgba(46, 213, 115, 0.4);
+            backdrop-filter: blur(4px);
+            pointer-events: auto;
+        }
+        .hud-top-left h2 {
+            font-size: 16px;
+            color: #7bed9f;
+            margin-bottom: 5px;
+        }
+        .hud-item {
+            font-size: 13px;
+            margin-bottom: 3px;
+        }
+        .progress-bar {
+            width: 150px;
+            height: 7px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2ed573, #eccc68);
+            width: 0%;
+        }
+
+        /* 顶部右上角按钮群 (音乐 & 暂停) */
+        .top-right-btns {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 10px;
+            pointer-events: auto;
+        }
+        .top-btn {
+            background: rgba(0, 0, 0, 0.65);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        /* 状态 Buff 提示 */
+        .buff-container {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+        .buff-badge {
+            padding: 5px 14px;
+            border-radius: 20px;
+            color: #fff;
+            font-weight: bold;
+            font-size: 13px;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        #buff-speed { background: linear-gradient(135deg, #1e90ff, #00d2d3); }
+        #buff-invincible { background: linear-gradient(135deg, #ffa502, #ff6348); }
+
+        /* Boss 警告 */
+        #boss-alert {
+            position: absolute;
+            top: 22%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 26px;
+            font-weight: 900;
+            color: #ff4757;
+            text-shadow: 0 0 10px rgba(0,0,0,0.9), 0 0 4px #fff;
+            display: none;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* 小地图 */
+        #minimap {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            width: 120px;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+
+        /* 手机端虚拟摇杆与右侧按键 */
+        #virtual-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: none;
+        }
+        #joystick-base {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            border-radius: 50%;
+            pointer-events: auto;
+        }
+        #joystick-stick {
+            position: absolute;
+            top: 32px;
+            left: 32px;
+            width: 56px;
+            height: 56px;
+            background: rgba(255, 255, 255, 0.55);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .right-action-btns {
+            position: absolute;
+            bottom: 35px;
+            right: 150px;
+            pointer-events: auto;
+        }
+        .ctrl-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(46,213,115,0.85), rgba(30,144,255,0.85));
+            border: 3px solid #fff;
+            color: #fff;
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+
+        /* 弹窗遮罩 */
+        #modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            pointer-events: auto;
+            z-index: 20;
+            padding: 20px;
+            text-align: center;
+        }
+        #modal h1 {
+            font-size: 32px;
+            color: #2ed573;
+            margin-bottom: 10px;
+        }
+        #modal p {
+            font-size: 15px;
+            max-width: 480px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            color: #dfe4ea;
+        }
+        .btn {
+            padding: 12px 36px;
+            font-size: 17px;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(135deg, #2ed573, #1e90ff);
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(46, 213, 115, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+
+<div id="ui-layer">
+    <div class="hud-top-left">
+        <h2 id="level-title">第 1 关：青秀山绿肺</h2>
+        <div class="hud-item">当前长度: <span id="score-val">30</span></div>
+        <div class="hud-item">召唤目标: <span id="target-val">80</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="level-progress"></div></div>
+        <div class="hud-item" id="controls-tip" style="margin-top:5px; font-size:11px; color:#a4b0be;">
+            PC: 方向键/WASD | [Esc] 暂停
+        </div>
+    </div>
+
+    <div class="top-right-btns">
+        <button class="top-btn" id="pause-btn">⏸️ 暂停</button>
+        <button class="top-btn" id="sound-btn">🔊 音乐: 开</button>
+    </div>
+
+    <div class="buff-container">
+        <div id="buff-speed" class="buff-badge">⚡ 极速冲刺 (<span id="speed-time">5.0</span>s)</div>
+        <div id="buff-invincible" class="buff-badge">🛡️ 铜鼓护盾 (<span id="invincible-time">5.0</span>s)</div>
+    </div>
+
+    <div id="boss-alert">⚠️ 南宁特色巨型关底 Boss 降临！⚠️</div>
+    <canvas id="minimap" width="120" height="120"></canvas>
+
+    <div id="virtual-controls">
+        <div id="joystick-base">
+            <div id="joystick-stick"></div>
+        </div>
+        <div class="right-action-btns">
+            <div class="ctrl-btn" id="btn-boost">
+                <span>⚡</span>
+                <span style="font-size:10px;">冲刺</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal">
+    <h1>邕城绿野·贪吃蛇大作战</h1>
+    <p>
+        欢迎来到绿城南宁！吞噬地图上的铜鼓光点和敌人尸体让自己不断变大。<br>
+        ⚡ <b>1号道具(蓝色闪电)</b>：免费极速冲刺 5 秒<br>
+        🛡️ <b>2号道具(金色铜鼓)</b>：无敌霸体 5 秒（可直接撞碎敌人）<br>
+        通关全部 10 个南宁地标关卡，击败关底 Boss 成为邕城霸主！
+    </p>
+    <button class="btn" id="start-btn">开始第 1 关</button>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const minimap = document.getElementById('minimap');
+const mCtx = minimap.getContext('2d');
+
+let width, height;
+function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+const WORLD_SIZE = 1800;
+
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 850;
+if (isMobile) {
+    document.getElementById('virtual-controls').style.display = 'block';
+    document.getElementById('controls-tip').innerText = '手机端：左下角摇杆 | 右侧按钮冲刺';
+}
+
+// ==================== 音频与背景音乐系统 ====================
+let audioCtx = null;
+let musicEnabled = true;
+let bgmInterval = null;
+
+function initAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playSound(type) {
+    if (!musicEnabled || !audioCtx || gameState !== 'PLAYING') return;
+    try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+
+        if (type === 'eat') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(350, now);
+            osc.frequency.exponentialRampToValueAtTime(550, now + 0.06);
+            gain.gain.setValueAtTime(0.08, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.06);
+            osc.start(now); osc.stop(now + 0.06);
+        } else if (type === 'powerup') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(450, now);
+            osc.frequency.setValueAtTime(750, now + 0.15);
+            gain.gain.setValueAtTime(0.12, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+            osc.start(now); osc.stop(now + 0.25);
+        } else if (type === 'die') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(200, now);
+            osc.frequency.linearRampToValueAtTime(60, now + 0.3);
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now); osc.stop(now + 0.3);
+        } else if (type === 'boss') {
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(140, now);
+            osc.frequency.setValueAtTime(100, now + 0.15);
+            gain.gain.setValueAtTime(0.18, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now); osc.stop(now + 0.3);
+        }
+    } catch(e) {}
+}
+
+function startBGM() {
+    if (bgmInterval) clearInterval(bgmInterval);
+    const notes = [261.63, 329.63, 392.00, 523.25, 440.00, 392.00];
+    let idx = 0;
+    bgmInterval = setInterval(() => {
+        if (!musicEnabled || !audioCtx || gameState !== 'PLAYING') return;
+        try {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+            osc.frequency.setValueAtTime(notes[idx % notes.length], now);
+            gain.gain.setValueAtTime(0.03, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+            osc.start(now); osc.stop(now + 0.2);
+            idx++;
+        } catch(e) {}
+    }, 350);
+}
+
+document.getElementById('sound-btn').addEventListener('click', () => {
+    initAudio();
+    musicEnabled = !musicEnabled;
+    document.getElementById('sound-btn').innerText = musicEnabled ? "🔊 音乐: 开" : "🔇 音乐: 关";
+});
+
+// ==================== 10个南宁特色关卡配置 ====================
+const LEVELS = [
+    { name: "第 1 关：青秀山绿肺", bg: "#427233", grid: "#37612a", decorType: "flower", decorColor: "#ffffff", targetLen: 75, aiCount: 8, bossHpLen: 110, bossSpeed: 3.4, bossColor: "#ff4757", bossName: "青秀山神兽" },
+    { name: "第 2 关：南湖公园碧波", bg: "#366b43", grid: "#2d5937", decorType: "clover", decorColor: "#7bed9f", targetLen: 110, aiCount: 9, bossHpLen: 150, bossSpeed: 3.6, bossColor: "#ffa502", bossName: "南湖巨鲤Boss" },
+    { name: "第 3 关：三街两巷老街", bg: "#507a32", grid: "#42672a", decorType: "stone", decorColor: "#d1ccc0", targetLen: 150, aiCount: 10, bossHpLen: 190, bossSpeed: 3.8, bossColor: "#3742fa", bossName: "骑楼老街霸主" },
+    { name: "第 4 关：邕江夜游长廊", bg: "#28604a", grid: "#214e3d", decorType: "bamboo", decorColor: "#badc58", targetLen: 200, aiCount: 11, bossHpLen: 240, bossSpeed: 4.0, bossColor: "#a55eea", bossName: "邕江水怪Boss" },
+    { name: "第 5 关：民歌湖音乐小镇", bg: "#2a6639", grid: "#225430", decorType: "flower", decorColor: "#ffda79", targetLen: 250, aiCount: 12, bossHpLen: 290, bossSpeed: 4.2, bossColor: "#eb4d4b", bossName: "民歌铜鼓王" },
+    { name: "第 6 关：五象新区广场", bg: "#24523c", grid: "#1c4230", decorType: "stone", decorColor: "#84817a", targetLen: 310, aiCount: 13, bossHpLen: 350, bossSpeed: 4.3, bossColor: "#f0932b", bossName: "五象神像守护" },
+    { name: "第 7 关：方特东盟神画", bg: "#1e4d2a", grid: "#173d21", decorType: "flower", decorColor: "#ff9ff3", targetLen: 370, aiCount: 14, bossHpLen: 410, bossSpeed: 4.5, bossColor: "#be2edd", bossName: "东盟神话巨蟒" },
+    { name: "第 8 关：大明山雨林奇观", bg: "#345224", grid: "#2a431d", decorType: "mushroom", decorColor: "#ff6b81", targetLen: 430, aiCount: 15, bossHpLen: 470, bossSpeed: 4.7, bossColor: "#ff3838", bossName: "大明山林霸" },
+    { name: "第 9 关：德天跨国瀑布", bg: "#163a23", grid: "#112e1b", decorType: "clover", decorColor: "#70a1ff", targetLen: 500, aiCount: 16, bossHpLen: 540, bossSpeed: 4.9, bossColor: "#ff9f1a", bossName: "跨国瀑布龙" },
+    { name: "第 10 关：南宁国际会展中心", bg: "#184537", grid: "#12372c", decorType: "flower", decorColor: "#ffeaa7", targetLen: 580, aiCount: 18, bossHpLen: 620, bossSpeed: 5.1, bossColor: "#ff0055", bossName: "金紫荆会展之王" }
+];
+
+let currentLevelIdx = 0;
+let gameState = 'MENU'; // MENU, PLAYING, PAUSED, LEVEL_CLEAR, GAME_OVER, VICTORY
+let player = null;
+let snakes = [];
+let foods = [];
+let powerups = [];
+let grassDecors = [];
+let bossSpawned = false;
+let boss = null;
+
+let mouse = { x: width / 2, y: height / 2 };
+let isManualBoosting = false;
+let keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, KeyW: false, KeyS: false, KeyA: false, KeyD: false, Space: false };
+
+window.addEventListener('keydown', e => {
+    initAudio();
+    if (e.code === 'Escape') {
+        togglePause();
+        return;
+    }
+    if (e.code in keys) keys[e.code] = true;
+    if (e.code === 'Space') isManualBoosting = true;
+});
+
+window.addEventListener('keyup', e => {
+    if (e.code in keys) keys[e.code] = false;
+    if (e.code === 'Space') isManualBoosting = false;
+});
+
+window.addEventListener('mousemove', e => {
+    if (!isMobile) { mouse.x = e.clientX; mouse.y = e.clientY; }
+});
+window.addEventListener('mousedown', e => { if (e.button === 0 && !isMobile) isManualBoosting = true; });
+window.addEventListener('mouseup', e => { if (e.button === 0 && !isMobile) isManualBoosting = false; });
+
+// 暂停功能切换函数
+function togglePause() {
+    if (gameState === 'PLAYING') {
+        gameState = 'PAUSED';
+        showModal("游戏已暂停", "点击下方按钮或按 [Esc] 键即可恢复游戏。", "继续游戏");
+    } else if (gameState === 'PAUSED') {
+        modal.style.display = 'none';
+        gameState = 'PLAYING';
+    }
+}
+
+document.getElementById('pause-btn').addEventListener('click', () => {
+    togglePause();
+});
+
+// 手机虚拟摇杆控制
+let joystickTouchId = null;
+const joystickBase = document.getElementById('joystick-base');
+const joystickStick = document.getElementById('joystick-stick');
+let joystickVector = { x: 0, y: 0 };
+
+joystickBase.addEventListener('touchstart', e => {
+    initAudio();
+    const touch = e.changedTouches[0];
+    joystickTouchId = touch.identifier;
+    updateJoystick(touch);
+});
+joystickBase.addEventListener('touchmove', e => {
+    for (let touch of e.changedTouches) {
+        if (touch.identifier === joystickTouchId) updateJoystick(touch);
+    }
+});
+function endJoystick(e) {
+    for (let touch of e.changedTouches) {
+        if (touch.identifier === joystickTouchId) {
+            joystickTouchId = null;
+            joystickVector = { x: 0, y: 0 };
+            joystickStick.style.transform = `translate(0px, 0px)`;
+        }
+    }
+}
+joystickBase.addEventListener('touchend', endJoystick);
+joystickBase.addEventListener('touchcancel', endJoystick);
+
+function updateJoystick(touch) {
+    const rect = joystickBase.getBoundingClientRect();
+    const dx = touch.clientX - (rect.left + rect.width / 2);
+    const dy = touch.clientY - (rect.top + rect.height / 2);
+    const dist = Math.hypot(dx, dy);
+    const maxDist = 40;
+    const angle = Math.atan2(dy, dx);
+    const clampedDist = Math.min(dist, maxDist);
+
+    joystickStick.style.transform = `translate(${Math.cos(angle)*clampedDist}px, ${Math.sin(angle)*clampedDist}px)`;
+    joystickVector = { x: Math.cos(angle) * (clampedDist / maxDist), y: Math.sin(angle) * (clampedDist / maxDist) };
+}
+
+const btnBoost = document.getElementById('btn-boost');
+btnBoost.addEventListener('touchstart', e => { e.preventDefault(); isManualBoosting = true; });
+btnBoost.addEventListener('touchend', e => { e.preventDefault(); isManualBoosting = false; });
+
+const SNAKE_COLORS = ['#ff6b81', '#70a1ff', '#eccc68', '#a29bfe', '#ff7f50', '#1dd1a1', '#f368e0', '#48dbfb'];
+
+// ==================== 贪吃蛇底层类 ====================
+class Snake {
+    constructor(x, y, length, color, isPlayer = false, isBoss = false, name = "") {
+        this.isPlayer = isPlayer;
+        this.isBoss = isBoss;
+        this.name = name;
+        this.color = color;
+        this.angle = Math.random() * Math.PI * 2;
+        this.targetAngle = this.angle;
+        
+        this.baseSpeed = isBoss ? LEVELS[currentLevelIdx].bossSpeed : 3.0;
+        this.turnSpeed = isBoss ? 0.06 : 0.09;
+        
+        this.length = length;
+        this.path = [];
+        this.segments = [];
+        
+        this.speedBuffTimer = 0;
+        this.invincibleBuffTimer = 0;
+        this.dead = false;
+        this.aiTimer = 0;
+
+        for (let i = 0; i < length * 2.5; i++) {
+            this.path.push({ x: x - Math.cos(this.angle)*i*2, y: y - Math.sin(this.angle)*i*2 });
+        }
+        this.updateSegments();
+    }
+
+    get radius() {
+        const baseR = this.isBoss ? 22 : 10;
+        return Math.min(this.isBoss ? 38 : 25, baseR + Math.sqrt(this.length) * 0.4);
+    }
+
+    update(dt) {
+        if (this.dead) return;
+
+        if (this.speedBuffTimer > 0) this.speedBuffTimer = Math.max(0, this.speedBuffTimer - dt);
+        if (this.invincibleBuffTimer > 0) this.invincibleBuffTimer = Math.max(0, this.invincibleBuffTimer - dt);
+
+        if (this.isPlayer) {
+            let kx = 0, ky = 0;
+            if (keys.ArrowLeft || keys.KeyA) kx -= 1;
+            if (keys.ArrowRight || keys.KeyD) kx += 1;
+            if (keys.ArrowUp || keys.KeyW) ky -= 1;
+            if (keys.ArrowDown || keys.KeyS) ky += 1;
+
+            if (kx !== 0 || ky !== 0) {
+                this.targetAngle = Math.atan2(ky, kx);
+            } else if (isMobile && (joystickVector.x !== 0 || joystickVector.y !== 0)) {
+                this.targetAngle = Math.atan2(joystickVector.y, joystickVector.x);
+            } else if (!isMobile) {
+                const dx = mouse.x - width / 2;
+                const dy = mouse.y - height / 2;
+                if (Math.hypot(dx, dy) > 10) this.targetAngle = Math.atan2(dy, dx);
+            }
+        } else {
+            this.updateAI(dt);
+        }
+
+        let diff = this.targetAngle - this.angle;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        this.angle += Math.sign(diff) * Math.min(Math.abs(diff), this.turnSpeed);
+
+        let currentSpeed = this.baseSpeed;
+        if (this.speedBuffTimer > 0) {
+            currentSpeed *= 1.8;
+        } else if (this.isPlayer && isManualBoosting && this.length > 15) {
+            currentSpeed *= 1.6;
+            this.length -= 2.5 * dt;
+        }
+
+        const head = this.path[0];
+        const nx = head.x + Math.cos(this.angle) * currentSpeed;
+        const ny = head.y + Math.sin(this.angle) * currentSpeed;
+
+        const r = this.radius;
+        if (nx < r || nx > WORLD_SIZE - r || ny < r || ny > WORLD_SIZE - r) {
+            if (this.invincibleBuffTimer > 0 || !this.isPlayer) {
+                if (nx < r || nx > WORLD_SIZE - r) this.angle = Math.PI - this.angle;
+                if (ny < r || ny > WORLD_SIZE - r) this.angle = -this.angle;
+                this.targetAngle = this.angle;
+            } else {
+                this.die();
+                return;
+            }
+        } else {
+            this.path.unshift({ x: nx, y: ny });
+        }
+
+        this.updateSegments();
+        this.checkFoodAndPowerups();
+    }
+
+    updateAI(dt) {
+        this.aiTimer -= dt;
+        const head = this.path[0];
+        let danger = false;
+        const checkX = head.x + Math.cos(this.angle) * (this.radius * 4);
+        const checkY = head.y + Math.sin(this.angle) * (this.radius * 4);
+
+        for (let other of snakes) {
+            if (other === this || other.dead) continue;
+            for (let i = 0; i < other.segments.length; i += 3) {
+                const seg = other.segments[i];
+                if (Math.hypot(checkX - seg.x, checkY - seg.y) < other.radius + this.radius + 20) {
+                    this.targetAngle = this.angle + (Math.random() > 0.5 ? 1.5 : -1.5);
+                    this.aiTimer = 0.4;
+                    danger = true;
+                    break;
+                }
+            }
+            if (danger) break;
+        }
+
+        if (!danger && this.aiTimer <= 0) {
+            this.aiTimer = 0.4 + Math.random() * 0.4;
+            if (this.isBoss && player && !player.dead) {
+                this.targetAngle = Math.atan2(player.path[0].y - head.y, player.path[0].x - head.x) + (Math.random() - 0.5) * 0.4;
+            } else {
+                let bestFood = null;
+                let minDist = 300;
+                for (let f of foods) {
+                    const d = Math.hypot(f.x - head.x, f.y - head.y);
+                    const weight = f.isCorpse ? d * 0.4 : d;
+                    if (weight < minDist) { minDist = weight; bestFood = f; }
+                }
+                if (bestFood) {
+                    this.targetAngle = Math.atan2(bestFood.y - head.y, bestFood.x - head.x);
+                } else {
+                    this.targetAngle += (Math.random() - 0.5) * 1.0;
+                }
+            }
+        }
+    }
+
+    updateSegments() {
+        const segmentCount = Math.floor(this.length);
+        const spacing = this.radius * 0.6;
+        this.segments = [this.path[0]];
+        let accumulatedDist = 0;
+        let pathIdx = 0;
+
+        while (this.segments.length < segmentCount && pathIdx < this.path.length - 1) {
+            const p1 = this.path[pathIdx];
+            const p2 = this.path[pathIdx + 1];
+            const d = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+            
+            if (accumulatedDist + d >= spacing) {
+                const ratio = (spacing - accumulatedDist) / d;
+                const sx = p1.x + (p2.x - p1.x) * ratio;
+                const sy = p1.y + (p2.y - p1.y) * ratio;
+                this.segments.push({ x: sx, y: sy });
+                accumulatedDist = 0;
+                this.path.splice(pathIdx + 1, 0, { x: sx, y: sy });
+                pathIdx++;
+            } else {
+                accumulatedDist += d;
+                pathIdx++;
+            }
+        }
+        if (this.path.length > pathIdx + 8) this.path.length = pathIdx + 8;
+    }
+
+    checkFoodAndPowerups() {
+        const head = this.segments[0];
+        const eatRange = this.radius + 10;
+
+        for (let i = foods.length - 1; i >= 0; i--) {
+            const f = foods[i];
+            if (Math.hypot(head.x - f.x, head.y - f.y) < eatRange + f.r) {
+                this.length += f.value;
+                foods.splice(i, 1);
+                if (this.isPlayer) playSound('eat');
+            }
+        }
+
+        for (let i = powerups.length - 1; i >= 0; i--) {
+            const p = powerups[i];
+            if (Math.hypot(head.x - p.x, head.y - p.y) < eatRange + 12) {
+                if (p.type === 1) this.speedBuffTimer = 5.0;
+                else if (p.type === 2) this.invincibleBuffTimer = 5.0;
+                powerups.splice(i, 1);
+                if (this.isPlayer) playSound('powerup');
+            }
+        }
+    }
+
+    die() {
+        if (this.dead) return;
+        this.dead = true;
+
+        const step = this.isBoss ? 1 : 2;
+        for (let i = 0; i < this.segments.length; i += step) {
+            const seg = this.segments[i];
+            foods.push({
+                x: seg.x + (Math.random() - 0.5) * 12,
+                y: seg.y + (Math.random() - 0.5) * 12,
+                r: this.isBoss ? 10 : 7,
+                value: this.isBoss ? 4.0 : 2.2,
+                color: this.color,
+                isCorpse: true
+            });
+        }
+
+        if (this.isPlayer) {
+            playSound('die');
+            gameState = 'GAME_OVER';
+            showModal("挑战失败", `你在 [${LEVELS[currentLevelIdx].name}] 倒下了！<br>最终长度：${Math.floor(this.length)}`, "重新挑战当前关卡");
+        } else if (this.isBoss) {
+            boss = null;
+            if (currentLevelIdx < LEVELS.length - 1) {
+                gameState = 'LEVEL_CLEAR';
+                showModal("🎉 成功通关！", `你征服了 [${LEVELS[currentLevelIdx].name}]！<br>下一站：${LEVELS[currentLevelIdx + 1].name}`, `前往下一关`);
+            } else {
+                gameState = 'VICTORY';
+                showModal("🏆 邕城霸主诞生！", `你已通关全部 10 个南宁地标关卡，制霸绿城！`, "重新开始挑战");
+            }
+        }
+    }
+
+    draw(ctx) {
+        if (this.dead || this.segments.length === 0) return;
+        const r = this.radius;
+
+        for (let i = this.segments.length - 1; i >= 0; i--) {
+            const seg = this.segments[i];
+            ctx.beginPath();
+            const segR = i > this.segments.length - 4 ? r * 0.75 : r;
+            ctx.arc(seg.x, seg.y, segR, 0, Math.PI * 2);
+            
+            if (this.invincibleBuffTimer > 0) {
+                ctx.fillStyle = (Math.floor(Date.now() / 100) % 2 === 0) ? '#ffeaa7' : this.color;
+            } else {
+                ctx.fillStyle = (i % 2 === 0) ? this.color : '#2d3436';
+            }
+            ctx.fill();
+        }
+
+        const head = this.segments[0];
+        ctx.save();
+        ctx.translate(head.x, head.y);
+        ctx.rotate(this.angle);
+
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(r * 0.35, -r * 0.45, r * 0.25, 0, Math.PI * 2);
+        ctx.arc(r * 0.35, r * 0.45, r * 0.25, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = this.isBoss ? '#ff0000' : '#000';
+        ctx.beginPath();
+        ctx.arc(r * 0.45, -r * 0.45, r * 0.12, 0, Math.PI * 2);
+        ctx.arc(r * 0.45, r * 0.45, r * 0.12, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+
+        ctx.fillStyle = this.isBoss ? '#ff4757' : '#ffffff';
+        ctx.font = this.isBoss ? 'bold 14px sans-serif' : '11px sans-serif';
+        ctx.textAlign = 'center';
+        const label = this.isBoss ? `👑 ${LEVELS[currentLevelIdx].bossName} (${Math.floor(this.length)})` : (this.isPlayer ? '你' : this.name);
+        ctx.fillText(label, head.x, head.y - r - 6);
+    }
+}
+
+// ==================== 关卡与场景生成 ====================
+function generateGrassDecor(cfg) {
+    grassDecors = [];
+    for (let i = 0; i < 120; i++) {
+        grassDecors.push({
+            x: Math.random() * WORLD_SIZE,
+            y: Math.random() * WORLD_SIZE,
+            size: 5 + Math.random() * 8,
+            type: cfg.decorType,
+            color: cfg.decorColor
+        });
+    }
+}
+
+function initLevel(idx) {
+    currentLevelIdx = idx;
+    const cfg = LEVELS[idx];
+    
+    snakes = [];
+    foods = [];
+    powerups = [];
+    bossSpawned = false;
+    boss = null;
+    document.getElementById('boss-alert').style.display = 'none';
+
+    generateGrassDecor(cfg);
+
+    const startLen = (idx === 0) ? 30 : Math.max(35, Math.floor(cfg.targetLen * 0.4));
+    player = new Snake(WORLD_SIZE / 2, WORLD_SIZE / 2, startLen, '#2ed573', true, false, '玩家');
+    snakes.push(player);
+
+    for (let i = 0; i < cfg.aiCount; i++) spawnAISnake();
+    for (let i = 0; i < 140; i++) spawnFood();
+    for (let i = 0; i < 6; i++) spawnPowerup();
+
+    document.getElementById('level-title').innerText = cfg.name;
+    document.getElementById('target-val').innerText = cfg.targetLen;
+    gameState = 'PLAYING';
+    startBGM();
+}
+
+function spawnAISnake() {
+    let x, y;
+    do {
+        x = 100 + Math.random() * (WORLD_SIZE - 200);
+        y = 100 + Math.random() * (WORLD_SIZE - 200);
+    } while (player && Math.hypot(x - player.segments[0].x, y - player.segments[0].y) < 350);
+
+    const color = SNAKE_COLORS[Math.floor(Math.random() * SNAKE_COLORS.length)];
+    const len = 18 + Math.floor(Math.random() * (20 + currentLevelIdx * 5));
+    snakes.push(new Snake(x, y, len, color, false, false, `壮乡蛇#${Math.floor(Math.random()*90+10)}`));
+}
+
+function spawnBoss() {
+    bossSpawned = true;
+    const cfg = LEVELS[currentLevelIdx];
+    playSound('boss');
+    const alertEl = document.getElementById('boss-alert');
+    alertEl.style.display = 'block';
+    setTimeout(() => { alertEl.style.display = 'none'; }, 3000);
+
+    let bx = player.segments[0].x + (Math.random() > 0.5 ? 400 : -400);
+    let by = player.segments[0].y + (Math.random() > 0.5 ? 400 : -400);
+    bx = Math.max(150, Math.min(WORLD_SIZE - 150, bx));
+    by = Math.max(150, Math.min(WORLD_SIZE - 150, by));
+
+    boss = new Snake(bx, by, cfg.bossHpLen, cfg.bossColor, false, true, cfg.bossName);
+    snakes.push(boss);
+}
+
+function spawnFood() {
+    foods.push({
+        x: 30 + Math.random() * (WORLD_SIZE - 60),
+        y: 30 + Math.random() * (WORLD_SIZE - 60),
+        r: 4 + Math.random() * 2,
+        value: 1.0,
+        color: SNAKE_COLORS[Math.floor(Math.random() * SNAKE_COLORS.length)],
+        isCorpse: false
+    });
+}
+
+function spawnPowerup() {
+    const type = Math.random() > 0.5 ? 1 : 2;
+    powerups.push({
+        x: 60 + Math.random() * (WORLD_SIZE - 120),
+        y: 60 + Math.random() * (WORLD_SIZE - 120),
+        type: type
+    });
+}
+
+function checkSnakeCollisions() {
+    for (let i = 0; i < snakes.length; i++) {
+        const s1 = snakes[i];
+        if (s1.dead) continue;
+        const head1 = s1.segments[0];
+
+        for (let j = 0; j < snakes.length; j++) {
+            if (i === j) continue;
+            const s2 = snakes[j];
+            if (s2.dead) continue;
+
+            for (let k = 0; k < s2.segments.length; k++) {
+                const seg2 = s2.segments[k];
+                if (Math.hypot(head1.x - seg2.x, head1.y - seg2.y) < s1.radius + s2.radius - 3) {
+                    if (k === 0) {
+                        if (s1.invincibleBuffTimer > 0 && s2.invincibleBuffTimer <= 0) s2.die();
+                        else if (s1.length < s2.length && s1.invincibleBuffTimer <= 0) s1.die();
+                    } else {
+                        if (s1.invincibleBuffTimer > 0) {
+                            if (!s2.isBoss) s2.die();
+                        } else {
+                            s1.die();
+                        }
+                    }
+                    break;
+                }
+            }
+            if (s1.dead) break;
+        }
+    }
+}
+
+// ==================== 渲染循环 ====================
+function drawBackground(camX, camY) {
+    const cfg = LEVELS[currentLevelIdx];
+    ctx.fillStyle = cfg.bg;
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.save();
+    ctx.translate(-camX, -camY);
+
+    ctx.strokeStyle = cfg.grid;
+    ctx.lineWidth = 1.5;
+    const gridSize = 100;
+    const startX = Math.floor(camX / gridSize) * gridSize;
+    const startY = Math.floor(camY / gridSize) * gridSize;
+
+    ctx.beginPath();
+    for (let x = startX; x < camX + width + gridSize; x += gridSize) {
+        if (x >= 0 && x <= WORLD_SIZE) { ctx.moveTo(x, Math.max(0, camY)); ctx.lineTo(x, Math.min(WORLD_SIZE, camY + height)); }
+    }
+    for (let y = startY; y < camY + height + gridSize; y += gridSize) {
+        if (y >= 0 && y <= WORLD_SIZE) { ctx.moveTo(Math.max(0, camX), y); ctx.lineTo(Math.min(WORLD_SIZE, camX + width), y); }
+    }
+    ctx.stroke();
+
+    for (let d of grassDecors) {
+        if (d.x < camX - 25 || d.x > camX + width + 25 || d.y < camY - 25 || d.y > camY + height + 25) continue;
+        ctx.fillStyle = d.color;
+        ctx.globalAlpha = 0.35;
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.globalAlpha = 1.0;
+
+    ctx.strokeStyle = '#ff4757';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(0, 0, WORLD_SIZE, WORLD_SIZE);
+
+    ctx.restore();
+}
+
+function drawMinimap() {
+    mCtx.clearRect(0, 0, 120, 120);
+    const scale = 120 / WORLD_SIZE;
+
+    for (let p of powerups) {
+        mCtx.fillStyle = p.type === 1 ? '#00d2d3' : '#ffa502';
+        mCtx.fillRect(p.x * scale - 1.5, p.y * scale - 1.5, 3, 3);
+    }
+    for (let s of snakes) {
+        if (s.dead) continue;
+        const head = s.segments[0];
+        mCtx.beginPath();
+        mCtx.arc(head.x * scale, head.y * scale, s.isBoss ? 4 : (s.isPlayer ? 3 : 1.5), 0, Math.PI * 2);
+        mCtx.fillStyle = s.isBoss ? '#ff0000' : (s.isPlayer ? '#2ed573' : '#ffffff');
+        mCtx.fill();
+    }
+}
+
+function updateHUD() {
+    if (!player) return;
+    const cfg = LEVELS[currentLevelIdx];
+    const len = Math.floor(player.length);
+    document.getElementById('score-val').innerText = len;
+
+    if (!bossSpawned) {
+        const pct = Math.min(100, (len / cfg.targetLen) * 100);
+        document.getElementById('level-progress').style.width = pct + '%';
+        if (len >= cfg.targetLen) spawnBoss();
+    } else {
+        document.getElementById('level-progress').style.width = '100%';
+        document.getElementById('level-progress').style.background = '#ff4757';
+    }
+
+    const speedBadge = document.getElementById('buff-speed');
+    if (player.speedBuffTimer > 0) {
+        speedBadge.style.display = 'block';
+        document.getElementById('speed-time').innerText = player.speedBuffTimer.toFixed(1);
+    } else { speedBadge.style.display = 'none'; }
+
+    const invBadge = document.getElementById('buff-invincible');
+    if (player.invincibleBuffTimer > 0) {
+        invBadge.style.display = 'block';
+        document.getElementById('invincible-time').innerText = player.invincibleBuffTimer.toFixed(1);
+    } else { invBadge.style.display = 'none'; }
+}
+
+let lastTime = 0;
+function gameLoop(timestamp) {
+    const dt = Math.min(0.04, (timestamp - lastTime) / 1000) || 0.016;
+    lastTime = timestamp;
+
+    if (gameState === 'PLAYING') {
+        while (foods.length < 140) spawnFood();
+        while (powerups.length < 6) spawnPowerup();
+        
+        snakes = snakes.filter(s => !s.dead);
+        const normalAICount = snakes.filter(s => !s.isPlayer && !s.isBoss).length;
+        if (normalAICount < LEVELS[currentLevelIdx].aiCount) spawnAISnake();
+
+        for (let s of snakes) s.update(dt);
+        checkSnakeCollisions();
+        updateHUD();
+    }
+
+    const camX = player ? player.segments[0].x - width / 2 : WORLD_SIZE / 2 - width / 2;
+    const camY = player ? player.segments[0].y - height / 2 : WORLD_SIZE / 2 - height / 2;
+
+    drawBackground(camX, camY);
+
+    ctx.save();
+    ctx.translate(-camX, -camY);
+
+    for (let f of foods) {
+        if (f.x < camX - 15 || f.x > camX + width + 15 || f.y < camY - 15 || f.y > camY + height + 15) continue;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+        ctx.fillStyle = f.color;
+        if (f.isCorpse) { ctx.shadowColor = f.color; ctx.shadowBlur = 6; }
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+
+    for (let p of powerups) {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.beginPath();
+        ctx.arc(0, 0, 14, 0, Math.PI * 2);
+        ctx.fillStyle = p.type === 1 ? '#1e90ff' : '#ffa502';
+        ctx.fill();
+        ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(p.type === 1 ? '⚡' : '🛡️', 0, 0);
+        ctx.restore();
+    }
+
+    for (let s of snakes) s.draw(ctx);
+
+    ctx.restore();
+    drawMinimap();
+
+    requestAnimationFrame(gameLoop);
+}
+
+const modal = document.getElementById('modal');
+const startBtn = document.getElementById('start-btn');
+
+function showModal(title, desc, btnText) {
+    document.querySelector('#modal h1').innerText = title;
+    document.querySelector('#modal p').innerHTML = desc;
+    startBtn.innerText = btnText;
+    modal.style.display = 'flex';
+}
+
+startBtn.addEventListener('click', () => {
+    initAudio();
+    modal.style.display = 'none';
+    document.getElementById('level-progress').style.background = 'linear-gradient(90deg, #2ed573, #eccc68)';
+    
+    if (gameState === 'PAUSED') {
+        gameState = 'PLAYING';
+    } else if (gameState === 'LEVEL_CLEAR') {
+        initLevel(currentLevelIdx + 1);
+    } else if (gameState === 'VICTORY' || gameState === 'MENU') {
+        initLevel(0);
+    } else if (gameState === 'GAME_OVER') {
+        initLevel(currentLevelIdx);
+    }
+});
+
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
