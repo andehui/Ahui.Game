@@ -599,7 +599,7 @@
 <div id="login-overlay">
     <div class="login-card">
         <h1 id="registerTitle">华山论剑 · 双截龙神兵版</h1>
-        <p>剑在手，问天下谁是英雄</p>
+        <p>剑 in 手，问天下谁是英雄</p>
         <input type="text" id="usernameInput" class="login-input" placeholder="输入您的昵称 (例如: 大头辉)" maxlength="16">
         <button class="register-btn" onclick="registerUser()">发起挑战</button>
     </div>
@@ -679,11 +679,11 @@
 <div id="ad-modal-overlay">
     <div class="ad-header">
         <div class="ad-status-box">
-            <div class="ad-timer-text" id="adTimerText">⏳ 需向下翻动浏览满 30.0 秒即可复活 3 条命</div>
-            <div class="ad-scroll-tip paused" id="adScrollTip">⬇️ 请在下方网页中向下滑动/滚动，倒计时才会减少！</div>
+            <div class="ad-timer-text" id="adTimerText">⏳ 需进行任意鼠标滑动/点击/箭头操作触发30秒倒计时</div>
+            <div class="ad-scroll-tip paused" id="adScrollTip">👉 请在网页中进行任意滑动、滚动或点击，倒计时启动后将持续递减！</div>
         </div>
         <div class="ad-actions">
-            <a href="https://blog.a169.org/" target="_blank" rel="noopener noreferrer" class="ad-ext-btn" onclick="registerAdScrollActivity()">新窗口打开</a>
+            <a href="https://blog.a169.org/" target="_blank" rel="noopener noreferrer" class="ad-ext-btn" onclick="triggerAdStart()">新窗口打开</a>
             <button class="ad-close-btn" onclick="attemptCloseAd()">关闭网页 ✕</button>
         </div>
     </div>
@@ -696,9 +696,9 @@
 <div id="ad-warn-dialog">
     <div class="ad-warn-card">
         <h3>⚠️ 警告：无法获得三条命！</h3>
-        <p>当前有效下滑浏览时间未满 30 秒，现在关闭网页将<strong>无法获得三条命复活奖励</strong>，确定要放弃吗？</p>
+        <p>当前倒计时未满 30 秒，现在关闭网页将<strong>无法获得三条命复活奖励</strong>，确定要放弃吗？</p>
         <div class="ad-warn-btns">
-            <button class="warn-btn-continue" onclick="dismissAdWarning()">继续向下浏览</button>
+            <button class="warn-btn-continue" onclick="dismissAdWarning()">继续浏览</button>
             <button class="warn-btn-quit" onclick="forceCloseAd()">放弃奖励并关闭</button>
         </div>
     </div>
@@ -890,32 +890,42 @@ function showNotification(msg) {
     }, 3000);
 }
 
-// --- 看广告复活三条命逻辑 ---
+// --- 看广告复活三条命逻辑（触发一次后持续倒计时） ---
 let adState = {
     active: false,
     remainingTime: 30.0,
-    lastScrollActiveTime: 0,
+    hasStarted: false,
     timerId: null,
-    touchStartY: 0,
     warnDialogOpen: false
 };
 
-function registerAdScrollActivity() {
-    if (!adState.active) return;
-    adState.lastScrollActiveTime = performance.now();
+function triggerAdStart() {
+    if (!adState.hasStarted) {
+        adState.hasStarted = true;
+        const timerText = document.getElementById('adTimerText');
+        const scrollTip = document.getElementById('adScrollTip');
+        timerText.textContent = `⏳ 倒计时开始: 30.0 秒`;
+        scrollTip.textContent = '✅ 已成功触发动作，倒计时正在持续进行中...';
+        scrollTip.classList.remove('paused');
+    }
 }
 
 function openAdForRevive() {
     adState.active = true;
     adState.remainingTime = 30.0;
-    adState.lastScrollActiveTime = 0;
+    adState.hasStarted = false;
     adState.warnDialogOpen = false;
 
     const modal = document.getElementById('ad-modal-overlay');
     const iframe = document.getElementById('ad-iframe');
     iframe.src = 'https://blog.a169.org/';
     modal.classList.add('active');
-    updateAdUI();
+
+    const timerText = document.getElementById('adTimerText');
+    const scrollTip = document.getElementById('adScrollTip');
+    timerText.textContent = `⏳ 需进行任意鼠标滑动/点击/箭头操作触发30秒倒计时`;
+    scrollTip.textContent = '👉 请在网页中进行任意滑动、滚动或点击，倒计时启动后将持续递减！';
+    scrollTip.classList.add('paused');
 
     if (adState.timerId) clearInterval(adState.timerId);
     let lastTick = performance.now();
@@ -928,32 +938,16 @@ function openAdForRevive() {
 
         if (adState.warnDialogOpen) return;
 
-        // 只有在向下翻动后的 2.5 秒活跃窗口内才减少倒计时
-        let isScrollingDown = (now - adState.lastScrollActiveTime) <= 2500;
-        if (isScrollingDown) {
+        // 一旦 hasStarted 为 true，倒计时永不暂停，一直减到0
+        if (adState.hasStarted) {
             adState.remainingTime = Math.max(0, adState.remainingTime - dt);
+            timerText.textContent = `⏳ 剩余倒计时: ${adState.remainingTime.toFixed(1)} 秒 (满30秒自动复活)`;
         }
-
-        updateAdUI(isScrollingDown);
 
         if (adState.remainingTime <= 0) {
             completeAdRevive();
         }
     }, 100);
-}
-
-function updateAdUI(isScrollingDown = false) {
-    const timerText = document.getElementById('adTimerText');
-    const scrollTip = document.getElementById('adScrollTip');
-
-    timerText.textContent = `⏳ 剩余浏览时间: ${adState.remainingTime.toFixed(1)} 秒 (满30秒立即复活3条命)`;
-    if (isScrollingDown) {
-        scrollTip.textContent = '✅ 检测到向下翻动，倒计时减少中...';
-        scrollTip.classList.remove('paused');
-    } else {
-        scrollTip.textContent = '⬇️ 倒计时已暂停！请向下滑动/滚动网页以减少时间！';
-        scrollTip.classList.add('paused');
-    }
 }
 
 function attemptCloseAd() {
@@ -973,6 +967,7 @@ function dismissAdWarning() {
 
 function forceCloseAd() {
     adState.active = false;
+    adState.hasStarted = false;
     adState.warnDialogOpen = false;
     if (adState.timerId) {
         clearInterval(adState.timerId);
@@ -981,11 +976,12 @@ function forceCloseAd() {
     document.getElementById('ad-warn-dialog').classList.remove('active');
     document.getElementById('ad-modal-overlay').classList.remove('active');
     document.getElementById('ad-iframe').src = 'about:blank';
-    showNotification('❌ 未浏览满30秒已关闭，无法获得三条命！');
+    showNotification('❌ 倒计时未满30秒已关闭，无法获得三条命！');
 }
 
 function completeAdRevive() {
     adState.active = false;
+    adState.hasStarted = false;
     adState.warnDialogOpen = false;
     if (adState.timerId) {
         clearInterval(adState.timerId);
@@ -1006,38 +1002,41 @@ function completeAdRevive() {
 
     document.getElementById('game-over-overlay').classList.remove('active');
     playSoundLevelUp();
-    showNotification('🎉 浏览满30秒！已恢复三条命并开启5秒隐身继续战斗！');
+    showNotification('🎉 倒计时满30秒！已恢复三条命并开启5秒隐身继续战斗！');
     addFloatingText('❤️ 复活三条命！继续战斗！', player.x, player.y - 1.5, '#00e676');
     updateUI();
 }
 
-// 监听广告层内的向下滑动/滚轮/按键事件
+// 绑定任何鼠标滑动、点击、滚轮或键盘按键动作，触发一次后倒计时永久运行
 window.addEventListener('DOMContentLoaded', () => {
     const adWrapper = document.getElementById('ad-iframe-wrapper');
 
-    // 鼠标滚轮向下滚动 (deltaY > 0)
-    adWrapper.addEventListener('wheel', e => {
-        if (adState.active && e.deltaY > 0) {
-            registerAdScrollActivity();
+    const handleUserAction = () => {
+        if (adState.active && !adState.hasStarted) {
+            triggerAdStart();
         }
-    }, { passive: true });
+    };
 
-    // 触摸屏手指向上滑动（即页面向下翻动）
-    adWrapper.addEventListener('touchstart', e => {
-        if (adState.active && e.touches.length > 0) {
-            adState.touchStartY = e.touches[0].clientY;
+    adWrapper.addEventListener('mousemove', handleUserAction, { passive: true });
+    adWrapper.addEventListener('mousedown', handleUserAction, { passive: true });
+    adWrapper.addEventListener('wheel', handleUserAction, { passive: true });
+    adWrapper.addEventListener('touchstart', handleUserAction, { passive: true });
+    adWrapper.addEventListener('touchmove', handleUserAction, { passive: true });
+    
+    window.addEventListener('keydown', e => {
+        if (adState.active) {
+            handleUserAction();
+            return;
         }
-    }, { passive: true });
-
-    adWrapper.addEventListener('touchmove', e => {
-        if (adState.active && e.touches.length > 0) {
-            let currentY = e.touches[0].clientY;
-            if (adState.touchStartY - currentY > 6) {
-                registerAdScrollActivity();
-                adState.touchStartY = currentY;
-            }
+        if (e.key === 'Escape') {
+            togglePause();
+            return;
         }
-    }, { passive: true });
+        keys[e.key] = true;
+        if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+            e.preventDefault();
+        }
+    });
 
     // 浏览器页面关闭/刷新拦截
     window.addEventListener('beforeunload', e => {
@@ -1322,22 +1321,6 @@ const joystickState = {
 
 const keys = {};
 
-window.addEventListener('keydown', e => {
-    if (adState.active) {
-        if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
-            registerAdScrollActivity();
-        }
-        return;
-    }
-    if (e.key === 'Escape') {
-        togglePause();
-        return;
-    }
-    keys[e.key] = true;
-    if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
-        e.preventDefault();
-    }
-});
 window.addEventListener('keyup', e => {
     keys[e.key] = false;
 });
