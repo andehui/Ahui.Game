@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>绿城南宁·贪吃蛇大作战 (猎杀Boss版)</title>
+    <title>贪吃蛇.南宁大作战</title>
     <style>
         * {
             margin: 0;
@@ -277,7 +277,7 @@
         <div class="hud-item" id="quest-status">小蛇击杀: <span id="kill-val">0</span> / <span id="target-kill-val">3</span></div>
         <div class="progress-bar"><div class="progress-fill" id="level-progress"></div></div>
         <div class="hud-item" id="controls-tip" style="margin-top:5px; font-size:11px; color:#a4b0be;">
-            PC: 方向键/WASD/鼠标 | [Esc] 暂停
+            PC: 方向键/WASD | 空格冲刺 | [Esc] 暂停
         </div>
     </div>
 
@@ -469,18 +469,18 @@ document.getElementById('sound-btn').addEventListener('click', () => {
     document.getElementById('sound-btn').innerText = musicEnabled ? "🔊 音乐: 开" : "🔇 音乐: 关";
 });
 
-// ==================== 10个南宁特色关卡配置 (每关小蛇总数 = 3 * 关卡数) ====================
+// ==================== 10个南宁特色关卡配置 (智能难度逐级递增) ====================
 const LEVELS = [
-    { name: "第 1 关：青秀山绿肺", bg: "#427233", grid: "#37612a", decorType: "flower", decorColor: "#ffffff", totalMinions: 3,  bossHpLen: 95,  bossSpeed: 3.3, bossColor: "#ff4757", bossName: "青秀山神兽" },
-    { name: "第 2 关：南湖公园碧波", bg: "#366b43", grid: "#2d5937", decorType: "clover", decorColor: "#7bed9f", totalMinions: 6,  bossHpLen: 130, bossSpeed: 3.5, bossColor: "#ffa502", bossName: "南湖巨鲤Boss" },
-    { name: "第 3 关：三街两巷老街", bg: "#507a32", grid: "#42672a", decorType: "stone",  decorColor: "#d1ccc0", totalMinions: 9,  bossHpLen: 165, bossSpeed: 3.7, bossColor: "#3742fa", bossName: "骑楼老街霸主" },
-    { name: "第 4 关：邕江夜游长廊", bg: "#28604a", grid: "#214e3d", decorType: "bamboo", decorColor: "#badc58", totalMinions: 12, bossHpLen: 205, bossSpeed: 3.9, bossColor: "#a55eea", bossName: "邕江水怪Boss" },
-    { name: "第 5 关：民歌湖音乐小镇", bg: "#2a6639", grid: "#225430", decorType: "flower", decorColor: "#ffda79", totalMinions: 15, bossHpLen: 245, bossSpeed: 4.1, bossColor: "#eb4d4b", bossName: "民歌铜鼓王" },
-    { name: "第 6 关：五象新区广场", bg: "#24523c", grid: "#1c4230", decorType: "stone",  decorColor: "#84817a", totalMinions: 18, bossHpLen: 290, bossSpeed: 4.3, bossColor: "#f0932b", bossName: "五象神像守护" },
-    { name: "第 7 关：方特东盟神画", bg: "#1e4d2a", grid: "#173d21", decorType: "flower", decorColor: "#ff9ff3", totalMinions: 21, bossHpLen: 340, bossSpeed: 4.5, bossColor: "#be2edd", bossName: "东盟神话巨蟒" },
-    { name: "第 8 关：大明山雨林奇观", bg: "#345224", grid: "#2a431d", decorType: "mushroom", decorColor: "#ff6b81", totalMinions: 24, bossHpLen: 390, bossSpeed: 4.7, bossColor: "#ff3838", bossName: "大明山林霸" },
-    { name: "第 9 关：德天跨国瀑布", bg: "#163a23", grid: "#112e1b", decorType: "clover", decorColor: "#70a1ff", totalMinions: 27, bossHpLen: 445, bossSpeed: 4.9, bossColor: "#ff9f1a", bossName: "跨国瀑布龙" },
-    { name: "第 10 关：南宁国际会展中心", bg: "#184537", grid: "#12372c", decorType: "flower", decorColor: "#ffeaa7", totalMinions: 30, bossHpLen: 500, bossSpeed: 5.1, bossColor: "#ff0055", bossName: "金紫荆会展之王" }
+    { name: "第 1 关：青秀山绿肺", bg: "#427233", grid: "#37612a", decorType: "flower", decorColor: "#ffffff", totalMinions: 3,  bossHpLen: 95,  bossSpeed: 3.1, bossColor: "#ff4757", bossName: "青秀山神兽" },
+    { name: "第 2 关：南湖公园碧波", bg: "#366b43", grid: "#2d5937", decorType: "clover", decorColor: "#7bed9f", totalMinions: 6,  bossHpLen: 130, bossSpeed: 3.3, bossColor: "#ffa502", bossName: "南湖巨鲤Boss" },
+    { name: "第 3 关：三街两巷老街", bg: "#507a32", grid: "#42672a", decorType: "stone",  decorColor: "#d1ccc0", totalMinions: 9,  bossHpLen: 165, bossSpeed: 3.5, bossColor: "#3742fa", bossName: "骑楼老街霸主" },
+    { name: "第 4 关：邕江夜游长廊", bg: "#28604a", grid: "#214e3d", decorType: "bamboo", decorColor: "#badc58", totalMinions: 12, bossHpLen: 205, bossSpeed: 3.7, bossColor: "#a55eea", bossName: "邕江水怪Boss" },
+    { name: "第 5 关：民歌湖音乐小镇", bg: "#2a6639", grid: "#225430", decorType: "flower", decorColor: "#ffda79", totalMinions: 15, bossHpLen: 245, bossSpeed: 3.9, bossColor: "#eb4d4b", bossName: "民歌铜鼓王" },
+    { name: "第 6 关：五象新区广场", bg: "#24523c", grid: "#1c4230", decorType: "stone",  decorColor: "#84817a", totalMinions: 18, bossHpLen: 290, bossSpeed: 4.1, bossColor: "#f0932b", bossName: "五象神像守护" },
+    { name: "第 7 关：方特东盟神画", bg: "#1e4d2a", grid: "#173d21", decorType: "flower", decorColor: "#ff9ff3", totalMinions: 21, bossHpLen: 340, bossSpeed: 4.3, bossColor: "#be2edd", bossName: "东盟神话巨蟒" },
+    { name: "第 8 关：大明山雨林奇观", bg: "#345224", grid: "#2a431d", decorType: "mushroom", decorColor: "#ff6b81", totalMinions: 24, bossHpLen: 390, bossSpeed: 4.5, bossColor: "#ff3838", bossName: "大明山林霸" },
+    { name: "第 9 关：德天跨国瀑布", bg: "#163a23", grid: "#112e1b", decorType: "clover", decorColor: "#70a1ff", totalMinions: 27, bossHpLen: 445, bossSpeed: 4.7, bossColor: "#ff9f1a", bossName: "跨国瀑布龙" },
+    { name: "第 10 关：南宁国际会展中心", bg: "#184537", grid: "#12372c", decorType: "flower", decorColor: "#ffeaa7", totalMinions: 30, bossHpLen: 500, bossSpeed: 5.0, bossColor: "#ff0055", bossName: "金紫荆会展之王" }
 ];
 
 let currentLevelIdx = 0;
@@ -497,7 +497,6 @@ let minionsSpawnedInLevel = 0;
 let bossSpawned = false;
 let boss = null;
 
-let mouse = { x: width / 2, y: height / 2 };
 let isManualBoosting = false;
 let keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, KeyW: false, KeyS: false, KeyA: false, KeyD: false, Space: false };
 
@@ -515,17 +514,6 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => {
     if (e.code in keys) keys[e.code] = false;
     if (e.code === 'Space') isManualBoosting = false;
-});
-
-window.addEventListener('mousemove', e => {
-    if (!isMobile) { mouse.x = e.clientX; mouse.y = e.clientY; }
-});
-window.addEventListener('mousedown', e => {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
-    if (e.button === 0 && !isMobile) isManualBoosting = true;
-});
-window.addEventListener('mouseup', e => {
-    if (e.button === 0 && !isMobile) isManualBoosting = false;
 });
 
 // 暂停功能切换函数
@@ -591,7 +579,7 @@ btnBoost.addEventListener('touchend', e => { e.preventDefault(); isManualBoostin
 
 const SNAKE_COLORS = ['#ff6b81', '#70a1ff', '#eccc68', '#a29bfe', '#ff7f50', '#1dd1a1', '#f368e0', '#48dbfb'];
 
-// ==================== 贪吃蛇底层类 ====================
+// ==================== 贪吃蛇底层类 (增强智能 AI 系统) ====================
 class Snake {
     constructor(x, y, length, color, isPlayer = false, isBoss = false, name = "") {
         this.isPlayer = isPlayer;
@@ -601,8 +589,10 @@ class Snake {
         this.angle = Math.random() * Math.PI * 2;
         this.targetAngle = this.angle;
         
-        this.baseSpeed = isBoss ? LEVELS[currentLevelIdx].bossSpeed : 3.0;
-        this.turnSpeed = isBoss ? 0.06 : 0.09;
+        // 随关卡递增的基础移动速度与转向灵敏度
+        const levelMultiplier = 1 + currentLevelIdx * 0.04;
+        this.baseSpeed = (isBoss ? LEVELS[currentLevelIdx].bossSpeed : 2.6) * levelMultiplier;
+        this.turnSpeed = (isBoss ? 0.07 : 0.095) + currentLevelIdx * 0.002;
         
         this.length = length;
         this.path = [];
@@ -641,13 +631,9 @@ class Snake {
                 this.targetAngle = Math.atan2(ky, kx);
             } else if (isMobile && (joystickVector.x !== 0 || joystickVector.y !== 0)) {
                 this.targetAngle = Math.atan2(joystickVector.y, joystickVector.x);
-            } else if (!isMobile) {
-                const dx = mouse.x - width / 2;
-                const dy = mouse.y - height / 2;
-                if (Math.hypot(dx, dy) > 10) this.targetAngle = Math.atan2(dy, dx);
             }
         } else {
-            this.updateAI(dt);
+            this.updateAdvancedAI(dt);
         }
 
         let diff = this.targetAngle - this.angle;
@@ -661,6 +647,9 @@ class Snake {
         } else if (this.isPlayer && isManualBoosting && this.length > 15) {
             currentSpeed *= 1.6;
             this.length -= 2.5 * dt;
+        } else if (this.isBoss && Math.random() < 0.02) {
+            // Boss 会根据距离玩家远近智能决定是否短促冲刺包抄
+            currentSpeed *= 1.35;
         }
 
         const head = this.path[0];
@@ -685,43 +674,92 @@ class Snake {
         this.checkFoodAndPowerups();
     }
 
-    updateAI(dt) {
+    // ==================== 增强版高级 AI 决策算法 ====================
+    updateAdvancedAI(dt) {
         this.aiTimer -= dt;
         const head = this.path[0];
-        let danger = false;
-        const checkX = head.x + Math.cos(this.angle) * (this.radius * 4);
-        const checkY = head.y + Math.sin(this.angle) * (this.radius * 4);
+        const lookAheadDist = (this.isBoss ? 150 : 100) + currentLevelIdx * 8;
 
-        for (let other of snakes) {
-            if (other === this || other.dead) continue;
-            for (let i = 0; i < other.segments.length; i += 3) {
-                const seg = other.segments[i];
-                if (Math.hypot(checkX - seg.x, checkY - seg.y) < other.radius + this.radius + 20) {
-                    this.targetAngle = this.angle + (Math.random() > 0.5 ? 1.5 : -1.5);
-                    this.aiTimer = 0.4;
-                    danger = true;
-                    break;
+        // 1. 扇形多射线障碍物感知（前方、左前方、右前方）
+        const rayAngles = [0, -0.45, 0.45, -0.9, 0.9];
+        let dangerDetected = false;
+        let bestEscapeAngle = this.angle;
+        let minDangerScore = Infinity;
+
+        for (let ra of rayAngles) {
+            const testAngle = this.angle + ra;
+            const tx = head.x + Math.cos(testAngle) * lookAheadDist;
+            const ty = head.y + Math.sin(testAngle) * lookAheadDist;
+
+            // 边界危险检测
+            let rayDanger = 0;
+            if (tx < 120 || tx > WORLD_SIZE - 120 || ty < 120 || ty > WORLD_SIZE - 120) {
+                rayDanger += 1000;
+            }
+
+            // 其他蛇身体碰撞危险检测
+            for (let other of snakes) {
+                if (other === this || other.dead) continue;
+                for (let i = 0; i < other.segments.length; i += 2) {
+                    const seg = other.segments[i];
+                    const dist = Math.hypot(tx - seg.x, ty - seg.y);
+                    if (dist < other.radius + this.radius + 35) {
+                        rayDanger += (1 / (dist + 1)) * 5000;
+                    }
                 }
             }
-            if (danger) break;
+
+            if (rayDanger < minDangerScore) {
+                minDangerScore = rayDanger;
+                bestEscapeAngle = testAngle;
+            }
         }
 
-        if (!danger && this.aiTimer <= 0) {
-            this.aiTimer = 0.4 + Math.random() * 0.4;
+        // 如果前方有明显碰撞危险，立刻执行紧急避让
+        if (minDangerScore > 50) {
+            this.targetAngle = bestEscapeAngle;
+            this.aiTimer = 0.3; // 缩短重置周期以保持高灵敏度闪避
+            return;
+        }
+
+        // 2. 定期寻路与战术决策
+        if (this.aiTimer <= 0) {
+            this.aiTimer = Math.max(0.2, 0.5 - currentLevelIdx * 0.02); // 关卡越高，AI 思考越频繁敏捷
+
             if (this.isBoss && player && !player.dead) {
-                this.targetAngle = Math.atan2(player.path[0].y - head.y, player.path[0].x - head.x) + (Math.random() - 0.5) * 0.4;
+                // Boss 战术：高智商包抄，根据玩家移动方向进行“提前量预判”
+                const pHead = player.path[0];
+                const pSpeed = 3.2; 
+                // 预测玩家未来位置进行合围拦截
+                const predictX = pHead.x + Math.cos(player.angle) * pSpeed * 25;
+                const predictY = pHead.y + Math.sin(player.angle) * pSpeed * 25;
+                
+                const angleToPlayer = Math.atan2(predictY - head.y, predictX - head.x);
+                // 随机加入微小战术侧向偏移，形成包围圈
+                this.targetAngle = angleToPlayer + Math.sin(Date.now() * 0.002) * 0.5;
             } else {
-                let bestFood = null;
-                let minDist = 300;
+                // 普通小蛇：在“安全觅食”与“迂回游走”之间智能切换
+                let bestTarget = null;
+                let bestScore = -Infinity;
+
+                // 搜索附近的食物或尸体
                 for (let f of foods) {
-                    const d = Math.hypot(f.x - head.x, f.y - head.y);
-                    const weight = f.isCorpse ? d * 0.4 : d;
-                    if (weight < minDist) { minDist = weight; bestFood = f; }
+                    const dist = Math.hypot(f.x - head.x, f.y - head.y);
+                    if (dist < 400 + currentLevelIdx * 20) {
+                        // 尸体价值更高，大蛇也会有意识去抢夺尸体
+                        const score = (f.isCorpse ? 50 : 15) - dist * 0.1;
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestTarget = f;
+                        }
+                    }
                 }
-                if (bestFood) {
-                    this.targetAngle = Math.atan2(bestFood.y - head.y, bestFood.x - head.x);
+
+                if (bestTarget) {
+                    this.targetAngle = Math.atan2(bestTarget.y - head.y, bestTarget.x - head.x);
                 } else {
-                    this.targetAngle += (Math.random() - 0.5) * 1.0;
+                    // 没有食物时平滑巡逻转弯
+                    this.targetAngle += (Math.random() - 0.5) * 1.2;
                 }
             }
         }
@@ -894,7 +932,6 @@ function initLevel(idx) {
     player = new Snake(WORLD_SIZE / 2, WORLD_SIZE / 2, startLen, '#2ed573', true, false, playerName);
     snakes.push(player);
 
-    // 初始刷出最多 5 条小蛇（且不超过本关总小蛇数）
     const initialSpawnCount = Math.min(MAX_ACTIVE_MINIONS, cfg.totalMinions);
     for (let i = 0; i < initialSpawnCount; i++) {
         spawnAISnake();
@@ -1068,7 +1105,6 @@ function updateHUD() {
         const pct = Math.min(100, (minionsKilledInLevel / cfg.totalMinions) * 100);
         document.getElementById('level-progress').style.width = pct + '%';
 
-        // 当本关小蛇全部被击败，召唤 Boss
         if (minionsKilledInLevel >= cfg.totalMinions) {
             spawnBoss();
         }
@@ -1104,7 +1140,6 @@ function gameLoop(timestamp) {
         const cfg = LEVELS[currentLevelIdx];
         const activeMinions = snakes.filter(s => !s.isPlayer && !s.isBoss).length;
 
-        // 场上保持最多 5 条小蛇，死一条补一条，直到达到本关总数
         if (activeMinions < MAX_ACTIVE_MINIONS && minionsSpawnedInLevel < cfg.totalMinions) {
             spawnAISnake();
         }
@@ -1167,11 +1202,9 @@ function showModal(title, desc, btnText, showNameInput = false) {
     modal.style.display = 'flex';
 }
 
-// 第一次进入，如果已有保存的名字也允许在主界面修改
 nameInputBox.style.display = 'flex';
 
 startBtn.addEventListener('click', () => {
-    // 进入游戏时自动请求全屏
     requestFullScreenMode();
     initAudio();
 
@@ -1194,7 +1227,6 @@ startBtn.addEventListener('click', () => {
     }
 });
 
-// 支持在输入框按回车直接开始
 playerNameInput.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
         startBtn.click();
