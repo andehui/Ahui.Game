@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>贪吃蛇.南宁大作战</title>
+    <title>绿城南宁·贪吃蛇大作战 (猎杀Boss版)</title>
     <style>
         * {
             margin: 0;
@@ -937,8 +937,9 @@ function initLevel(idx) {
         spawnAISnake();
     }
 
-    for (let i = 0; i < 140; i++) spawnFood();
-    for (let i = 0; i < 6; i++) spawnPowerup();
+    // 道具/食物初始数量减少 80%：食物从140个减至28个，道具从6个减至1个
+    for (let i = 0; i < 28; i++) spawnFood();
+    for (let i = 0; i < 1; i++) spawnPowerup();
 
     document.getElementById('level-title').innerText = cfg.name;
     document.getElementById('hud-player-name').innerText = playerName;
@@ -1133,8 +1134,10 @@ function gameLoop(timestamp) {
     lastTime = timestamp;
 
     if (gameState === 'PLAYING') {
-        while (foods.length < 140) spawnFood();
-        while (powerups.length < 6) spawnPowerup();
+        // 食物维持上限从140减至28
+        while (foods.length < 28) spawnFood();
+        // 道具维持上限从6减至1
+        while (powerups.length < 1) spawnPowerup();
         
         snakes = snakes.filter(s => !s.dead);
         const cfg = LEVELS[currentLevelIdx];
